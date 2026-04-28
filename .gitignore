@@ -1,0 +1,18 @@
+/.bundle/
+/vendor/bundle/
+/pkg/
+/coverage/
+/tmp/
+/doc/
+/.yardoc/
+
+*.gem
+*.rbc
+.rspec_status
+
+# Editor / OS
+.idea/
+.DS_Store
+.claude/
+.cursor/
+.ruby-lsp/

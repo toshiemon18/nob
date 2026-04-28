@@ -1,0 +1,4 @@
+#!/usr/bin/env ruby
+require "nob/cli"
+
+Nob::CLI.start(ARGV)
