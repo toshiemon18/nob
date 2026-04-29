@@ -34,13 +34,18 @@
    - チェックボックス形式で書く
 
 5. **plan ファイルを書き出す**
-   - 出力先: `docs/plans/<slug>.md`
+   - 出力先: `docs/plans/YYYY-MM-DD_{slug}.md`（YYYY-MM-DD は作成日）
    - frontmatter:
      - `title`, `slug`, `status: planning`, `created`, `updated` を埋める
    - セクション: 目的・背景 / 設計 / TODO / レビューフィードバック（空） / 実装と計画の差分（空）
 
-6. **user レビュー**
-   - plan の要点（目的・設計の核・TODO 件数）を簡潔にまとめて提示
+6. **plan レビュー**
+   - `peer-review` skill を `plan=<planファイルパス>` モードで呼ぶ
+   - 結果を plan の「レビューフィードバック」セクションに記録する
+   - Critical / Important の指摘があれば plan を修正してから次へ進む
+
+7. **user レビュー**
+   - plan の要点（目的・設計の核・TODO 件数）と peer-review の Critical 件数を簡潔にまとめて提示
    - 修正があれば反映
    - OK が出たら `status: implementing` に更新し、`Implement に進みますか？` と user に確認して終了
 
