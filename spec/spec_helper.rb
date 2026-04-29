@@ -1,5 +1,7 @@
 require "nob"
 
+Dir[File.expand_path("support/**/*.rb", __dir__)].each { |f| require f }
+
 RSpec.configure do |config|
   config.expect_with :rspec do |c|
     c.syntax = :expect

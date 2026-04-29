@@ -27,5 +27,16 @@ module Nob
       warn "Error: #{e.message}"
       exit 1
     end
+
+    desc "list", "List notes under the vault"
+    method_option :prefix, type: :string, desc: "Filter by vault-relative subdirectory (e.g. daily, projects/2026)"
+    def list
+      config = Nob::Config.load
+      entries = Nob::NoteList.list(vault: config.vault, prefix: options[:prefix])
+      entries.each { |entry| puts entry.relative_path }
+    rescue Nob::Error => e
+      warn "Error: #{e.message}"
+      exit 1
+    end
   end
 end

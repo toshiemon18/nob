@@ -1,0 +1,96 @@
+require "nob/cli"
+require "stringio"
+require "tmpdir"
+
+RSpec.describe Nob::CLI do
+  def capture_stdout
+    original = $stdout
+    $stdout = StringIO.new
+    yield
+    $stdout.string
+  ensure
+    $stdout = original
+  end
+
+  def capture_stderr
+    original = $stderr
+    $stderr = StringIO.new
+    yield
+    $stderr.string
+  ensure
+    $stderr = original
+  end
+
+  describe "#list" do
+    context "with the fixture vault" do
+      include_context "fixture vault"
+
+      it "prints all notes sorted by relative path" do
+        output = capture_stdout { described_class.start(["list"]) }
+
+        expect(output).to eq(FixtureVault::EXPECTED_NOTES.join("\n") + "\n")
+      end
+
+      it "does not include files under .nob/" do
+        output = capture_stdout { described_class.start(["list"]) }
+
+        expect(output).not_to include(".nob/")
+      end
+
+      it "filters by --prefix" do
+        output = capture_stdout { described_class.start(["list", "--prefix", "daily"]) }
+
+        expect(output).to eq("daily/2026-04-30.md\n")
+      end
+
+      it "filters by --prefix to projects/" do
+        output = capture_stdout { described_class.start(["list", "--prefix", "projects"]) }
+
+        expect(output).to eq("projects/Plan.md\n")
+      end
+    end
+
+    context "with an empty vault" do
+      before do
+        @empty_vault = Dir.mktmpdir("nob-empty-vault")
+        cfg_dir = Dir.mktmpdir("nob-cfg")
+        config_path = File.join(cfg_dir, "nob", "config.toml")
+        FileUtils.mkdir_p(File.dirname(config_path))
+        File.write(config_path, %(vault = "#{@empty_vault}"\n))
+        allow(Nob::Config).to receive(:default_path).and_return(config_path)
+        @cfg_dir = cfg_dir
+      end
+      after do
+        FileUtils.remove_entry(@empty_vault)
+        FileUtils.remove_entry(@cfg_dir)
+      end
+
+      it "prints nothing and exits 0 when the vault has no notes" do
+        output = capture_stdout { described_class.start(["list"]) }
+
+        expect(output).to eq("")
+      end
+    end
+
+    context "with error conditions" do
+      it "warns and exits 1 when the prefix directory does not exist" do
+        Dir.mktmpdir("nob-vault") do |vault|
+          Dir.mktmpdir("nob-cfg") do |cfg_dir|
+            config_path = File.join(cfg_dir, "nob", "config.toml")
+            FileUtils.mkdir_p(File.dirname(config_path))
+            File.write(config_path, %(vault = "#{vault}"\n))
+            allow(Nob::Config).to receive(:default_path).and_return(config_path)
+
+            stderr = capture_stderr do
+              expect {
+                capture_stdout { described_class.start(["list", "--prefix", "missing"]) }
+              }.to raise_error(SystemExit) { |e| expect(e.status).to eq(1) }
+            end
+
+            expect(stderr).to match(/Error.*missing/)
+          end
+        end
+      end
+    end
+  end
+end

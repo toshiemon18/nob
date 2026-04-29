@@ -6,3 +6,4 @@ end
 
 require_relative "nob/config"
 require_relative "nob/note"
+require_relative "nob/note_list"
