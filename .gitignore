@@ -13,6 +13,6 @@
 # Editor / OS
 .idea/
 .DS_Store
-.claude/
+.claude/settings.local.json
 .cursor/
 .ruby-lsp/
