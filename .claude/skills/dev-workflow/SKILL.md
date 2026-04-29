@@ -1,6 +1,6 @@
 ---
 name: dev-workflow
-description: 機能単位の開発フローを Plan → Implement → Review → Refine → Recap で段階的に進めるためのオーケストレーション skill。実装は t-wada 流の TDD に従う。状態は docs/plans/<slug>.md のフロントマターで管理する。
+description: 機能単位の開発フローを Plan → Implement → Review → Refine → Recap で段階的に進めるためのオーケストレーション skill。実装は t-wada 流の TDD に従う。状態は docs/plans/YYYY-MM-DD_{slug}.md のフロントマターで管理する。
 ---
 
 # dev-workflow
@@ -24,7 +24,7 @@ description: 機能単位の開発フローを Plan → Implement → Review →
    - 第1引数 → `phase`
    - 第2引数 → `slug`
 2. **`slug` が未指定**:
-   - `docs/plans/*.md` を Glob し、frontmatter `status` が `done` 以外のものを抽出
+   - `docs/plans/????-??-??_*.md` を Glob し、frontmatter `status` が `done` 以外のものを抽出
    - 1 件 → それを使う
    - 0 件もしくは 2 件以上 → user に確認
 3. **`phase` が未指定**:
@@ -39,7 +39,9 @@ description: 機能単位の開発フローを Plan → Implement → Review →
 
 ## plan ファイルのスキーマ
 
-`docs/plans/<slug>.md`:
+ファイル名: `docs/plans/YYYY-MM-DD_{slug}.md`
+- `YYYY-MM-DD` は plan 作成日（created と同じ日付）
+- 日付 prefix により `ls` で時系列順に並ぶ。類似スコープの plan が複数生まれても衝突しない
 
 ```markdown
 ---
