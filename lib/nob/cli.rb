@@ -27,6 +27,25 @@ module Nob
       exit 1
     end
 
+    desc "show TITLE", "Print path, size, character count, and frontmatter for a note"
+    def show(title)
+      config = Nob::Config.load
+      detail = Nob::Notes::Viewer.show(vault: config.vault, title: title)
+      puts "Path     : #{detail.note.relative_path}"
+      puts "Size     : #{format_size(detail.size)}"
+      puts "Chars    : #{detail.chars}"
+      unless detail.frontmatter.empty?
+        puts "---frontmatter---"
+        key_width = detail.frontmatter.keys.map(&:to_s).map(&:length).max
+        detail.frontmatter.each do |key, value|
+          puts "#{key.to_s.ljust([key_width, 8].max)} : #{value}"
+        end
+      end
+    rescue Nob::Error => e
+      warn "Error: #{e.message}"
+      exit 1
+    end
+
     desc "list", "List notes under the vault"
     method_option :prefix, type: :string, desc: "Filter by vault-relative subdirectory (e.g. daily, projects/2026)"
     def list
@@ -36,6 +55,20 @@ module Nob
     rescue Nob::Error => e
       warn "Error: #{e.message}"
       exit 1
+    end
+
+    no_commands do
+      def format_size(bytes)
+        kb = 1024
+        mb = kb * 1024
+        if bytes < kb
+          "#{bytes}B"
+        elsif bytes < mb
+          "#{(bytes.to_f / kb).round(1)}KB"
+        else
+          "#{(bytes.to_f / mb).round(1)}MB"
+        end
+      end
     end
   end
 end

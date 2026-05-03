@@ -20,6 +20,87 @@ RSpec.describe Nob::Cli do
     $stderr = original
   end
 
+  describe "#show" do
+    context "with the fixture vault" do
+      include_context "fixture vault"
+
+      it "prints Path/Size/Chars and the frontmatter section for a note with frontmatter" do
+        output = capture_stdout { described_class.start(["show", "Plan"]) }
+
+        expect(output).to include("Path     : projects/Plan.md\n")
+        expect(output).to match(/^Size     : \d+B\n/)
+        expect(output).to match(/^Chars    : \d+\n/)
+        expect(output).to include("---frontmatter---\n")
+        expect(output).to include("title    : Plan\n")
+        expect(output).to include("date     : 2026-04-30\n")
+      end
+
+    end
+
+    context "with size formatting" do
+      before do
+        @vault = Dir.mktmpdir("nob-vault")
+        @cfg_dir = Dir.mktmpdir("nob-cfg")
+        config_path = File.join(@cfg_dir, "nob", "config.toml")
+        FileUtils.mkdir_p(File.dirname(config_path))
+        File.write(config_path, %(vault = "#{@vault}"\n))
+        allow(Nob::Config).to receive(:default_path).and_return(config_path)
+      end
+
+      after do
+        FileUtils.remove_entry(@vault) if @vault
+        FileUtils.remove_entry(@cfg_dir) if @cfg_dir
+      end
+
+      it "formats sub-1KB sizes in bytes" do
+        File.write(File.join(@vault, "tiny.md"), "x" * 512)
+
+        output = capture_stdout { described_class.start(["show", "tiny"]) }
+
+        expect(output).to include("Size     : 512B\n")
+      end
+
+      it "omits the frontmatter section for a note without frontmatter" do
+        File.write(File.join(@vault, "plain.md"), "no frontmatter here")
+
+        output = capture_stdout { described_class.start(["show", "plain"]) }
+
+        expect(output).to include("Path     : plain.md\n")
+        expect(output).not_to include("---frontmatter---")
+      end
+
+      it "formats 1024 bytes as 1.0KB" do
+        File.write(File.join(@vault, "kb.md"), "x" * 1024)
+
+        output = capture_stdout { described_class.start(["show", "kb"]) }
+
+        expect(output).to include("Size     : 1.0KB\n")
+      end
+
+      it "formats 1MB as 1.0MB" do
+        File.write(File.join(@vault, "mb.md"), "x" * (1024 * 1024))
+
+        output = capture_stdout { described_class.start(["show", "mb"]) }
+
+        expect(output).to include("Size     : 1.0MB\n")
+      end
+    end
+
+    context "with error conditions" do
+      include_context "fixture vault"
+
+      it "warns and exits 1 when the title does not match any note" do
+        stderr = capture_stderr do
+          expect {
+            capture_stdout { described_class.start(["show", "missing"]) }
+          }.to raise_error(SystemExit) { |e| expect(e.status).to eq(1) }
+        end
+
+        expect(stderr).to match(/Error.*missing/)
+      end
+    end
+  end
+
   describe "#list" do
     context "with the fixture vault" do
       include_context "fixture vault"
