@@ -73,3 +73,16 @@ updated: YYYY-MM-DD
 - 各フェーズの末尾で plan ファイルの該当セクションと frontmatter を更新すること
 - フェーズの境界を user に明示する（「Plan が完了したので Implement に進みます」のように 1 文）
 - 不足しているセクションや使われないセクションが見つかった場合は、SKILL.md / 各フェーズ MD と一緒に整理する提案を user に出す
+
+## タスク分割 = コミットプラン
+
+このワークフローでは **plan の TODO 1 件 = git commit 1 件** を原則とする。
+
+- Plan フェーズで TODO を切る時点で「これがそのまま 1 コミット」になる粒度を選ぶ。Red→Green→Refactor の各サイクルは 1 task の内部サイクルであって、別 task ではない
+- Implement フェーズは task 完了 (テスト全 green + Refactor 済) のたびにコミットする。`/dev-workflow implement` を起動した時点で、task 単位の commit は user の事前承認の下で実行される
+- Refine フェーズも指摘 1 件 = 1 commit を基本とする
+- これにより `git log` を見るだけで plan のたどり方が再現できる。後続の RECAP は plan TODO と git log を突き合わせれば書ける
+
+例外:
+- 「全テスト green の確認」のように差分を生まない task は plan に書かない（commit にならない task は task ではない）
+- entangled な変更（複数 task に跨らないと完結しないファイル編集）が判明したら、即停止して plan を再分割する

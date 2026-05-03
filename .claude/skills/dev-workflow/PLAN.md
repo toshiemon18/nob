@@ -27,11 +27,23 @@
    - エッジケース・失敗時の振る舞い
    - 設計判断の根拠を 1 行ずつ添える
 
-4. **TDD タスク分解**
-   - t-wada 流に「テスト可能な小さなステップ」へ分解する
-   - 各 task は「何のテストを書き、何を実装するか」が読めば分かる粒度
-   - 並べ順は Red→Green→Refactor の連続性を意識する
+4. **タスク分解（= コミットプラン）**
+   - **1 task = 1 commit** が原則。task は「green になった瞬間にそのまま commit できる粒度」で切る
+   - Red→Green→Refactor は 1 task の内部サイクル。別 task に切らない
+   - 各 task は次の 2 段で書く:
+     - 1 行目: そのままコミットメッセージ subject になる短い英語フレーズ（70 字以内、命令形 / 動詞始まり）
+     - 続けて、Red で書くテストの意図と Green で実装する範囲を 1〜2 行で補足
+   - 「全テスト green の確認」のように差分を生まない作業は task に書かない（commit にならない task は不要）
+   - 並べ順は Red→Green→Refactor の TDD 連続性 + 依存方向（先に作るべきものから）で決める
    - チェックボックス形式で書く
+
+   フォーマット例:
+
+   ```markdown
+   - [ ] **T1**: `Add Templates module skeleton with exception classes`
+       - Red: `spec/nob/templates_spec.rb` で `UndefinedVariable` / `ParseError` が `Nob::Error` を継承していることを assert
+       - Green: `lib/nob/templates.rb` に例外と `Token` / `Literal` / `Variable` を定義
+   ```
 
 5. **plan ファイルを書き出す**
    - 出力先: `docs/plans/YYYY-MM-DD_{slug}.md`（YYYY-MM-DD は作成日）

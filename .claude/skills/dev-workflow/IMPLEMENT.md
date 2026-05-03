@@ -21,7 +21,7 @@
   2. **三角測量** (2 つ目のテストケースを足して一般化を強制する)
   3. **明白な実装** (もう仮実装で逃げる必要がない場面では直接書く)
 - **歩幅は不安と相談**: 不安が大きいタスクほど小さく刻む。慣れた領域は大胆に進める
-- **コミット境界**: Green になった瞬間と Refactor 後をそれぞれ commit 候補と捉える（user が明示的に commit を求めたときだけ実際にコミットする）
+- **task = commit**: plan の TODO 1 件は git commit 1 件に対応する。task の Refactor まで終わって全テスト green になったら、その task の subject 行をコミットメッセージに使ってコミットする。`/dev-workflow implement` を起動した時点で、task 単位 commit は user の事前承認下にある（毎回確認しない）
 
 ## 手順
 
@@ -52,11 +52,17 @@
    - plan の該当チェックを完了 (`- [x]`) に
    - 新しく気づいた task を末尾に追加（「途中で見つけた仕事」を漏らさない）
 
-8. **次の task へ**: 2 に戻る
+8. **コミット**
+   - task の subject 行をそのままコミットメッセージの 1 行目に使う
+   - 本文は plan の補足部分（Red / Green の説明）から「なぜ」を抜き出して 1〜3 行で書く
+   - 想定外のファイルが変更に含まれている場合は、別 task の混入を疑い停止して plan を見直す（entangled は task 分割ミスのシグナル）
+   - コミット失敗 (pre-commit hook 等) 時は新規 commit でリカバリ。amend は使わない
 
-9. **全 task 完了**
-   - plan の `status` を `reviewing` に更新、`updated` を当日に
-   - user に「Implement が完了しました。Review に進みますか？」を 1 行で伝える
+9. **次の task へ**: 2 に戻る
+
+10. **全 task 完了**
+    - plan の `status` を `reviewing` に更新、`updated` を当日に
+    - user に「Implement が完了しました。Review に進みますか？」を 1 行で伝える
 
 ## 守るべきガードレール
 
