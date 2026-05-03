@@ -120,6 +120,26 @@ RSpec.describe Nob::Cli do
       end
     end
 
+    context "with --path" do
+      before do
+        @cfg_dir = Dir.mktmpdir("nob-cfg")
+        @config_path = File.join(@cfg_dir, "nob", "config.toml")
+        allow(Nob::Config).to receive(:default_path).and_return(@config_path)
+      end
+
+      after do
+        FileUtils.remove_entry(@cfg_dir) if @cfg_dir
+      end
+
+      it "ensures the config file exists and prints its path" do
+        expect(Nob::Config).to receive(:ensure_exists).with(@config_path).and_call_original
+
+        output = capture_stdout { described_class.start(["config", "--path"]) }
+
+        expect(output).to eq("#{@config_path}\n")
+      end
+    end
+
     context "without options" do
       it "prints usage and exits 1" do
         stderr = capture_stderr do
