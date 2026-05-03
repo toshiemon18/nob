@@ -100,6 +100,39 @@ RSpec.describe Nob::Cli do
     end
   end
 
+  describe "#config" do
+    context "with -e" do
+      before do
+        @cfg_dir = Dir.mktmpdir("nob-cfg")
+        @config_path = File.join(@cfg_dir, "nob", "config.toml")
+        allow(Nob::Config).to receive(:default_path).and_return(@config_path)
+      end
+
+      after do
+        FileUtils.remove_entry(@cfg_dir) if @cfg_dir
+      end
+
+      it "ensures the config file exists and delegates to Editor.open" do
+        expect(Nob::Config).to receive(:ensure_exists).with(@config_path).ordered.and_call_original
+        expect(Nob::Config::Editor).to receive(:open).with(path: @config_path).ordered
+
+        described_class.start(["config", "-e"])
+      end
+    end
+
+    context "without options" do
+      it "prints usage and exits 1" do
+        stderr = capture_stderr do
+          expect {
+            described_class.start(["config"])
+          }.to raise_error(SystemExit) { |e| expect(e.status).to eq(1) }
+        end
+
+        expect(stderr).to match(/Usage: nob config -e/)
+      end
+    end
+  end
+
   describe "#list" do
     context "with the fixture vault" do
       include_context "fixture vault"

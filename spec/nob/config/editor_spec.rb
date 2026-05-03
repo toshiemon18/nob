@@ -29,8 +29,16 @@ RSpec.describe Nob::Config::Editor do
     let(:fake_runner) do
       Class.new do
         attr_reader :calls
-        def initialize(result) = (@result = result; @calls = [])
-        def system(*args) = (@calls << args; @result)
+
+        def initialize(result)
+          @result = result
+          @calls = []
+        end
+
+        def system(*args)
+          @calls << args
+          @result
+        end
       end
     end
 

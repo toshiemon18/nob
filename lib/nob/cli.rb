@@ -46,6 +46,21 @@ module Nob
       exit 1
     end
 
+    desc "config", "Open the config file in $EDITOR (use -e)"
+    method_option :edit, aliases: "-e", type: :boolean, default: false, desc: "Open config in editor"
+    def config
+      unless options[:edit]
+        warn "Usage: nob config -e"
+        exit 1
+      end
+      path = Nob::Config.default_path
+      Nob::Config.ensure_exists(path)
+      Nob::Config::Editor.open(path: path)
+    rescue Nob::Error => e
+      warn "Error: #{e.message}"
+      exit 1
+    end
+
     desc "list", "List notes under the vault"
     method_option :prefix, type: :string, desc: "Filter by vault-relative subdirectory (e.g. daily, projects/2026)"
     def list
