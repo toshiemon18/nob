@@ -114,6 +114,7 @@ nob show <title>             # ノート情報参照
 - 場所: `$XDG_CONFIG_HOME/nob/config.toml`（未設定の場合は`~/.config/nob/config.toml`）
 - 初回起動時にファイルが存在しなければデフォルト値で自動生成する
 - `nob config -e` でエディタを開いて編集できる（`$EDITOR`を参照、未設定の場合は`vi`）
+- `$EDITOR` は `code -w` のような引数付きを許容するため shell 形式で起動する。ユーザ自身の環境変数を信頼する前提で、信頼できない `$EDITOR`（例: `evil; rm -rf ~`）の保護は行わない
 
 ---
 
