@@ -12,7 +12,7 @@ module Nob
       def render(title:, now:)
         @tokens.map { |t|
           case t
-          when Literal  then t.text
+          when Literal then t.text
           when Variable then t.operator.call(title: title, now: now)
           end
         }.join

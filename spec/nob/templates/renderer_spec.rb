@@ -1,7 +1,7 @@
 require "spec_helper"
 
 RSpec.describe Nob::Templates::Renderer do
-  let(:now)   { Time.new(2026, 5, 3, 9, 7, 30) }
+  let(:now) { Time.new(2026, 5, 3, 9, 7, 30) }
   let(:title) { "My Note" }
 
   describe ".render" do

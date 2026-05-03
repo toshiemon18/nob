@@ -4,7 +4,7 @@ RSpec.describe Nob::Entities::NoteDetail do
   let(:note) { Nob::Entities::Note.new(absolute_path: "/v/a.md", relative_path: "a.md") }
 
   it "exposes note/size/chars/frontmatter as keyword-initialized attributes" do
-    detail = described_class.new(note: note, size: 10, chars: 8, frontmatter: { "k" => "v" })
+    detail = described_class.new(note: note, size: 10, chars: 8, frontmatter: {"k" => "v"})
 
     expect(detail.note).to eq(note)
     expect(detail.size).to eq(10)

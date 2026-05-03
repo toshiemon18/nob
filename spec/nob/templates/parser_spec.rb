@@ -1,11 +1,11 @@
 require "spec_helper"
 
 RSpec.describe Nob::Templates::Parser do
-  let(:literal)  { Nob::Templates::Literal }
+  let(:literal) { Nob::Templates::Literal }
   let(:variable) { Nob::Templates::Variable }
   let(:title_op) { Nob::Templates::Operators::Title }
-  let(:date_op)  { Nob::Templates::Operators::Date }
-  let(:time_op)  { Nob::Templates::Operators::Time }
+  let(:date_op) { Nob::Templates::Operators::Date }
+  let(:time_op) { Nob::Templates::Operators::Time }
 
   describe ".parse" do
     context "literals and basic variables" do

@@ -34,7 +34,6 @@ RSpec.describe Nob::Cli do
         expect(output).to include("title    : Plan\n")
         expect(output).to include("date     : 2026-04-30\n")
       end
-
     end
 
     context "with size formatting" do

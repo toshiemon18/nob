@@ -11,7 +11,7 @@ module Nob
       Result = Struct.new(:path, :backup_path, keyword_init: true)
 
       def self.create(title:, vault:, dir: nil, force: false, today: Date.today)
-        target_dir = dir.nil? || dir.to_s.empty? ? vault : File.join(vault, dir)
+        target_dir = (dir.nil? || dir.to_s.empty?) ? vault : File.join(vault, dir)
         target_path = File.join(target_dir, "#{title}.md")
 
         backup_path = nil

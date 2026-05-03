@@ -37,7 +37,7 @@ module Nob
         loop do
           if @s.eos?
             raise ParseError, "unterminated variable (line #{start_line})"
-          elsif @s.scan(/\}\}/)
+          elsif @s.scan("}}")
             break
           elsif @s.match?(/\{\{/)
             raise ParseError, "unexpected '{{' inside variable (line #{@line})"
