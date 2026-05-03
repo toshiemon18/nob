@@ -16,9 +16,9 @@ module Nob
         result = runner.system(cmd)
         case result
         when nil
-          raise Nob::Error, "failed to launch editor: #{cmd}"
+          raise Nob::Error, "failed to launch editor (#{editor}) for #{path}"
         when false
-          raise Nob::Error, "editor exited with non-zero status: #{cmd}"
+          raise Nob::Error, "editor (#{editor}) exited with non-zero status for #{path}"
         end
       end
     end

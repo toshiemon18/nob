@@ -68,7 +68,7 @@ RSpec.describe Nob::Config::Editor do
       runner = fake_runner.new(false)
       expect {
         described_class.open(path: path, env: {"EDITOR" => "vi"}, runner: runner)
-      }.to raise_error(Nob::Error, /editor exited with non-zero status/)
+      }.to raise_error(Nob::Error, /exited with non-zero status/)
     end
   end
 end
