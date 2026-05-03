@@ -140,6 +140,26 @@ RSpec.describe Nob::Cli do
       end
     end
 
+    context "with --show" do
+      before do
+        @cfg_dir = Dir.mktmpdir("nob-cfg")
+        @config_path = File.join(@cfg_dir, "nob", "config.toml")
+        FileUtils.mkdir_p(File.dirname(@config_path))
+        File.write(@config_path, "vault = \"/some/where\"\n")
+        allow(Nob::Config).to receive(:default_path).and_return(@config_path)
+      end
+
+      after do
+        FileUtils.remove_entry(@cfg_dir) if @cfg_dir
+      end
+
+      it "prints the config file contents to stdout as-is" do
+        output = capture_stdout { described_class.start(["config", "--show"]) }
+
+        expect(output).to eq("vault = \"/some/where\"\n")
+      end
+    end
+
     context "without options" do
       it "prints usage and exits 1" do
         stderr = capture_stderr do

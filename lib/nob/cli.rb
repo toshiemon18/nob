@@ -46,11 +46,12 @@ module Nob
       exit 1
     end
 
-    desc "config", "View or edit the config file (use -e/--path)"
+    desc "config", "View or edit the config file (use -e/--path/--show)"
     method_option :edit, aliases: "-e", type: :boolean, default: false, desc: "Open config in editor"
     method_option :path, aliases: "-p", type: :boolean, default: false, desc: "Print config file path"
+    method_option :show, aliases: "-s", type: :boolean, default: false, desc: "Print config file contents"
     def config
-      unless options[:edit] || options[:path]
+      unless options[:edit] || options[:path] || options[:show]
         warn "Usage: nob config -e"
         exit 1
       end
@@ -60,6 +61,8 @@ module Nob
         Nob::Config::Editor.open(path: path)
       elsif options[:path]
         puts path
+      elsif options[:show]
+        print File.read(path)
       end
     rescue Nob::Error => e
       warn "Error: #{e.message}"
