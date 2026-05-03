@@ -46,5 +46,30 @@ module Nob
       end
       expanded
     end
+
+    DailySettings = Struct.new(:base_path, :file_name_format, :template_path)
+
+    DAILY_DEFAULTS = {
+      "basePath" => "daily/",
+      "fileNameFormat" => "%Y-%m-%d"
+    }.freeze
+
+    def daily_settings
+      raw = data["dailyNote"] || {}
+      template = raw["template"]
+      template_path = if template.nil? || template.to_s.empty?
+        nil
+      elsif File.absolute_path?(template)
+        template
+      else
+        File.join(vault, template)
+      end
+
+      DailySettings.new(
+        raw["basePath"] || DAILY_DEFAULTS["basePath"],
+        raw["fileNameFormat"] || DAILY_DEFAULTS["fileNameFormat"],
+        template_path
+      )
+    end
   end
 end
