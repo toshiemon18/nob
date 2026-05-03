@@ -36,6 +36,8 @@ module Nob
         return "" if template_text.nil?
         Nob::Templates::Renderer.render(template_text, title: title, now: now)
       end
+
+      private_class_method :render
     end
   end
 end
