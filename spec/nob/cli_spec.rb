@@ -131,6 +131,30 @@ RSpec.describe Nob::Cli do
         expect(stderr).to match(/Usage: nob config -e/)
       end
     end
+
+    context "when Editor.open raises Nob::Error" do
+      before do
+        @cfg_dir = Dir.mktmpdir("nob-cfg")
+        config_path = File.join(@cfg_dir, "nob", "config.toml")
+        allow(Nob::Config).to receive(:default_path).and_return(config_path)
+        allow(Nob::Config).to receive(:ensure_exists)
+        allow(Nob::Config::Editor).to receive(:open).and_raise(Nob::Error, "failed to launch editor: foo")
+      end
+
+      after do
+        FileUtils.remove_entry(@cfg_dir) if @cfg_dir
+      end
+
+      it "warns and exits 1" do
+        stderr = capture_stderr do
+          expect {
+            described_class.start(["config", "-e"])
+          }.to raise_error(SystemExit) { |e| expect(e.status).to eq(1) }
+        end
+
+        expect(stderr).to match(/Error: failed to launch editor/)
+      end
+    end
   end
 
   describe "#list" do
