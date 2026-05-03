@@ -1,2 +1,22 @@
+[settings]
+idiomatic_version_file_enable_tools = ["ruby"]
+task_output = "interleave"
+
 [tools]
-ruby = "4.0.3"
+gh = "latest"
+
+[tasks.test]
+description = "Run RSpec"
+run = "bundle exec rspec"
+
+[tasks.lint]
+description = "Run standardrb"
+run = "bundle exec standardrb"
+
+[tasks.fix]
+description = "Run standardrb --fix"
+run = "bundle exec standardrb --fix"
+
+[tasks.check]
+description = "Run spec + lint (rake default)"
+run = "bundle exec rake"
