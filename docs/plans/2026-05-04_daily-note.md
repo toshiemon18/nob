@@ -105,7 +105,7 @@ end
     - Red: `spec/nob/config_spec.rb` で TOML に `[dailyNote]` 有り／空（デフォルト適用）／template 相対パスの絶対化、3 ケースを assert
     - Green: `Nob::Config#daily_settings` を実装、`DailyNote = Struct.new(...)` を内部に置く
 
-- [ ] **T2**: `Add Notes::Daily.create for normal mode (skip when non-empty exists)`
+- [x] **T2**: `Add Notes::Daily.create for normal mode (skip when non-empty exists)`
     - Red: `spec/nob/notes/daily_spec.rb` でテンポラリ vault に対し: 未生成 → 作成 (:created)、size>0 既存 → スキップ (:skipped)、size==0 既存 → 再生成 (:recreated)、テンプレ無し → 空ファイル、テンプレ有り → 変数展開済み内容、`basePath` ディレクトリが未存在でも `mkdir_p` で自動生成されること
     - Green: `lib/nob/notes/daily.rb` を実装。force=false 経路のみ
 
