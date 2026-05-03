@@ -74,6 +74,24 @@ module Nob
       exit 1
     end
 
+    desc "daily", "Create today's daily note"
+    method_option :force, aliases: "-f", type: :boolean, default: false, desc: "Backup existing and recreate"
+    def daily
+      config = Nob::Config.load
+      settings = config.daily_settings
+      template_text = read_template(settings.template_path)
+      result = Nob::Notes::Daily.create(
+        vault: config.vault,
+        daily_settings: settings,
+        template_text: template_text,
+        force: options[:force]
+      )
+      puts format_daily_result(result)
+    rescue Nob::Error => e
+      warn "Error: #{e.message}"
+      exit 1
+    end
+
     desc "list", "List notes under the vault"
     method_option :prefix, type: :string, desc: "Filter by vault-relative subdirectory (e.g. daily, projects/2026)"
     def list
@@ -86,6 +104,24 @@ module Nob
     end
 
     no_commands do
+      def read_template(template_path)
+        return nil if template_path.nil?
+        unless File.exist?(template_path)
+          raise Nob::Error, "template file not found: #{template_path}"
+        end
+        File.read(template_path)
+      end
+
+      def format_daily_result(result)
+        case result.action
+        when :created then "Created: #{result.path}"
+        when :recreated
+          base = "Recreated: #{result.path}"
+          result.backup_path ? "#{base} (backup: #{result.backup_path})" : base
+        when :skipped then "Already exists: #{result.path}"
+        end
+      end
+
       def format_size(bytes)
         kb = 1024
         mb = kb * 1024

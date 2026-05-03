@@ -216,6 +216,62 @@ RSpec.describe Nob::Cli do
     end
   end
 
+  describe "#daily" do
+    before do
+      @vault = Dir.mktmpdir("nob-vault")
+      @cfg_dir = Dir.mktmpdir("nob-cfg")
+      @config_path = File.join(@cfg_dir, "nob", "config.toml")
+      FileUtils.mkdir_p(File.dirname(@config_path))
+      File.write(@config_path, %(vault = "#{@vault}"\n))
+      allow(Nob::Config).to receive(:default_path).and_return(@config_path)
+    end
+
+    after do
+      FileUtils.remove_entry(@vault) if @vault
+      FileUtils.remove_entry(@cfg_dir) if @cfg_dir
+    end
+
+    it "creates today's daily note and prints Created:" do
+      output = capture_stdout { described_class.start(["daily"]) }
+
+      expect(output).to match(/^Created: .*\/daily\/\d{4}-\d{2}-\d{2}\.md\n/)
+    end
+
+    it "prints Already exists: on the second run" do
+      capture_stdout { described_class.start(["daily"]) }
+      File.write(Dir.glob("#{@vault}/daily/*.md").first, "user content\n")
+
+      output = capture_stdout { described_class.start(["daily"]) }
+
+      expect(output).to match(/^Already exists: /)
+    end
+
+    it "with --force backs up the existing note and recreates it" do
+      capture_stdout { described_class.start(["daily"]) }
+      File.write(Dir.glob("#{@vault}/daily/*.md").first, "user content\n")
+
+      output = capture_stdout { described_class.start(["daily", "--force"]) }
+
+      expect(output).to match(/^Recreated: .* \(backup: .*\.backup-\d{8}-\d{6}\.md\)\n/)
+    end
+
+    it "warns and exits 1 when the configured template path is missing" do
+      File.write(@config_path, <<~TOML)
+        vault = "#{@vault}"
+        [dailyNote]
+        template = "templates/missing.md"
+      TOML
+
+      stderr = capture_stderr do
+        expect {
+          capture_stdout { described_class.start(["daily"]) }
+        }.to raise_error(SystemExit) { |e| expect(e.status).to eq(1) }
+      end
+
+      expect(stderr).to match(/Error:.*missing\.md/)
+    end
+  end
+
   describe "#list" do
     context "with the fixture vault" do
       include_context "fixture vault"

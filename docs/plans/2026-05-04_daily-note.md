@@ -113,7 +113,7 @@ end
     - Red: 同 spec で force=true: 未生成 → 通常通り (:created, backup_path nil)、既存 → backup へリネーム & 再生成 (:recreated, backup_path 値あり)、バックアップファイル名がフォーマット通り (`.backup-\d{8}-\d{6}\.md$`)、`now` を固定して同一秒で2回呼んでバックアップ衝突 → `Nob::Error` で失敗
     - Green: force 分岐を追加
 
-- [ ] **T4**: `Wire nob daily / nob daily --force in CLI`
+- [x] **T4**: `Wire nob daily / nob daily --force in CLI`
     - Red: `spec/nob/cli_spec.rb` に: テンポラリ vault と config を作って `nob daily` 起動 → "Created:" 出力、再実行 → "Already exists:" 出力、`--force` で "Recreated:" + backup 出力、テンプレートファイルが指定されているのに存在しない場合 → "Error:" + exit 1
     - Green: `Cli#daily` を追加
 
