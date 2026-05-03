@@ -1,7 +1,7 @@
 ---
 title: nob daily / nob daily --force でデイリーノートを作る
 slug: daily-note
-status: implementing
+status: done
 created: 2026-05-04
 updated: 2026-05-04
 ---
@@ -132,6 +132,27 @@ Critical: なし / Important: 3 / Nice-to-have: 3
 - CLI 経由テストでの時刻固定: T4 で `Time.now` をどう固定するかは Red 段階で決める（必要なら `Daily.create` を直接 stub する方針で十分）。明記せず
 - T1 の部分指定ケース／absolute template path: 主要3ケースで充分、余裕があれば実装中に追加
 
+### 2026-05-04 コードレビュー (peer-review)
+
+Critical: なし / Important: 2 / Nice-to-have: 1
+
+反映済み (Important):
+- `move_to_backup` が `Notes::Creator` と `Notes::Daily` で重複 → `Notes::Backup.move` を切り出して共通化。衝突時は両者とも `Nob::Error` を raise する挙動に統一（旧 Creator は `FileUtils.mv` で暗黙上書きしていたので挙動も合わせる）
+
+反映済み (Nice-to-have):
+- `Notes::Daily.render` を `private_class_method` で隠蔽し、Creator と粒度を合わせた
+
 ## 実装と計画の差分（recap）
 
-(実装後に追記)
+### 計画通りに進んだ点
+- T1〜T4 の Red→Green を計画通り 4 commit で進行
+- Config に `DailySettings` Struct を追加し、basePath/fileNameFormat/template_path のデフォルト適用と template の絶対化までを `Config#daily_settings` に閉じ込められた
+- `Notes::Daily.create` が `template_text` を文字列で受け取る設計により、テストでテンプレ読み込みを stub せず済んだ
+
+### 計画から逸脱した点
+- 設定 Struct の名前を当初 `DailyNote` で書いていたが、ドメインの `Notes::Daily` と衝突するため `DailySettings` に変更
+- T3 の Red で `Cli` 経由のテストを書きかけ、`Editor.open` のデフォルト runner が `Kernel.system` で実 `vi` を起動してしまいテストがハングした事案あり。以後 CLI テストでは Daily.create を stub する方針
+
+### 仕上げで追加した変更
+- Refine 1: `Notes::Backup` を新設して Creator/Daily 両方から呼ぶようにし、バックアップ衝突時は `Nob::Error` を raise する挙動に統一
+- Refine 2: `Notes::Daily.render` を private_class_method 化
