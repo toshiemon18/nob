@@ -66,4 +66,34 @@ RSpec.describe Nob::Notes::Daily do
       expect(File.read(daily_path)).to eq("fresh")
     end
   end
+
+  describe ".create (force mode)" do
+    it "behaves like normal mode when the file does not exist" do
+      result = described_class.create(vault: @vault, daily_settings: settings, template_text: nil, now: now, force: true)
+
+      expect(result.action).to eq(:created)
+      expect(result.backup_path).to be_nil
+    end
+
+    it "moves an existing file to a timestamped backup and recreates it" do
+      FileUtils.mkdir_p(File.dirname(daily_path))
+      File.write(daily_path, "old content")
+
+      result = described_class.create(vault: @vault, daily_settings: settings, template_text: "new", now: now, force: true)
+
+      expect(result.action).to eq(:recreated)
+      expect(result.backup_path).to match(%r{/daily/2026-05-04\.backup-\d{8}-\d{6}\.md\z})
+      expect(File.read(result.backup_path)).to eq("old content")
+      expect(File.read(result.path)).to eq("new")
+    end
+
+    it "raises when the backup destination already exists (same-second collision)" do
+      described_class.create(vault: @vault, daily_settings: settings, template_text: nil, now: now)
+      described_class.create(vault: @vault, daily_settings: settings, template_text: "v1", now: now, force: true)
+
+      expect {
+        described_class.create(vault: @vault, daily_settings: settings, template_text: "v2", now: now, force: true)
+      }.to raise_error(Nob::Error, /backup target already exists/)
+    end
+  end
 end

@@ -109,7 +109,7 @@ end
     - Red: `spec/nob/notes/daily_spec.rb` でテンポラリ vault に対し: 未生成 → 作成 (:created)、size>0 既存 → スキップ (:skipped)、size==0 既存 → 再生成 (:recreated)、テンプレ無し → 空ファイル、テンプレ有り → 変数展開済み内容、`basePath` ディレクトリが未存在でも `mkdir_p` で自動生成されること
     - Green: `lib/nob/notes/daily.rb` を実装。force=false 経路のみ
 
-- [ ] **T3**: `Handle force mode with timestamped backup in Notes::Daily`
+- [x] **T3**: `Handle force mode with timestamped backup in Notes::Daily`
     - Red: 同 spec で force=true: 未生成 → 通常通り (:created, backup_path nil)、既存 → backup へリネーム & 再生成 (:recreated, backup_path 値あり)、バックアップファイル名がフォーマット通り (`.backup-\d{8}-\d{6}\.md$`)、`now` を固定して同一秒で2回呼んでバックアップ衝突 → `Nob::Error` で失敗
     - Green: force 分岐を追加
 
