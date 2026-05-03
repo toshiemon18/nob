@@ -14,7 +14,7 @@ module Nob
         action =
           if File.exist?(target_path)
             if force
-              backup_path = move_to_backup(target_path, now: now)
+              backup_path = Backup.move(target_path, now: now)
               :recreated
             elsif File.size(target_path) > 0
               :skipped
@@ -30,18 +30,6 @@ module Nob
         FileUtils.mkdir_p(target_dir)
         File.write(target_path, render(template_text: template_text, title: date_str, now: now))
         Result.new(path: target_path, backup_path: backup_path, action: action)
-      end
-
-      def self.move_to_backup(path, now:)
-        timestamp = now.strftime("%Y%m%d-%H%M%S")
-        ext = File.extname(path)
-        base = File.basename(path, ext)
-        backup_path = File.join(File.dirname(path), "#{base}.backup-#{timestamp}#{ext}")
-        if File.exist?(backup_path)
-          raise Nob::Error, "backup target already exists: #{backup_path}"
-        end
-        FileUtils.mv(path, backup_path)
-        backup_path
       end
 
       def self.render(template_text:, title:, now:)

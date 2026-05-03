@@ -19,7 +19,7 @@ module Nob
           unless force
             raise AlreadyExists, "Note already exists: #{target_path}"
           end
-          backup_path = move_to_backup(target_path)
+          backup_path = Backup.move(target_path)
         end
 
         FileUtils.mkdir_p(target_dir)
@@ -28,21 +28,12 @@ module Nob
         Result.new(path: target_path, backup_path: backup_path)
       end
 
-      def self.move_to_backup(path, now: Time.now)
-        timestamp = now.strftime("%Y%m%d-%H%M%S")
-        ext = File.extname(path)
-        base = File.basename(path, ext)
-        backup_path = File.join(File.dirname(path), "#{base}.backup-#{timestamp}#{ext}")
-        FileUtils.mv(path, backup_path)
-        backup_path
-      end
-
       def self.render(title:, date:)
         front_matter = YAML.dump({"title" => title, "date" => date})
         "#{front_matter}---\n\n"
       end
 
-      private_class_method :move_to_backup, :render
+      private_class_method :render
     end
   end
 end
