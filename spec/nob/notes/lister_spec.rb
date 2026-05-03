@@ -1,7 +1,8 @@
+require "spec_helper"
 require "tmpdir"
 require "fileutils"
 
-RSpec.describe Nob::NoteList do
+RSpec.describe Nob::Notes::Lister do
   let(:vault) { Dir.mktmpdir("nob-vault") }
 
   after { FileUtils.remove_entry(vault) }
@@ -14,6 +15,14 @@ RSpec.describe Nob::NoteList do
   end
 
   describe ".list" do
+    it "returns Nob::Entities::Note instances" do
+      touch("README.md", "# hi")
+
+      result = described_class.list(vault: vault)
+
+      expect(result.first).to be_a(Nob::Entities::Note)
+    end
+
     it "returns a single entry for one .md file at the vault root" do
       abs = touch("README.md", "# hi")
 
@@ -101,19 +110,19 @@ RSpec.describe Nob::NoteList do
 
       expect {
         described_class.list(vault: vault, prefix: "missing")
-      }.to raise_error(Nob::NoteList::PrefixNotFound, /missing/)
+      }.to raise_error(Nob::Notes::Lister::PrefixNotFound, /missing/)
     end
 
     it "raises InvalidPrefix when the prefix is an absolute path" do
       expect {
         described_class.list(vault: vault, prefix: "/etc")
-      }.to raise_error(Nob::NoteList::InvalidPrefix)
+      }.to raise_error(Nob::Notes::Lister::InvalidPrefix)
     end
 
     it "raises InvalidPrefix when the prefix escapes the vault via .." do
       expect {
         described_class.list(vault: vault, prefix: "../outside")
-      }.to raise_error(Nob::NoteList::InvalidPrefix)
+      }.to raise_error(Nob::Notes::Lister::InvalidPrefix)
     end
 
     it "raises InvalidPrefix when the prefix points to a file" do
@@ -121,7 +130,7 @@ RSpec.describe Nob::NoteList do
 
       expect {
         described_class.list(vault: vault, prefix: "notes.md")
-      }.to raise_error(Nob::NoteList::InvalidPrefix)
+      }.to raise_error(Nob::Notes::Lister::InvalidPrefix)
     end
   end
 end

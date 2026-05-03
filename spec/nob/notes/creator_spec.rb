@@ -1,7 +1,8 @@
+require "spec_helper"
 require "tmpdir"
 require "date"
 
-RSpec.describe Nob::Note do
+RSpec.describe Nob::Notes::Creator do
   let(:vault) { Dir.mktmpdir("nob-vault") }
   let(:today) { Date.new(2026, 4, 27) }
 
@@ -40,7 +41,7 @@ RSpec.describe Nob::Note do
 
       expect {
         described_class.create(title: "Dup", vault: vault, today: today)
-      }.to raise_error(Nob::Note::AlreadyExists)
+      }.to raise_error(Nob::Notes::Creator::AlreadyExists)
     end
 
     it "backs up the existing file when force is true" do

@@ -1,8 +1,7 @@
 require "thor"
-require_relative "../nob"
 
 module Nob
-  class CLI < Thor
+  class Cli < Thor
     def self.exit_on_failure? = true
 
     desc "version", "Print nob version"
@@ -15,7 +14,7 @@ module Nob
     method_option :force, aliases: "-f", type: :boolean, default: false, desc: "Backup existing file and recreate"
     def create(title)
       config = Nob::Config.load
-      result = Nob::Note.create(
+      result = Nob::Notes::Creator.create(
         title: title,
         vault: config.vault,
         dir: options[:dir],
@@ -32,7 +31,7 @@ module Nob
     method_option :prefix, type: :string, desc: "Filter by vault-relative subdirectory (e.g. daily, projects/2026)"
     def list
       config = Nob::Config.load
-      entries = Nob::NoteList.list(vault: config.vault, prefix: options[:prefix])
+      entries = Nob::Notes::Lister.list(vault: config.vault, prefix: options[:prefix])
       entries.each { |entry| puts entry.relative_path }
     rescue Nob::Error => e
       warn "Error: #{e.message}"

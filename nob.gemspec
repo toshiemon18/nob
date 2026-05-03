@@ -16,6 +16,7 @@ Gem::Specification.new do |spec|
   spec.executables = ["nob"]
   spec.require_paths = ["lib"]
 
+  spec.add_dependency "zeitwerk", "~> 2.6"
   spec.add_dependency "thor", "~> 1.3"
   spec.add_dependency "tty-prompt", "~> 0.23"
   spec.add_dependency "toml-rb", "~> 4.0"

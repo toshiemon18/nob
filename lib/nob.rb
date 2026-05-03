@@ -1,9 +1,8 @@
-require_relative "nob/version"
+require "zeitwerk"
+
+loader = Zeitwerk::Loader.for_gem
+loader.setup
 
 module Nob
   class Error < StandardError; end
 end
-
-require_relative "nob/config"
-require_relative "nob/note"
-require_relative "nob/note_list"

@@ -1,8 +1,7 @@
-require "nob/cli"
 require "stringio"
 require "tmpdir"
 
-RSpec.describe Nob::CLI do
+RSpec.describe Nob::Cli do
   def capture_stdout
     original = $stdout
     $stdout = StringIO.new
