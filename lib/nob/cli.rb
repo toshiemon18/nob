@@ -51,7 +51,12 @@ module Nob
     method_option :path, aliases: "-p", type: :boolean, default: false, desc: "Print config file path"
     method_option :show, aliases: "-s", type: :boolean, default: false, desc: "Print config file contents"
     def config
-      unless options[:edit] || options[:path] || options[:show]
+      flags = [options[:edit], options[:path], options[:show]].count(true)
+      if flags > 1
+        warn "Error: specify only one of -e/--path/--show"
+        exit 1
+      end
+      if flags.zero?
         warn "Usage: nob config -e"
         exit 1
       end

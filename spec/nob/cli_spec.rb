@@ -172,6 +172,25 @@ RSpec.describe Nob::Cli do
       end
     end
 
+    context "with conflicting flags" do
+      [
+        ["config", "-e", "--path"],
+        ["config", "--path", "--show"],
+        ["config", "-e", "--show"],
+        ["config", "-e", "--path", "--show"]
+      ].each do |args|
+        it "rejects #{args.drop(1).join(" ")} with Error and exits 1" do
+          stderr = capture_stderr do
+            expect {
+              described_class.start(args)
+            }.to raise_error(SystemExit) { |e| expect(e.status).to eq(1) }
+          end
+
+          expect(stderr).to match(/Error: specify only one of -e\/--path\/--show/)
+        end
+      end
+    end
+
     context "when Editor.open raises Nob::Error" do
       before do
         @cfg_dir = Dir.mktmpdir("nob-cfg")
