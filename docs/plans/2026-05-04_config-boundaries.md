@@ -1,7 +1,7 @@
 ---
 title: Config 層の責務分離
 slug: config-boundaries
-status: refining
+status: done
 created: 2026-05-04
 updated: 2026-05-04
 ---
@@ -179,4 +179,17 @@ Critical: 0 件 / Important: 2 件 / Nice-to-have: 4 件
 
 ## 実装と計画の差分（recap）
 
-（recap で記入）
+コミット: `85c0391 (plan) → 3feb9a2 (T1) → 1ee4fae (T2) → 2094fa5 (R1) → (recap)`。TODO 2 件はそれぞれ 1 task = 1 commit、Refine 1 commit、計 4 commit。
+
+### 意図的な変更
+
+- **検証の置き場所**: plan は `Config.validate_vault!(raw)` private クラスメソッドを提案していたが、実装は `resolve_vault!` private インスタンスメソッドにした。エラーメッセージで `path`（インスタンス属性）を使う必要があり、クラスメソッドにすると `path:` を引数で受け渡しすることになって冗長。インスタンス内に閉じる方が自然と判断。学び: 「private クラスメソッド or private インスタンスメソッド」の選択は、依存する状態が self に収まるかで決めるとよい。
+- **`Config#data` の private 化 (R1)**: plan には書いていなかったが、peer-review 2 回目で「`attr_reader :data` のままだと `config.data["vault"] = ...` で `@vault` と乖離が起きうる」という指摘があり、本サイクルの目的（Config の不変条件確立）に直結する Important として Refine で対応した。`data` を `private` 配下の `attr_reader` に降格し、外部書き換え経路を塞いだ。学び: eager validation は「validate しただけ」では完結せず、検証対象の source-of-truth を後から触らせない構造とセットでようやく不変条件になる。
+
+### 想定外の追加
+
+- なし（R1 は Refine 経由なので Refine 仕分けの範囲内）。
+
+### 削除・スキップ
+
+- なし。peer-review 2 回目の Important #2（plan/実装差分の論点）と Nice-to-have 4 件は却下、却下理由は「レビューフィードバック」セクションに記録済み。
