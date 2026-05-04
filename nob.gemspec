@@ -18,7 +18,6 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "zeitwerk", "~> 2.6"
   spec.add_dependency "thor", "~> 1.3"
-  spec.add_dependency "tty-prompt", "~> 0.23"
   spec.add_dependency "toml-rb", "~> 4.0"
   spec.add_dependency "front_matter_parser", "~> 1.0"
 end

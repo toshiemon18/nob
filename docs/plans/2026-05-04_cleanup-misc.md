@@ -62,7 +62,7 @@ DailySettings = Struct.new(:base_path, :file_name_format, :template_path)
 
 ## TODO（TDDタスク分解）
 
-- [ ] **T1** (非 TDD / cleanup task): `Drop unused tty-prompt gem dependency`
+- [x] **T1** (非 TDD / cleanup task): `Drop unused tty-prompt gem dependency`
     - 事前確認: `rg tty-prompt -- lib spec exe` で参照ゼロ
     - 変更: `nob.gemspec` から `add_dependency "tty-prompt"` 行を削除 + `bundle install` で `Gemfile.lock` 追従
     - 完了基準: `bundle exec rake`（rspec + standardrb）が green
