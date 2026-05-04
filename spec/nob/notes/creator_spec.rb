@@ -12,6 +12,7 @@ RSpec.describe Nob::Notes::Creator do
     it "creates a markdown file with frontmatter at vault root" do
       result = described_class.create(title: "My Note", vault: vault, today: today)
 
+      expect(result.action).to eq(:created)
       expect(result.path).to eq(File.join(vault, "My Note.md"))
       expect(result.backup_path).to be_nil
       expect(File.read(result.path)).to eq(<<~MD)
@@ -50,6 +51,7 @@ RSpec.describe Nob::Notes::Creator do
 
       result = described_class.create(title: "Dup", vault: vault, force: true, today: today)
 
+      expect(result.action).to eq(:recreated)
       expect(result.path).to eq(first.path)
       expect(result.backup_path).not_to be_nil
       expect(File.read(result.backup_path)).to eq("ORIGINAL")

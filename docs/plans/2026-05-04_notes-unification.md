@@ -128,7 +128,7 @@ T2 と T3 を分けた理由: T2 は出力互換のリファクタ（`format_dai
 
 ## TODO（TDDタスク分解）
 
-- [ ] **T1**: `Add :action to Creator::Result`
+- [x] **T1**: `Add :action to Creator::Result`
     - Red: `spec/nob/notes/creator_spec.rb` の既存 example を拡張し、`result.action == :created` (新規作成ケース) と `result.action == :recreated` (force backup ケース) を assert。`AlreadyExists` raise ケースには触らない。実装変更前なので `NoMethodError: undefined method 'action'` で fail
     - Green: `lib/nob/notes/creator.rb` の `Result` に `:action` を追加し、`create` 内で `:created` / `:recreated` をセットして返す
     - 完了基準: `bundle exec rake` が green、`Creator::Result` の shape が `Daily::Result` と一致
