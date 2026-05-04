@@ -1,0 +1,13 @@
+# TypeProf 0.31.1
+
+# lib/nob/templates.rb
+module Nob
+  module Nob::Templates
+    class Nob::Templates::UndefinedVariable # failed to identify its superclass
+    end
+    class Nob::Templates::ParseError # failed to identify its superclass
+    end
+    Nob::Templates::Literal: untyped
+    Nob::Templates::Variable: untyped
+  end
+end

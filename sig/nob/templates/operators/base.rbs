@@ -1,0 +1,16 @@
+# TypeProf 0.31.1
+
+# lib/nob/templates/operators/base.rb
+module Nob
+  module Nob::Templates
+    module Nob::Templates::Operators
+      class Nob::Templates::Operators::Base
+        def fmt: -> untyped
+        def initialize: (untyped) -> void
+        def ==: (untyped) -> untyped
+        def hash: -> Integer
+        def call: (**untyped) -> bot
+      end
+    end
+  end
+end

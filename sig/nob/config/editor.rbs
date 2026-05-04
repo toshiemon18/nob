@@ -1,0 +1,12 @@
+# TypeProf 0.31.1
+
+# lib/nob/config/editor.rb
+module Nob
+  class Nob::Config
+    class Nob::Config::Editor
+      Nob::Config::Editor::DEFAULT: String
+      def self.resolve: (?env: RBS::Unnamed::ENVClass) -> String
+      def self.open: (path: untyped, ?env: RBS::Unnamed::ENVClass, ?runner: singleton(Kernel)) -> nil
+    end
+  end
+end

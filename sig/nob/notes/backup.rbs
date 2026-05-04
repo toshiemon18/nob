@@ -1,0 +1,10 @@
+# TypeProf 0.31.1
+
+# lib/nob/notes/backup.rb
+module Nob
+  module Nob::Notes
+    class Nob::Notes::Backup
+      def self.move: (untyped, ?now: Time) -> String
+    end
+  end
+end

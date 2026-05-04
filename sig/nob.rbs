@@ -1,0 +1,7 @@
+# TypeProf 0.31.1
+
+# lib/nob.rb
+module Nob
+  class Nob::Error < StandardError
+  end
+end

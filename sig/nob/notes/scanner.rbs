@@ -1,0 +1,10 @@
+# TypeProf 0.31.1
+
+# lib/nob/notes/scanner.rb
+module Nob
+  module Nob::Notes
+    module Nob::Notes::Scanner
+      def self.markdown_files: (untyped) -> Array[String]
+    end
+  end
+end

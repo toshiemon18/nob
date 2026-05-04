@@ -1,0 +1,14 @@
+# TypeProf 0.31.1
+
+# lib/nob/templates/parser.rb
+module Nob
+  module Nob::Templates
+    class Nob::Templates::Parser
+      def self.parse: (untyped) -> []
+      def initialize: (untyped) -> void
+      def parse: -> []
+      def consume_variable: -> untyped
+      def advance_lines: (untyped) -> untyped
+    end
+  end
+end
