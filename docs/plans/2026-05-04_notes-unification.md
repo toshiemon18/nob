@@ -1,9 +1,9 @@
 ---
 title: Notes 層の統一
 slug: notes-unification
-status: refining
+status: done
 created: 2026-05-04
-updated: 2026-05-04
+updated: 2026-05-05
 ---
 
 ## 目的・背景
@@ -203,4 +203,17 @@ Critical: 0 件 / Important: 2 件 / Nice-to-have: 5 件
 
 ## 実装と計画の差分（recap）
 
-（recap で記入）
+コミット: `e0815ce (plan) → c25b32c (T1) → 861499a (T2) → d724748 (T3) → 054d8fc (T4) → c0ee415 (T5) → 72f3049 (R1) → (recap)`。TODO 5 件は 1 task = 1 commit、Refine 1 commit、計 7 commit。
+
+### 意図的な変更
+
+- **T2 を「リファクタ task」として進めた**: plan は T2 の Red を「`format_note_action` を呼ぶ統合テストを書いて NoMethodError で fail させる」としていたが、実際にはこの形の Red はテストとして無意味（呼び出し側を書き換える前は到達しない）。代わりに「既存 daily spec の出力期待値が green を維持し続けることが gate」「`grep "format_daily_result"` が空になることが完了基準」として、純粋な命名リファクタとして進めた。t-wada 流 TDD でも「振る舞いを変えないリファクタは Refactor フェーズ」と扱える。学び: 「リネームだけの task」は無理に Red を作らず、既存 spec を gate に置くのが素直。
+- **ADR 0002 の例外表に直前サイクルの仕様も含めた**: plan の設計 4 では「Viewer の `InvalidFrontmatter` ラップ判断」を主に挙げていたが、実装では `cleanup-misc`/`config-boundaries` で確定した既存例外（`Lister::InvalidPrefix`, `Templates::ParseError`, `Creator::AlreadyExists` 等）も表に含めて全例外マッピングのスナップショットを取った。新規コード追加時の参照点として 1 箇所にまとまる方が価値がある。
+
+### 想定外の追加
+
+- **R1 (Refine)**: peer-review 2 回目で ADR 0002 の表 2 件の不整合（`Backup` 同秒衝突が daily 限定の文言になっていた / 「(無し)」表記揺れ）が発覚。どちらもドキュメントの精度問題で、本サイクルで導入した ADR の責務として直すのが筋として 1 commit でまとめて修正した。学び: 「既存挙動を表にまとめる」ような ADR は実装と一行ずつ突き合わせる目で書く必要があり、レビュアー視点の重要性が出やすい。
+
+### 削除・スキップ
+
+- なし。peer-review 2 回目の Important #2（Zeitwerk 依存可視化）と Nice-to-have 4 件はそれぞれ却下、却下理由は「レビューフィードバック」セクションに記録済み。特に Nice-to-have 3（Viewer sort 回帰 spec）は plan で「一応 spec で確認する」と書いた約束を実装で取りこぼした形だが、`spec/nob/notes/viewer_spec.rb:92-103` の `Ambiguous` example が Viewer 内部の `matches.sort_by` を assert しており、Scanner sort と独立に振る舞いが固定されているため、追加 spec の保証は薄いと判断した。
