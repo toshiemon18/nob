@@ -66,7 +66,7 @@ DailySettings = Struct.new(:base_path, :file_name_format, :template_path)
     - 事前確認: `rg tty-prompt -- lib spec exe` で参照ゼロ
     - 変更: `nob.gemspec` から `add_dependency "tty-prompt"` 行を削除 + `bundle install` で `Gemfile.lock` 追従
     - 完了基準: `bundle exec rake`（rspec + standardrb）が green
-- [ ] **T2** (非 TDD / cleanup task): `Inline Zeitwerk loader setup in lib/nob.rb`
+- [x] **T2** (非 TDD / cleanup task): `Inline Zeitwerk loader setup in lib/nob.rb`
     - 事前確認: 既存 spec が green
     - 変更: `lib/nob.rb` を `Zeitwerk::Loader.for_gem.setup` の 1 行に集約
     - 完了基準: `bundle exec rake` が green（autoload 経路の振る舞いが従来通り）
