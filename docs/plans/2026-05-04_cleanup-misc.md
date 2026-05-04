@@ -1,7 +1,7 @@
 ---
 title: 雑掃除（peer-review 指摘の小粒な不整合まとめ）
 slug: cleanup-misc
-status: implementing
+status: refining
 created: 2026-05-04
 updated: 2026-05-04
 ---
@@ -95,6 +95,26 @@ Critical: 0 件 / Important: 2 件 / Nice-to-have: 2 件
 
 - T1/T2 が「事前 green 確認」型で TDD の Red→Green 形式から外れる旨を plan に明示。→ **対応済み**: T1/T2 に「(非 TDD / cleanup task)」ラベルを付け、事前確認 / 変更 / 完了基準の 3 段で記述
 - スコープ外項目の後続 plan slug 候補を併記。→ **対応済み**: 「目的・背景」のスコープ外節に slug 候補（`config-boundaries` / `notes-unification` / `cli-aggregation` / `operators-dispatch`）を併記
+
+### peer-review 2 回目（2026-05-04, code モード）
+
+range: `16efa73..HEAD`（plan 追加 + T1〜T4 の 5 commit）
+
+Critical: 0 件 / Important: 2 件 / Nice-to-have: 2 件
+
+**Important**
+
+- `docs/design.md:39, 81` に `tty-prompt` 記述が残存。T1 のスコープを `nob.gemspec` / `Gemfile.lock` に絞ったが、design.md にも TUI ライブラリとして明記されており「未参照の依存を残さない」目的（plan 目的・背景）と乖離。撤去か「未導入」の注記かを判断すべき。
+  - → **対応済 (R1)**: design.md は「TUI フェーズ着手時の選定候補」を表明しており、tty-prompt 自体を完全削除するのは将来意図を消し過ぎる。技術スタック表 (`docs/design.md:39`) と CLI 仕様 (`docs/design.md:81`) の `tty-prompt` 記述に「TUIフェーズ着手時に導入予定。現時点ではgem依存に含めていない」の注記を加えて整合させた。
+- plan status が `reviewing` のままで TODO 全 `[x]` だが「実装と計画の差分（recap）」が空欄。
+  - → **却下（フェーズ運用上正常）**: dev-workflow は `reviewing → refining → recap` の順に進む。recap セクションは RECAP フェーズで埋める前提で、現スナップショットでは未記入が正しい状態。
+
+**Nice-to-have**
+
+- ADR 0001 の帰結注記が B 節内のみで、ADR 末尾の「帰結」セクションに撤去履歴が無い。
+  - → **却下**: 本 ADR の「帰結」セクションは「採用時点の利点／受容するトレードオフ」を述べたもので、撤去履歴を後付けで足す節ではない。B 節注記で改訂時点と理由が分かるので十分。レビュアー本人も「許容範囲」と述べている。
+- `spec/nob/config_spec.rb` の `rejects positional initialization` は `keyword_init` を外しても positional 3 引数は通るため契約固定としては弱い。keyword での正常系 example 追加で回帰検出を強くできる。
+  - → **却下**: `daily_spec.rb` の `Nob::Config::DailySettings.new(base_path:, file_name_format:, template_path:)` 呼び出しが事実上 keyword 系の正常系をカバーしており、`keyword_init` を外せば daily_spec 全 8 example が `unknown keywords` で red になる。重複した spec を増やす実益が薄い。
 
 ## 実装と計画の差分（recap）
 

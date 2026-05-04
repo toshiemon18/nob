@@ -36,7 +36,7 @@ ObsidianライクなノートをCLIおよびNeovimから操作できるノート
 | 出力 | 実行可能gem（`gem install` または `bundle exec`） |
 | パッケージ構成 | 単一gem |
 | CLIフレームワーク | Thor |
-| TUIライブラリ | tty-prompt（必要に応じて他を追加） |
+| TUIライブラリ | tty-prompt（TUIフェーズ着手時に導入予定。現時点ではgem依存に含めていない） |
 | TOMLパーサ | toml-rb |
 | フロントマターパーサ | front_matter_parser |
 
@@ -78,7 +78,7 @@ q  → 終了
 - デフォルト: vaultルート以下全体
 - `nob --prefix <path>`: 指定パス以下に絞る
 
-**TUIライブラリ**: `tty-prompt` をベースとし、必要に応じて他のライブラリを移植・追加する
+**TUIライブラリ**: `tty-prompt` をベースとし、必要に応じて他のライブラリを移植・追加する。TUIフェーズ着手時に gem 依存として再追加する（現時点では未導入）
 
 ### サブコマンド一覧
 
