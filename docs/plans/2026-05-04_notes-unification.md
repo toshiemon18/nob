@@ -136,7 +136,7 @@ T2 と T3 を分けた理由: T2 は出力互換のリファクタ（`format_dai
     - Red: `spec/nob/cli_spec.rb` の既存 `#daily` example が `format_note_action` 経由で動くこと自体は assert しないが、リネームに伴い既存 `format_daily_result` が無くなるので、`grep "format_daily_result" -- lib spec` が空になることを完了基準とする。Red としては「`format_note_action` を呼ぶ統合テストを書いてから、まだ未定義なので `NoMethodError` で fail」 — ただし既存 `#daily` spec の振る舞い (created / recreated / skipped 出力) はそのまま green を維持する形で、出力の互換性は担保される
     - Green: `lib/nob/cli.rb` の `format_daily_result` を `format_note_action` にリネーム + 中身は同じ（`:created` / `:recreated` / `:skipped` の 3 分岐）。`cli.rb#daily` の呼び出しを `format_note_action(result)` に差し替え。`#create` はまだ触らない（T3 で扱う）
     - 完了基準: `bundle exec rake` が green、既存 `#daily` spec の出力期待が変わらないこと、`grep "format_daily_result" -- lib spec` で参照ゼロ
-- [ ] **T3**: `Switch nob create CLI output to format_note_action`
+- [x] **T3**: `Switch nob create CLI output to format_note_action`
     - Red: `spec/nob/cli_spec.rb` に `#create` の describe を新設し、新規作成時の "Created: ..." と `--force` 時の "Recreated: ... (backup: ...)" 形式を assert。現状 `cli.rb#create` は "Created: ..." と "Backup : ..." の 2 行出力なので、force ケース spec が "Recreated: ..." 期待で fail
     - Green: `cli.rb#create` を `puts format_note_action(result)` に書き換え、現状の `puts "Created: ..."` + `puts "Backup : ..."` 2 行出力を撤去
     - 完了基準: `bundle exec rake` が green、新 `#create` spec が両ケース pass。CLI 出力フォーマットが `nob create` / `nob daily` で揃う（Recreated 表記の統一）

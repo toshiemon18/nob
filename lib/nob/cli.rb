@@ -20,8 +20,7 @@ module Nob
         dir: options[:dir],
         force: options[:force]
       )
-      puts "Created: #{result.path}"
-      puts "Backup : #{result.backup_path}" if result.backup_path
+      puts format_note_action(result)
     rescue Nob::Error => e
       warn "Error: #{e.message}"
       exit 1

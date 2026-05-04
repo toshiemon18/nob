@@ -216,6 +216,36 @@ RSpec.describe Nob::Cli do
     end
   end
 
+  describe "#create" do
+    before do
+      @vault = Dir.mktmpdir("nob-vault")
+      @cfg_dir = Dir.mktmpdir("nob-cfg")
+      @config_path = File.join(@cfg_dir, "nob", "config.toml")
+      FileUtils.mkdir_p(File.dirname(@config_path))
+      File.write(@config_path, %(vault = "#{@vault}"\n))
+      allow(Nob::Config).to receive(:default_path).and_return(@config_path)
+    end
+
+    after do
+      FileUtils.remove_entry(@vault) if @vault
+      FileUtils.remove_entry(@cfg_dir) if @cfg_dir
+    end
+
+    it "prints Created: <path> for a fresh note" do
+      output = capture_stdout { described_class.start(["create", "FreshNote"]) }
+
+      expect(output).to eq("Created: #{File.join(@vault, "FreshNote.md")}\n")
+    end
+
+    it "prints Recreated: <path> (backup: ...) when --force backs up an existing note" do
+      capture_stdout { described_class.start(["create", "Dup"]) }
+
+      output = capture_stdout { described_class.start(["create", "Dup", "--force"]) }
+
+      expect(output).to match(%r{\ARecreated: .*/Dup\.md \(backup: .*Dup\.backup-\d{8}-\d{6}\.md\)\n\z})
+    end
+  end
+
   describe "#daily" do
     before do
       @vault = Dir.mktmpdir("nob-vault")
