@@ -141,7 +141,7 @@ T2 / T3 を分けた理由: 前サイクル peer-review でも同パターン（
       1. `cli.rb#daily` を `Nob::Templates::Loader.read(settings.template_path)` 呼び出しに差し替え
       2. `cli.rb` の `no_commands` から `read_template` を撤去
     - 完了基準: `bundle exec rake` が green、`grep "read_template" -- lib/nob` で参照ゼロ、`#daily template not found` spec が引き続き pass
-- [ ] **T4**: `Warn when daily template is not configured (and document Warning: prefix)`
+- [x] **T4**: `Warn when daily template is not configured (and document Warning: prefix)`
     - Red: `spec/nob/cli_spec.rb#daily` に 2 つの example 追加
       - 「テンプレ未指定 (`[dailyNote].template` 無し) で `nob daily` 実行 → stderr に "Warning: ..." 行が出る + stdout に "Created: ..." が出る + exit 0」 — 現状実装は警告無しなので fail
       - 「テンプレ指定済み + 実在パスでは Warning 行が **出ない**」 negative example — 現状実装でも green（追加保証）

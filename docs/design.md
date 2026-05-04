@@ -92,6 +92,20 @@ nob links --unresolved       # 未解決リンクをvault全体で一覧表示
 nob config -e                # configをエディタで編集
 ```
 
+### 出力チャンネルの慣習
+
+サブコマンドが書き出す先と prefix を以下に統一する。後続コマンド追加時もこの規約に従う。
+
+| チャンネル | prefix | 終了コード | 例 |
+|-----------|--------|----------|----|
+| stdout | （prefix なし） | 0 | `Created: ...` / `Recreated: ... (backup: ...)` / `Already exists: ...` |
+| stderr | `Error: ` | 1 | `Error: vault directory does not exist: ...` |
+| stderr | `Warning: ` | 0 | `Warning: no daily-note template configured ([dailyNote].template); creating an empty file.` |
+
+- **`Error: `**: 致命的エラー。コマンドの主目的を達成できず、ユーザー側の対処（config 修正・引数見直し）が必要。`exit 1` で終了。`Nob::Error` ラップ方針の詳細は `docs/adr/0002_error-policy.md`
+- **`Warning: `**: 継続可能な注意。コマンドは目的を達成しているが、ユーザーが意図しているか確認したい状況（テンプレ未指定で空ファイル生成、等）。`exit 0` のまま
+- **prefix なし**: 通常の情報出力。stdout に書き、機械可読 / パイプ可能な形を保つ
+
 ---
 
 ## マイルストーン1（最初のゴール）
