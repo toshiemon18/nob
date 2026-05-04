@@ -1,0 +1,19 @@
+# TypeProf 0.31.1
+
+# lib/nob/config.rb
+module Nob
+  class Nob::Config
+    Nob::Config::DEFAULT_CONTENT: String
+    def path: -> String
+    def vault: -> String
+    def self.default_path: -> String
+    def self.load: (?path: String) -> Nob::Config
+    def self.ensure_exists: (String) -> Integer?
+    def initialize: (path: String, data: untyped) -> void
+    Nob::Config::DailySettings: untyped
+    Nob::Config::DAILY_DEFAULTS: Hash[String, String]
+    def daily_settings: -> untyped
+    def data: -> untyped
+    def resolve_vault!: -> String
+  end
+end

@@ -1,0 +1,10 @@
+# TypeProf 0.31.1
+
+# lib/nob/templates/operators.rb
+module Nob
+  module Nob::Templates
+    module Nob::Templates::Operators
+      def self.build: (name: untyped, fmt: untyped) -> Time
+    end
+  end
+end

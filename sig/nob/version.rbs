@@ -1,0 +1,6 @@
+# TypeProf 0.31.1
+
+# lib/nob/version.rb
+module Nob
+  Nob::VERSION: String
+end

@@ -1,0 +1,12 @@
+# TypeProf 0.31.1
+
+# lib/nob/templates/operators/date.rb
+module Nob
+  module Nob::Templates
+    module Nob::Templates::Operators
+      class Nob::Templates::Operators::Date # failed to identify its superclass
+        def call: (title: untyped, now: untyped) -> untyped
+      end
+    end
+  end
+end

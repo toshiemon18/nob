@@ -128,7 +128,7 @@ T2 / T3 を分けた理由: 前サイクル peer-review でも同パターン（
       2. 各サブコマンド (`create`, `show`, `config`, `daily`, `list`) 末尾の `rescue Nob::Error => e; warn ...; exit 1` を削除
       3. `docs/adr/0002_error-policy.md` §D に **Cli#invoke_command override 方式** を採用する旨を追記（保留事項を埋める）
     - 完了基準: `bundle exec rake` が green、`grep "rescue Nob::Error" -- lib/nob/cli.rb` で 1 箇所だけ（`invoke_command` 内）、ADR 0002 §D に採用方式が記載されている
-- [ ] **T2**: `Add Templates::Loader as a thin file-read helper`
+- [x] **T2**: `Add Templates::Loader as a thin file-read helper`
     - Red: `spec/nob/templates/loader_spec.rb` を新規追加し、(a) `path: nil` で `nil` 返却、(b) 存在しないパスで `Nob::Error` raise (メッセージに該当パス含む)、(c) 存在するパスで内容を返却、を assert。実装無いので `NameError` で fail
     - Green:
       1. `lib/nob/templates/loader.rb` を新規作成（`Nob::Templates::Loader.read(path)` を実装）

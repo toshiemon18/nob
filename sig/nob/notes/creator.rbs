@@ -1,0 +1,14 @@
+# TypeProf 0.31.1
+
+# lib/nob/notes/creator.rb
+module Nob
+  module Nob::Notes
+    class Nob::Notes::Creator
+      class Nob::Notes::Creator::AlreadyExists # failed to identify its superclass
+      end
+      Nob::Notes::Creator::Result: untyped
+      def self.create: (title: untyped, vault: untyped, ?dir: nil, ?force: false, ?today: untyped) -> untyped
+      def self.render: (title: untyped, date: untyped) -> String
+    end
+  end
+end

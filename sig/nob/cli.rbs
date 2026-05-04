@@ -1,0 +1,18 @@
+# TypeProf 0.31.1
+
+# lib/nob/cli.rb
+module Nob
+  class Nob::Cli # failed to identify its superclass
+    def self.exit_on_failure?: -> true
+    def version: -> nil
+    def create: (untyped) -> nil
+    def show: (untyped) -> nil
+    def config: -> nil
+    def daily: -> nil
+    def list: -> untyped
+    def invoke_command: (untyped, *untyped) -> bot
+    def read_template: (untyped) -> String?
+    def format_note_action: (untyped) -> String?
+    def format_size: (untyped) -> String
+  end
+end

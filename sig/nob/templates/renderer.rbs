@@ -1,0 +1,12 @@
+# TypeProf 0.31.1
+
+# lib/nob/templates/renderer.rb
+module Nob
+  module Nob::Templates
+    class Nob::Templates::Renderer
+      def self.render: (untyped, title: untyped, now: untyped) -> untyped
+      def initialize: (untyped) -> void
+      def render: (title: untyped, now: untyped) -> untyped
+    end
+  end
+end
