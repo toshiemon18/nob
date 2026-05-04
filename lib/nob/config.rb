@@ -11,7 +11,7 @@ module Nob
       vault = ""
     TOML
 
-    attr_reader :path, :data, :vault
+    attr_reader :path, :vault
 
     def self.default_path
       base = ENV["XDG_CONFIG_HOME"]
@@ -62,6 +62,8 @@ module Nob
     end
 
     private
+
+    attr_reader :data
 
     def resolve_vault!
       raw = data["vault"].to_s

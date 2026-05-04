@@ -52,6 +52,18 @@ RSpec.describe Nob::Config do
       FileUtils.remove_entry(cfg_dir) if cfg_dir
       FileUtils.remove_entry(vault) if vault
     end
+
+    it "keeps the underlying data hash inaccessible so callers cannot desync it from @vault" do
+      vault = Dir.mktmpdir("nob-vault")
+      path, cfg_dir = write_config(%(vault = "#{vault}"\n))
+
+      config = described_class.load(path: path)
+
+      expect { config.data }.to raise_error(NoMethodError, /private/)
+    ensure
+      FileUtils.remove_entry(vault) if vault
+      FileUtils.remove_entry(cfg_dir) if cfg_dir
+    end
   end
 
   describe "#daily_settings" do

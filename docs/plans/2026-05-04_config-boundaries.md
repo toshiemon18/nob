@@ -1,7 +1,7 @@
 ---
 title: Config 層の責務分離
 slug: config-boundaries
-status: implementing
+status: refining
 created: 2026-05-04
 updated: 2026-05-04
 ---
@@ -152,6 +152,30 @@ Critical: 0 件 / Important: 3 件 / Nice-to-have: 3 件
   - → **対応済**: 「設計 → 2. → 判断」に値オブジェクト化の閾値（3 フィールド以上 / 共起する複数の不変条件 / 複数 caller で同じ束を組み立てる、のいずれか）を追記
 - シンボリックリンク / リンク切れ vault の挙動を spec で 1 行担保しておくと安全。
   - → **却下**: 現状実装の `File.expand_path` + `File.directory?` を維持するため、リンクの follow 挙動は自然と等価。新規 spec で固定するのは過剰。エッジケース節に「現状維持」とだけ明記
+
+### peer-review 2 回目（2026-05-04, code モード）
+
+range: `85c0391..HEAD`（plan 追加 + T1 + T2 の 3 commit）
+
+Critical: 0 件 / Important: 2 件 / Nice-to-have: 4 件
+
+**Important**
+
+- `Config#data` が `attr_reader` で外部公開されており、`config.data["vault"] = ...` のような書き換えで `@vault` と `data["vault"]` の乖離が起きる経路が残っている（`lib/nob/config.rb:14`）。eager 検証で得た不変条件が部分的にしか守られない。
+  - → **対応済 (R1)**: `attr_reader :path, :data, :vault` から `data` を外し、`private` 配下に `attr_reader :data` として配置。外部からの書き換え経路を塞ぎ、`Config#daily_settings` / `resolve_vault!` のみが内部 accessor 経由で読む形に。`config.data` 呼び出しが `NoMethodError (private method)` で fail することを spec で固定。
+- plan は `Config.validate_vault!(raw)` private クラスメソッドを提案していたが、実装は `resolve_vault!` private インスタンスメソッド（`lib/nob/config.rb:66`）。`path` をエラーメッセージに使うためインスタンス側のほうが自然との判断。
+  - → **却下（フェーズ運用上正常）**: plan とのこの差分は recap セクションに記録する種類のもの。recap は `reviewing → refining → recap` の最終フェーズで埋まる前提であり、現スナップショットで空欄なのは正常。
+
+**Nice-to-have**
+
+- 副作用消失 spec が「load 後に削除 → `#vault` が同じ値を返す」のみで、`File.directory?` が呼ばれないこと自体は直接担保していない。
+  - → **却下**: plan で「振る舞いベース、`File.directory?` モック方式は採らない」と決定済み。レビュアー本人も「許容範囲」と述べている。
+- 空白のみ vault（`"  "`）のエッジケースで「does not exist」側のメッセージに倒れる挙動を spec 1 行で固定する案。
+  - → **却下**: 既存挙動として問題なく動作。メッセージの違いは些末で、固定する価値が低い。
+- `cli.rb` の引数展開が `settings.base_path` / `settings.file_name_format` を 2 行書く冗長さ。
+  - → **却下**: call site 1 箇所のみで重複コスト小。レビュアー本人も「許容範囲」と判断。
+- `daily_spec` の `let(:settings)` 削除で `Config::DailySettings` 経路の回帰検出がロスト。
+  - → **却下**: `config_spec` の `DailySettings` describe と CLI の手結合で代替済み。レビュアー本人も「実害なし」と判断。
 
 ## 実装と計画の差分（recap）
 
