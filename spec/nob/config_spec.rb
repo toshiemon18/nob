@@ -10,6 +10,50 @@ RSpec.describe Nob::Config do
     end
   end
 
+  describe ".load" do
+    def write_config(contents)
+      dir = Dir.mktmpdir("nob-cfg")
+      path = File.join(dir, "config.toml")
+      File.write(path, contents)
+      [path, dir]
+    end
+
+    it "raises Nob::Error eagerly when vault is unset" do
+      path, cfg_dir = write_config("vault = \"\"\n")
+
+      expect {
+        described_class.load(path: path)
+      }.to raise_error(Nob::Error, /vault is not configured/)
+    ensure
+      FileUtils.remove_entry(cfg_dir) if cfg_dir
+    end
+
+    it "raises Nob::Error eagerly when vault directory is missing" do
+      path, cfg_dir = write_config(%(vault = "/nonexistent/nob-vault-xyz"\n))
+
+      expect {
+        described_class.load(path: path)
+      }.to raise_error(Nob::Error, /vault directory does not exist/)
+    ensure
+      FileUtils.remove_entry(cfg_dir) if cfg_dir
+    end
+
+    it "freezes the resolved vault path so #vault stays valid even if the directory is removed afterwards" do
+      vault = Dir.mktmpdir("nob-vault")
+      path, cfg_dir = write_config(%(vault = "#{vault}"\n))
+
+      config = described_class.load(path: path)
+      resolved = config.vault
+      FileUtils.remove_entry(vault)
+      vault = nil
+
+      expect(config.vault).to eq(resolved)
+    ensure
+      FileUtils.remove_entry(cfg_dir) if cfg_dir
+      FileUtils.remove_entry(vault) if vault
+    end
+  end
+
   describe "#daily_settings" do
     def write_config(contents)
       dir = Dir.mktmpdir("nob-cfg")

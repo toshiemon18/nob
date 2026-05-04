@@ -115,7 +115,7 @@ end
 
 ## TODO（TDDタスク分解）
 
-- [ ] **T1**: `Validate vault eagerly in Config.load`
+- [x] **T1**: `Validate vault eagerly in Config.load`
     - Red: `spec/nob/config_spec.rb` に 2 つの spec を追加
       - 「`Config.load` で vault 未設定 / 不在ディレクトリの場合に `Nob::Error` を raise する（load 時に raise）」 — 現状実装は `#vault` を呼ぶまで raise しないので fail
       - 「load 後に vault ディレクトリを削除しても `#vault` は当初の絶対パスを返し続ける（副作用消失の振る舞いベース確認）」 — 現状実装は `#vault` 内で `File.directory?` を走らせるので削除後に raise → fail。**`File.directory?` をモックする方式は採らない**（実装結合度が上がる、振る舞いベース spec で十分）

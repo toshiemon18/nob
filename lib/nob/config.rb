@@ -11,7 +11,7 @@ module Nob
       vault = ""
     TOML
 
-    attr_reader :path, :data
+    attr_reader :path, :data, :vault
 
     def self.default_path
       base = ENV["XDG_CONFIG_HOME"]
@@ -33,18 +33,7 @@ module Nob
     def initialize(path:, data:)
       @path = path
       @data = data
-    end
-
-    def vault
-      raw = data["vault"].to_s
-      if raw.empty?
-        raise Nob::Error, "vault is not configured. Edit #{path} (or run `nob config -e`)."
-      end
-      expanded = File.expand_path(raw)
-      unless File.directory?(expanded)
-        raise Nob::Error, "vault directory does not exist: #{expanded}"
-      end
-      expanded
+      @vault = resolve_vault!
     end
 
     DailySettings = Struct.new(:base_path, :file_name_format, :template_path, keyword_init: true)
@@ -70,6 +59,20 @@ module Nob
         file_name_format: raw["fileNameFormat"] || DAILY_DEFAULTS["fileNameFormat"],
         template_path: template_path
       )
+    end
+
+    private
+
+    def resolve_vault!
+      raw = data["vault"].to_s
+      if raw.empty?
+        raise Nob::Error, "vault is not configured. Edit #{path} (or run `nob config -e`)."
+      end
+      expanded = File.expand_path(raw)
+      unless File.directory?(expanded)
+        raise Nob::Error, "vault directory does not exist: #{expanded}"
+      end
+      expanded
     end
   end
 end
