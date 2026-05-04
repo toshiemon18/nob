@@ -69,6 +69,8 @@ updated: YYYY-MM-DD
 
 ## 横断的なルール
 
+- plan を作成する前に, 新規ブランチを作成してチェックアウトして作業すること
+- plan を作成したら `gh pr create` して PR を作成すること
 - どのフェーズに入っても、まず `docs/plans/<slug>.md` を **Read** して現状を把握すること
 - 各フェーズの末尾で plan ファイルの該当セクションと frontmatter を更新すること
 - フェーズの境界を user に明示する（「Plan が完了したので Implement に進みます」のように 1 文）
