@@ -69,7 +69,7 @@ module Nob
     def daily
       config = Nob::Config.load
       settings = config.daily_settings
-      template_text = read_template(settings.template_path)
+      template_text = Nob::Templates::Loader.read(settings.template_path)
       result = Nob::Notes::Daily.create(
         vault: config.vault,
         base_path: settings.base_path,
@@ -94,14 +94,6 @@ module Nob
       rescue Nob::Error => e
         warn "Error: #{e.message}"
         exit 1
-      end
-
-      def read_template(template_path)
-        return nil if template_path.nil?
-        unless File.exist?(template_path)
-          raise Nob::Error, "template file not found: #{template_path}"
-        end
-        File.read(template_path)
       end
 
       def format_note_action(result)

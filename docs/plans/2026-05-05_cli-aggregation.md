@@ -135,7 +135,7 @@ T2 / T3 を分けた理由: 前サイクル peer-review でも同パターン（
       2. `docs/adr/0001_template-system.md` §I を補追: 「caller が単数でも、CLI 層と core 層の境界をまたぐ薄いヘルパなら早めに切り出してよい」を 1 段落追記。Loader 導入の論拠を残す
     - この task では CLI 側はまだ触らない（Loader は孤児コードになるが、T3 で接続する）
     - 完了基準: `bundle exec rake` が green、Loader spec の 3 例が pass、ADR 0001 §I に補追あり
-- [ ] **T3**: `Switch CLI daily to Templates::Loader and drop Cli#read_template`
+- [x] **T3**: `Switch CLI daily to Templates::Loader and drop Cli#read_template`
     - Red: `spec/nob/cli_spec.rb#daily` の既存 "warns and exits 1 when the configured template path is missing" が gate になる。現状 `read_template` 経由のメッセージと、`Templates::Loader.read` 経由のメッセージを **互換にする**（plan 設計 §2 のメッセージ "template file not found: <path>" は元の `read_template` と同一）。互換性で既存 spec は green を維持する
     - Green:
       1. `cli.rb#daily` を `Nob::Templates::Loader.read(settings.template_path)` 呼び出しに差し替え
