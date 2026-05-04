@@ -87,7 +87,7 @@ module Nob
         template_text: template_text,
         force: options[:force]
       )
-      puts format_daily_result(result)
+      puts format_note_action(result)
     rescue Nob::Error => e
       warn "Error: #{e.message}"
       exit 1
@@ -113,7 +113,7 @@ module Nob
         File.read(template_path)
       end
 
-      def format_daily_result(result)
+      def format_note_action(result)
         case result.action
         when :created then "Created: #{result.path}"
         when :recreated

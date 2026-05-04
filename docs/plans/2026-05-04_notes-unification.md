@@ -132,7 +132,7 @@ T2 と T3 を分けた理由: T2 は出力互換のリファクタ（`format_dai
     - Red: `spec/nob/notes/creator_spec.rb` の既存 example を拡張し、`result.action == :created` (新規作成ケース) と `result.action == :recreated` (force backup ケース) を assert。`AlreadyExists` raise ケースには触らない。実装変更前なので `NoMethodError: undefined method 'action'` で fail
     - Green: `lib/nob/notes/creator.rb` の `Result` に `:action` を追加し、`create` 内で `:created` / `:recreated` をセットして返す
     - 完了基準: `bundle exec rake` が green、`Creator::Result` の shape が `Daily::Result` と一致
-- [ ] **T2**: `Rename format_daily_result to format_note_action (output unchanged)`
+- [x] **T2**: `Rename format_daily_result to format_note_action (output unchanged)`
     - Red: `spec/nob/cli_spec.rb` の既存 `#daily` example が `format_note_action` 経由で動くこと自体は assert しないが、リネームに伴い既存 `format_daily_result` が無くなるので、`grep "format_daily_result" -- lib spec` が空になることを完了基準とする。Red としては「`format_note_action` を呼ぶ統合テストを書いてから、まだ未定義なので `NoMethodError` で fail」 — ただし既存 `#daily` spec の振る舞い (created / recreated / skipped 出力) はそのまま green を維持する形で、出力の互換性は担保される
     - Green: `lib/nob/cli.rb` の `format_daily_result` を `format_note_action` にリネーム + 中身は同じ（`:created` / `:recreated` / `:skipped` の 3 分岐）。`cli.rb#daily` の呼び出しを `format_note_action(result)` に差し替え。`#create` はまだ触らない（T3 で扱う）
     - 完了基準: `bundle exec rake` が green、既存 `#daily` spec の出力期待が変わらないこと、`grep "format_daily_result" -- lib spec` で参照ゼロ
