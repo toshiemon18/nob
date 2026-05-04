@@ -92,7 +92,7 @@ spec の中で `Operators::Foo < Operators::Base` を **動的に定義** し、
 
 ## TODO（TDDタスク分解）
 
-- [ ] **T1**: `Replace Operators dispatch with const_get-based lookup`
+- [x] **T1**: `Replace Operators dispatch with const_get-based lookup`
     - Red: `spec/nob/templates/operators_spec.rb` に 3 example を追加
       - 「`Operators` 配下に `Foo < Base` を動的定義 → `build(name: "foo", fmt: nil)` が `Foo.new(nil)` を返す」 — 現状 `case/when` では `UndefinedVariable` で fail
       - 「name が大文字混じり (`"Title"`) → `UndefinedVariable`」 — 既存実装でも green（追加保証）

@@ -33,5 +33,35 @@ RSpec.describe Nob::Templates::Operators do
         Nob::Templates::UndefinedVariable, /title does not accept format/
       )
     end
+
+    context "with dynamic Operator subclasses (1-file extension contract)" do
+      after do
+        if described_class.const_defined?(:Foo, false)
+          described_class.send(:remove_const, :Foo)
+        end
+      end
+
+      it "constructs an Operator class added under Operators without editing the dispatch table" do
+        described_class.const_set(:Foo, Class.new(Nob::Templates::Operators::Base) {
+          def call(title:, now:) = "foo"
+        })
+
+        op = described_class.build(name: "foo", fmt: nil)
+
+        expect(op).to be_a(described_class.const_get(:Foo))
+      end
+    end
+
+    it "rejects a name with mixed case (Title) as UndefinedVariable" do
+      expect { described_class.build(name: "Title", fmt: nil) }.to raise_error(
+        Nob::Templates::UndefinedVariable, /unknown variable: Title/
+      )
+    end
+
+    it "refuses Base itself as a target operator" do
+      expect { described_class.build(name: "base", fmt: nil) }.to raise_error(
+        Nob::Templates::UndefinedVariable, /unknown variable: base/
+      )
+    end
   end
 end
