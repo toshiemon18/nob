@@ -38,15 +38,15 @@ CLI 層 (`Nob::Cli`) は現状サブコマンド単位で `rescue Nob::Error => 
 | 状況 | 元例外 | 扱い | 派生クラス |
 |------|--------|------|-----------|
 | `vault` 未設定 / 不在ディレクトリ | （無し、自前検出） | raise | `Nob::Error`（直接） |
-| `--prefix` が vault を抜けている | （無し） | raise | `Notes::Lister::InvalidPrefix` |
-| `--prefix` ディレクトリが存在しない | （無し） | raise | `Notes::Lister::PrefixNotFound` |
-| `nob show` で title 未マッチ | （無し） | raise | `Notes::Viewer::NotFound` |
-| `nob show` で title 複数マッチ | （無し） | raise | `Notes::Viewer::Ambiguous` |
+| `--prefix` が vault を抜けている | （無し、自前検出） | raise | `Notes::Lister::InvalidPrefix` |
+| `--prefix` ディレクトリが存在しない | （無し、自前検出） | raise | `Notes::Lister::PrefixNotFound` |
+| `nob show` で title 未マッチ | （無し、自前検出） | raise | `Notes::Viewer::NotFound` |
+| `nob show` で title 複数マッチ | （無し、自前検出） | raise | `Notes::Viewer::Ambiguous` |
 | frontmatter YAML が壊れている | `Psych::SyntaxError` | **ラップ** | `Notes::Viewer::InvalidFrontmatter` |
-| テンプレートに未定義変数 | （Parser 自前検出） | raise | `Templates::UndefinedVariable` |
-| テンプレート構文エラー | （Parser 自前検出） | raise | `Templates::ParseError` |
-| `nob create` で既存ファイル | （無し） | raise | `Notes::Creator::AlreadyExists` |
-| `nob daily --force` で同秒バックアップ衝突 | （無し） | raise | `Nob::Error`（直接） |
+| テンプレートに未定義変数 | （無し、自前検出） | raise | `Templates::UndefinedVariable` |
+| テンプレート構文エラー | （無し、自前検出） | raise | `Templates::ParseError` |
+| `nob create` で既存ファイル（force 無し） | （無し、自前検出） | raise | `Notes::Creator::AlreadyExists` |
+| `--force` 同秒バックアップ衝突（create / daily 共通） | （無し、自前検出） | raise | `Nob::Error`（直接） |
 | 対象ファイルがレースで消えた | `Errno::ENOENT` | **素通し** | — |
 | パーミッション不足 | `Errno::EACCES` | **素通し** | — |
 | 引数の型違反 | `ArgumentError` / `TypeError` | **素通し**（バグ） | — |

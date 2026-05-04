@@ -1,7 +1,7 @@
 ---
 title: Notes 層の統一
 slug: notes-unification
-status: implementing
+status: refining
 created: 2026-05-04
 updated: 2026-05-04
 ---
@@ -174,6 +174,32 @@ Critical: 0 件 / Important: 3 件 / Nice-to-have: 4 件
   - → **対応済**: 設計 3 の「責務分担と挙動の補足」に明記
 - T1 の Red の想定（`NoMethodError`）。
   - → **対応不要**: レビュアー自身が「正しい」と評価している
+
+### peer-review 2 回目（2026-05-05, code モード）
+
+range: `e0815ce..HEAD`（plan 追加 + T1〜T5 の 6 commit）
+
+Critical: 0 件 / Important: 2 件 / Nice-to-have: 5 件
+
+**Important**
+
+- ADR 0002 の例外表「`nob daily --force` で同秒バックアップ衝突」が daily 限定の文言だが、`Notes::Backup.move` は Creator も `force=true` で同経路に到達するため実装と若干ずれる（`docs/adr/0002_error-policy.md:42`）。
+  - → **対応済 (R1)**: 表の「状況」欄を「`--force` 同秒バックアップ衝突（create / daily 共通）」に一般化。元例外欄も他行と表記揺れがあったため `(無し、自前検出)` で揃える（Nice-to-have 4 と一括対応）。
+- `Notes::Scanner` を新設したが `Lister`/`Viewer` 内で require / 明示参照なし。Zeitwerk の自動ロードに依存しており、ファイル単体で読んだとき依存が見えない。
+  - → **却下**: 既存の同モジュール内コード（`Backup` も同様）が require せず Zeitwerk に任せる方針で一貫している。Scanner だけ require を追加すると規約が壊れる。Zeitwerk が解決する前提で運用する。
+
+**Nice-to-have**
+
+- `format_note_action` の `:skipped` 分岐に「Creator からは到達しない」コメントが無い（`lib/nob/cli.rb:121`）。
+  - → **却下**: plan の設計 1 注記と ADR の議論で意図は記録済み。コードに置く一行コメントは「`default to write no comments` の原則」と引き合いになる。コードからは `Daily::Result` も `Creator::Result` も `:skipped` を取りうる shape として扱われており、formatter が 3 分岐を持つこと自体は自然で疑問を呼ばない判断。
+- Scanner spec に「`base` 不在」「シンボリックリンク」「拡張子大文字 `.MD`」の境界 example が無い。
+  - → **却下**: Scanner の責務を「base から `.md` を集めるだけの薄いヘルパ」と plan で定めた。境界検証は呼び出し側（`Lister.validate_base!` 等）の責務で、Scanner 単体に防御を持たせると責務が肥大化する。
+- Viewer 経由で sort 済みになる挙動微変化を回帰検出する spec が追加されていない（plan 設計 3 の「一応 spec で確認する」対応漏れ）。
+  - → **却下**: `spec/nob/notes/viewer_spec.rb:92-103` の `Ambiguous` example は Viewer 内部の `matches.sort_by` で別途並べ替えた結果を assert しており、Scanner の sort 順とは独立。Scanner spec で sort 済みが返ることは既に固定済みで、Viewer 既存 spec が安定 green を保つことが「挙動差分なし」の実質的な担保になっている。新規 spec を足しても追加保証が薄い。recap で経緯を記録する。
+- ADR 0002 表「(無し)」の表記揺れ。
+  - → **対応済 (R1)**: Important 1 と一括で `(無し、自前検出)` に揃える。
+- `Scanner.markdown_files(nil)` / 空文字 base の挙動を spec で押さえていない。
+  - → **却下**: 上記「Scanner 境界 spec」と同じ理由。Lister/Viewer は常に有効な base を渡す前提で、Scanner 単体の防御は scope 外。
 
 ## 実装と計画の差分（recap）
 
