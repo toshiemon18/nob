@@ -169,14 +169,14 @@ RSpec.describe Nob::Cli do
     end
 
     context "without options" do
-      it "prints usage and exits 1" do
+      it "prints an Error-prefixed message and exits 1" do
         stderr = capture_stderr do
           expect {
             described_class.start(["config"])
           }.to raise_error(SystemExit) { |e| expect(e.status).to eq(1) }
         end
 
-        expect(stderr).to match(/Usage: nob config -e/)
+        expect(stderr).to match(/^Error: specify -e\/--path\/--show/)
       end
     end
 

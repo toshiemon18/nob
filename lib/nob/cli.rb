@@ -50,7 +50,7 @@ module Nob
         exit 1
       end
       if flags.zero?
-        warn "Usage: nob config -e"
+        warn "Error: specify -e/--path/--show (use -h for usage)"
         exit 1
       end
       path = Nob::Config.default_path

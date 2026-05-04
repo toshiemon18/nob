@@ -1,7 +1,7 @@
 ---
 title: CLI 層の集約
 slug: cli-aggregation
-status: implementing
+status: refining
 created: 2026-05-05
 updated: 2026-05-05
 ---
@@ -173,6 +173,28 @@ Critical: 0 件 / Important: 3 件 / Nice-to-have: 3 件
   - → **対応済**: T4 の Green に `docs/design.md` への prefix 慣習追記（`Error:` / `Warning:` / 情報の使い分け）を含める。
 - T4 の spec で「テンプレ指定済みでは警告が出ない」 negative example も入れる。
   - → **対応済**: T4 の Red に negative example を追加し、現状実装でも green になる確認込みで明記。
+
+### peer-review 2 回目（2026-05-05, code モード）
+
+range: cli-aggregation 関連 commit のみ（plan + T1〜T4 = 5 commit）。typeprof 系のユーザー別作業 (`966bdbc`, `afab8b4`, `4b284ee`) は対象外。
+
+Critical: 0 件 / Important: 2 件 / Nice-to-have: 3 件
+
+**Important**
+
+- `lib/nob/cli.rb:53` の `warn "Usage: nob config -e"` (`exit 1`) が design.md 出力チャンネル表のどのカテゴリにも当てはまらない。`exit 1` なら `Error:` prefix のはずで、本サイクルで追加した慣習表とコードが整合しない。
+  - → **対応済 (R1)**: `cli.rb#config` の `flags.zero?` ブランチを `Error: specify -e/--path/--show (use -h for usage)` に変更。spec も `^Error: specify -e\/--path\/--show` 期待に追従。これで `cli.rb` 内の stderr + exit 1 経路がすべて `Error: ` prefix で揃う。
+- design.md の Warning 行が `exit 0` だが、`config` の引数バリデーションは `Nob::Error` 経由なしの直接 `warn + exit 1` で慣習表に明示反映されていない。
+  - → **R1 で同時解決**: コード側を `Error:` prefix に揃えれば、design.md 表が経由ルートを問わない一般記述（`stderr + Error: + exit 1`）として成立する。`config` の引数バリデーションは ADR 0002 §D に明記済み（経由方法）、design.md は出力チャンネル（経路を問わず）の話、と切り分ければ整合する。
+
+**Nice-to-have**
+
+- `lib/nob/templates/loader.rb:8` の `File.read(path)` がエンコーディング指定無し。
+  - → **却下**: 現状 UTF-8 前提で実害なし。後続の `create` テンプレ対応で実装が増えたら再考する。
+- `spec/nob/cli_spec.rb` の既存 daily example で `expect(stderr).to eq("")` を足す案。
+  - → **却下**: レビュアー本人も「採用しなくてよい」と判断。"does not warn when configured" 1 例に集約済み。
+- 整合確認結果（テスト 148 green、`rescue Nob::Error` / `read_template` / `Config#daily_settings` の空文字 → nil 変換 / `#version` の動作確認）が問題なし。
+  - → **アクション不要**
 
 ## 実装と計画の差分（recap）
 
