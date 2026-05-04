@@ -1,7 +1,7 @@
 ---
 title: CLI 層の集約
 slug: cli-aggregation
-status: refining
+status: done
 created: 2026-05-05
 updated: 2026-05-05
 ---
@@ -198,4 +198,19 @@ Critical: 0 件 / Important: 2 件 / Nice-to-have: 3 件
 
 ## 実装と計画の差分（recap）
 
-（recap で記入）
+コミット: `f86c8ce (plan) → 69a595f (T1) → 836ba71 (T2) → a94b7b9 (T3) → 0af347a (T4) → 2fc50a4 (R1) → (recap)`。TODO 4 件は 1 task = 1 commit、Refine 1 commit、計 6 commit（typeprof 系のユーザー別作業 3 commit は本サイクル外で混入したため除外）。
+
+### 意図的な変更
+
+- **T1 を「リファクタ task + ADR 補追」として進めた**: 各 command の `rescue Nob::Error` 5 箇所の撤去自体は振る舞い不変で、既存の error 経路 spec が gate になった。同時に ADR 0002 §D の保留事項（集約方法）を埋めるドキュメント変更を 1 commit に同梱。spec 側も `#version` セーフティネット 1 件を追加し、override が非エラーパスを壊さないことを担保した。
+- **T2 / T3 を分割した**: 前サイクル peer-review でも同型指摘があったため、Loader 単体仕様の Red→Green と CLI 差し替えのリファクタを別 commit に切った。T2 では Loader が孤児コードになる過渡期を許容。
+- **ADR 0001 §I を本サイクルで補追した**: 「caller が複数になる前は loader を切り出さない」という保留方針を「CLI 層と core 層の境界をまたぐ薄いヘルパなら早めに切り出してよい」に補追。`Templates::Loader` 導入の論拠をコードと同 commit で残す形。学び: ADR の保留事項は次のサイクルが該当論点に触れたとき、コード変更とセットで埋める方が「実装と決定」の対応が追いやすい。
+- **design.md に出力チャンネル節を新設した**: T4 で初登場する `Warning:` prefix だけ書き残すのではなく、`Error:` / `Warning:` / プレーン stdout の 3 カテゴリを表で固定。後続コマンドで判断軸が一貫する。
+
+### 想定外の追加
+
+- **R1 (Refine)**: peer-review 2 回目で `cli.rb#config` の `Usage: nob config -e` が design.md 出力チャンネル表（`Error:` prefix + exit 1）に整合しないと指摘。本サイクルで導入した design.md 慣習との整合は本サイクル責務として 1 commit でリファインした。学び: 既存挙動を慣習表として明文化するときは、まさに今触っているコード自体が新慣習に従っているかを最初に grep するべきだった（`grep "warn " lib/nob/cli.rb` で 3 件中 1 件が non-conforming だったのが見落としポイント）。
+
+### 削除・スキップ
+
+- なし。peer-review 2 回目の Nice-to-have 3 件はそれぞれ却下、却下理由は「レビューフィードバック」セクションに記録済み。`Templates::Loader` のエンコーディング指定無しは、後続 `create` テンプレ対応で実装が増えた段階で再考する宿題として残す。
