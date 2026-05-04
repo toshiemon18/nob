@@ -20,6 +20,14 @@ RSpec.describe Nob::Cli do
     $stderr = original
   end
 
+  describe "#version" do
+    it "prints Nob::VERSION to stdout" do
+      output = capture_stdout { described_class.start(["version"]) }
+
+      expect(output).to eq("#{Nob::VERSION}\n")
+    end
+  end
+
   describe "#show" do
     context "with the fixture vault" do
       include_context "fixture vault"

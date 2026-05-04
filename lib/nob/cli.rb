@@ -21,9 +21,6 @@ module Nob
         force: options[:force]
       )
       puts format_note_action(result)
-    rescue Nob::Error => e
-      warn "Error: #{e.message}"
-      exit 1
     end
 
     desc "show TITLE", "Print path, size, character count, and frontmatter for a note"
@@ -40,9 +37,6 @@ module Nob
           puts "#{key.to_s.ljust([key_width, 8].max)} : #{value}"
         end
       end
-    rescue Nob::Error => e
-      warn "Error: #{e.message}"
-      exit 1
     end
 
     desc "config", "View or edit the config file (use -e/--path/--show)"
@@ -68,9 +62,6 @@ module Nob
       elsif options[:show]
         print File.read(path)
       end
-    rescue Nob::Error => e
-      warn "Error: #{e.message}"
-      exit 1
     end
 
     desc "daily", "Create today's daily note"
@@ -87,9 +78,6 @@ module Nob
         force: options[:force]
       )
       puts format_note_action(result)
-    rescue Nob::Error => e
-      warn "Error: #{e.message}"
-      exit 1
     end
 
     desc "list", "List notes under the vault"
@@ -98,12 +86,16 @@ module Nob
       config = Nob::Config.load
       entries = Nob::Notes::Lister.list(vault: config.vault, prefix: options[:prefix])
       entries.each { |entry| puts entry.relative_path }
-    rescue Nob::Error => e
-      warn "Error: #{e.message}"
-      exit 1
     end
 
     no_commands do
+      def invoke_command(command, *args)
+        super
+      rescue Nob::Error => e
+        warn "Error: #{e.message}"
+        exit 1
+      end
+
       def read_template(template_path)
         return nil if template_path.nil?
         unless File.exist?(template_path)

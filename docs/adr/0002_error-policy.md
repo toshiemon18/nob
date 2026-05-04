@@ -62,7 +62,23 @@ CLI 層 (`Nob::Cli`) は現状サブコマンド単位で `rescue Nob::Error => 
 
 - CLI 層は `rescue Nob::Error => e` で全派生をまとめて拾う前提。`Notes::Viewer::NotFound` 等の具体クラスを CLI が個別に rescue することは原則しない
 - ライブラリ例外が CLI 層に到達した場合は素通しでよい（`exit_on_failure?` が Thor 側で例外を表示してくれる）。CLI は ライブラリ例外を catch しない
-- `rescue Nob::Error` の集約方法（`rescue_from` 経由 vs 各サブコマンド個別）は別 ADR / 別サイクルの議論
+- **集約方式**: Thor の `Thor::Invocation#invoke_command(command, *args)` を `Cli` 内で override し、`super` を `rescue Nob::Error => e` で囲む。これで全サブコマンドが共通の rescue 経路を通る（`cli-aggregation` サイクル, 2026-05-05 で採用）
+
+```ruby
+class Cli < Thor
+  no_commands do
+    def invoke_command(command, *args)
+      super
+    rescue Nob::Error => e
+      warn "Error: #{e.message}"
+      exit 1
+    end
+  end
+end
+```
+
+- 採用理由: Thor 1.x には `rescue_from` のような専用宣言が無く、`invoke_command` が dispatch 経路上唯一の hook。各サブコマンド末尾の rescue 重複を消せる
+- 例外: `config` コマンドの引数バリデーション（`-e/--path/--show` の同時指定 / 全省略）は `Nob::Error` ではなく **直接 `warn + exit 1`** する経路で、こちらは集約対象外
 
 ### E. ラップする実装パターン
 

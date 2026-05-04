@@ -120,7 +120,7 @@ T2 / T3 を分けた理由: 前サイクル peer-review でも同パターン（
 
 ## TODO（TDDタスク分解）
 
-- [ ] **T1** (リファクタ task + ADR 補追): `Centralize Nob::Error rescue via Cli#invoke_command`
+- [x] **T1** (リファクタ task + ADR 補追): `Centralize Nob::Error rescue via Cli#invoke_command`
     - 事前確認: 既存 cli_spec の error 経路（`#show error conditions`, `#config Editor.open raises`, `#daily template not found`, `#list prefix not found`）が green。これらが「`SystemExit` exit 1 + stderr に `Error: ...`」を assert しているので、集約後も同じ挙動を保てば回帰検出になる
     - Red 兼セーフティネット: `spec/nob/cli_spec.rb` に `#version` の正常系 example を 1 つ追加。`described_class.start(["version"])` が `Nob::VERSION` を stdout に出すこと。`invoke_command` override が `version` / 将来追加されうる help 系を壊さない確認。現状実装でも green になる（だが追加の保証として価値あり）
     - 変更:
