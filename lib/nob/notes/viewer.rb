@@ -14,7 +14,7 @@ module Nob
       )
 
       def self.show(vault:, title:)
-        relatives = Dir.glob("**/*.md", base: vault)
+        relatives = Scanner.markdown_files(vault)
         matches = relatives.select { |rel| File.basename(rel, ".md") == title }
 
         if matches.empty?

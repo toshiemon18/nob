@@ -10,7 +10,7 @@ module Nob
 
         validate_base!(base, normalized_prefix)
 
-        relatives = Dir.glob("**/*.md", base: base).sort
+        relatives = Scanner.markdown_files(base)
         relatives.map do |rel|
           rel_from_vault = normalized_prefix ? File.join(normalized_prefix, rel) : rel
           Nob::Entities::Note.new(

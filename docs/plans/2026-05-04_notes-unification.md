@@ -140,7 +140,7 @@ T2 と T3 を分けた理由: T2 は出力互換のリファクタ（`format_dai
     - Red: `spec/nob/cli_spec.rb` に `#create` の describe を新設し、新規作成時の "Created: ..." と `--force` 時の "Recreated: ... (backup: ...)" 形式を assert。現状 `cli.rb#create` は "Created: ..." と "Backup : ..." の 2 行出力なので、force ケース spec が "Recreated: ..." 期待で fail
     - Green: `cli.rb#create` を `puts format_note_action(result)` に書き換え、現状の `puts "Created: ..."` + `puts "Backup : ..."` 2 行出力を撤去
     - 完了基準: `bundle exec rake` が green、新 `#create` spec が両ケース pass。CLI 出力フォーマットが `nob create` / `nob daily` で揃う（Recreated 表記の統一）
-- [ ] **T4**: `Extract Notes::Scanner.markdown_files for vault traversal`
+- [x] **T4**: `Extract Notes::Scanner.markdown_files for vault traversal`
     - Red: `spec/nob/notes/scanner_spec.rb` を新規追加し、「`.md` のみ列挙」「sort 済み」「ドットファイル / ドットディレクトリ除外」を assert。`Notes::Scanner` 未定義なので `NameError` で fail
     - Green: `lib/nob/notes/scanner.rb` を新規作成して `Scanner.markdown_files(base)` を実装。`Lister.list` と `Viewer.show` の glob 呼び出しを Scanner 経由に差し替え
     - 完了基準: `bundle exec rake` が green。`rg "Dir.glob" -- lib/nob/notes` で `Scanner` 内の 1 箇所だけがヒット
