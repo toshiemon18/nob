@@ -41,7 +41,7 @@ ADR 全体で使う固有概念をここで定義する。
 ```
 String
   │
-  ├─ Parser ──▶ [Token]      （字句解析。書きぶりの正規化・エラー検出）
+  ├─ Parser ──▶ [Literal | Variable]   （字句解析。書きぶりの正規化・エラー検出）
   │
   └─ Renderer ──▶ String     （評価。トークンを順に展開して連結）
 ```
@@ -53,9 +53,8 @@ String
 
 ```ruby
 module Nob::Templates
-  Token = Module.new
-  Literal  = Struct.new(:text)         { include Token }
-  Variable = Struct.new(:operator)     { include Token }
+  Literal  = Struct.new(:text)
+  Variable = Struct.new(:operator)
 end
 ```
 
@@ -63,6 +62,7 @@ end
 - `Variable#operator` は **既に pre-bind 済みのオペレータインスタンス**（fmt は instance に閉じ込められている）
 - トークン列は単なる Array。AST と呼ぶほどの構造は持たない（ネスト無し）
 - Parser がエラーを投げた場合、Variable トークンは構築されない。つまり Variable トークンが手元にある時点で「name は既知、fmt は妥当」が保証される
+- 当初は型タグとして `Token = Module.new` を導入し `Literal`/`Variable` に `include Token` していたが、Renderer が `case t when Literal / when Variable` と個別クラスを名指ししており型タグを参照する経路が無かったため、cleanup-misc サイクル (2026-05-04) で撤去した。新トークン型を足す日が来たら `Token` を再導入してよい
 
 ### C. ファクトリ関数で Operator インスタンスを生成する
 
@@ -141,7 +141,7 @@ class Nob::Templates::UndefinedVariable < Nob::Error; end
 
 - Renderer は **トークン列の評価**だけを行う
 - 入口は `Renderer.render(template_string, title:, now:)`。内部で Parser を呼んでトークン列を作り、評価する
-- Parser を直接公開する（`Parser.parse(template_string) -> [Token]`）ので、「同じテンプレートを複数回 render したい」シーンが将来出てきたら parse 結果を caller がキャッシュできる
+- Parser を直接公開する（`Parser.parse(template_string) -> Array<Literal | Variable>`）ので、「同じテンプレートを複数回 render したい」シーンが将来出てきたら parse 結果を caller がキャッシュできる
 - 副作用なし。stdout/stderr に出力しない
 
 ### I. ファイル I/O は Renderer の外
@@ -158,12 +158,11 @@ module Nob
     class UndefinedVariable < Nob::Error; end
     class ParseError       < Nob::Error; end
 
-    Token    = Module.new
-    Literal  = Struct.new(:text)     { include Token }
-    Variable = Struct.new(:operator) { include Token }
+    Literal  = Struct.new(:text)
+    Variable = Struct.new(:operator)
 
     class Parser
-      def self.parse(template) # -> Array<Token>
+      def self.parse(template) # -> Array<Literal | Variable>
       end
     end
 

@@ -75,7 +75,7 @@ DailySettings = Struct.new(:base_path, :file_name_format, :template_path)
     - Red: spec の期待値・組み立てを keyword 形式に書き換える（既存が positional 直呼びなら fail、`.base_path` 等のアクセサ経由なら期待値書き換えだけでは red にならない可能性があるので、その場合は新規 example を keyword 形式で追加して red を作る）
     - Green: `Struct.new(:base_path, :file_name_format, :template_path, keyword_init: true)` に変更し、`Config#daily_settings` 内の `DailySettings.new(...)` 呼び出しも同一コミット内で keyword 形式に書き換え（Struct 定義と呼び出しは keyword_init 化と同時に変えないとそもそも初期化が通らないため、commit は分割不可）
     - 完了基準: `bundle exec rake` が green
-- [ ] **T4**: `Drop unused Token tag module from Templates and update ADR 0001`
+- [x] **T4**: `Drop unused Token tag module from Templates and update ADR 0001`
     - 事前: `rg "Token\b" -- lib spec` で `Token` の参照箇所を洗い出す。spec で直接 assert していれば該当 example を red にしてから外す
     - Green: `lib/nob/templates.rb` から `Token = Module.new` と `Literal`/`Variable` の `include Token` を削除し、`docs/adr/0001_template-system.md` の B 節および「公開 API」セクションを Token 撤去に合わせて改訂（撤去理由を「帰結」or 注記として記載）
     - 完了基準: `bundle exec rake` が green、ADR と実装の表現が一致
