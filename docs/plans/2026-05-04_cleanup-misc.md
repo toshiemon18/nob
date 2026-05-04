@@ -1,7 +1,7 @@
 ---
 title: 雑掃除（peer-review 指摘の小粒な不整合まとめ）
 slug: cleanup-misc
-status: refining
+status: done
 created: 2026-05-04
 updated: 2026-05-04
 ---
@@ -118,4 +118,17 @@ Critical: 0 件 / Important: 2 件 / Nice-to-have: 2 件
 
 ## 実装と計画の差分（recap）
 
-（recap で記入）
+コミット: `16efa73 (plan) → 164641f (T1) → dc9c8ca (T2) → a7c89db (T3) → 3ca1fd0 (T4) → f001264 (R1)`。TODO 4 件はすべて 1 task = 1 commit で完了し、Refine で 1 commit 追加。
+
+### 意図的な変更
+
+- **T3 の Red 戦略**: plan は「`spec/nob/notes/daily_spec.rb` の `DailySettings.new` を keyword 形式に書き換えて Red にする」想定だったが、Ruby 4.0 の `Struct.new(...)` は `keyword_init` 未指定でも positional / keyword 両方を許容する仕様で red にならなかった。`spec/nob/config_spec.rb` に **「positional 初期化を拒否する」独立 example** を追加して Red を作る形に切り替えた。学び: keyword_init を契約として固定したい場合は spec で「positional を拒否」する assertion を直接書くのが確実。
+- **T4 の ADR 改訂範囲**: plan は「B 節 + 公開 API ブロック」を対象としたが、実際にはフロー図 (`docs/adr/0001_template-system.md:44`) の `[Token]` と型注釈 2 箇所 (`:144`, `:165`) の `Array<Token>` にも `Token` 表記が残っていたため、`[Literal | Variable]` / `Array<Literal | Variable>` に追従更新した。
+
+### 想定外の追加
+
+- **R1 (Refine)**: peer-review 2 回目で `docs/design.md` の技術スタック表 (行 39) と CLI 仕様 (行 81) に `tty-prompt` 記述が残存していることが判明。T1 のスコープを `nob.gemspec` / `Gemfile.lock` に絞ったために生じた追従漏れ。「TUIフェーズ着手時に導入予定／現時点では gem 依存に含めていない」の注記を加えて整合させた。学び: 「未参照依存の削除」を gemspec だけで済ませず、design.md / ADR / plan も追従対象に入れる癖をつけたい。
+
+### 削除・スキップ
+
+- なし（peer-review 2 回目の Important #2 と Nice-to-have 2 件はフェーズ運用上正常 / 重複回避の観点から却下、却下理由は「レビューフィードバック」セクションに記録済み）。
