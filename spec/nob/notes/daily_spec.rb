@@ -4,7 +4,7 @@ require "tmpdir"
 RSpec.describe Nob::Notes::Daily do
   let(:now) { Time.new(2026, 5, 4, 9, 0, 0) }
   let(:settings) do
-    Nob::Config::DailySettings.new("daily/", "%Y-%m-%d", nil)
+    Nob::Config::DailySettings.new(base_path: "daily/", file_name_format: "%Y-%m-%d", template_path: nil)
   end
 
   around do |ex|
@@ -37,7 +37,7 @@ RSpec.describe Nob::Notes::Daily do
     end
 
     it "creates the basePath directory if missing" do
-      nested_settings = Nob::Config::DailySettings.new("journal/2026/", "%Y-%m-%d", nil)
+      nested_settings = Nob::Config::DailySettings.new(base_path: "journal/2026/", file_name_format: "%Y-%m-%d", template_path: nil)
 
       result = described_class.create(vault: @vault, daily_settings: nested_settings, template_text: nil, now: now)
 

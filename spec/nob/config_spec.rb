@@ -2,6 +2,14 @@ require "spec_helper"
 require "tmpdir"
 
 RSpec.describe Nob::Config do
+  describe Nob::Config::DailySettings do
+    it "rejects positional initialization (keyword_init only)" do
+      expect {
+        described_class.new("daily/", "%Y-%m-%d", nil)
+      }.to raise_error(ArgumentError)
+    end
+  end
+
   describe "#daily_settings" do
     def write_config(contents)
       dir = Dir.mktmpdir("nob-cfg")

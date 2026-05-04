@@ -47,7 +47,7 @@ module Nob
       expanded
     end
 
-    DailySettings = Struct.new(:base_path, :file_name_format, :template_path)
+    DailySettings = Struct.new(:base_path, :file_name_format, :template_path, keyword_init: true)
 
     DAILY_DEFAULTS = {
       "basePath" => "daily/",
@@ -66,9 +66,9 @@ module Nob
       end
 
       DailySettings.new(
-        raw["basePath"] || DAILY_DEFAULTS["basePath"],
-        raw["fileNameFormat"] || DAILY_DEFAULTS["fileNameFormat"],
-        template_path
+        base_path: raw["basePath"] || DAILY_DEFAULTS["basePath"],
+        file_name_format: raw["fileNameFormat"] || DAILY_DEFAULTS["fileNameFormat"],
+        template_path: template_path
       )
     end
   end

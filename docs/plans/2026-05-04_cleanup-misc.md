@@ -70,7 +70,7 @@ DailySettings = Struct.new(:base_path, :file_name_format, :template_path)
     - 事前確認: 既存 spec が green
     - 変更: `lib/nob.rb` を `Zeitwerk::Loader.for_gem.setup` の 1 行に集約
     - 完了基準: `bundle exec rake` が green（autoload 経路の振る舞いが従来通り）
-- [ ] **T3**: `Switch Config::DailySettings to keyword_init`
+- [x] **T3**: `Switch Config::DailySettings to keyword_init`
     - 事前: `spec/nob/config_spec.rb` で `DailySettings` がどう参照されているか確認（`Config#daily_settings` の戻り値経由か、`DailySettings.new(...)` を直接呼ぶか）
     - Red: spec の期待値・組み立てを keyword 形式に書き換える（既存が positional 直呼びなら fail、`.base_path` 等のアクセサ経由なら期待値書き換えだけでは red にならない可能性があるので、その場合は新規 example を keyword 形式で追加して red を作る）
     - Green: `Struct.new(:base_path, :file_name_format, :template_path, keyword_init: true)` に変更し、`Config#daily_settings` 内の `DailySettings.new(...)` 呼び出しも同一コミット内で keyword 形式に書き換え（Struct 定義と呼び出しは keyword_init 化と同時に変えないとそもそも初期化が通らないため、commit は分割不可）
