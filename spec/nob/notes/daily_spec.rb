@@ -3,9 +3,8 @@ require "tmpdir"
 
 RSpec.describe Nob::Notes::Daily do
   let(:now) { Time.new(2026, 5, 4, 9, 0, 0) }
-  let(:settings) do
-    Nob::Config::DailySettings.new(base_path: "daily/", file_name_format: "%Y-%m-%d", template_path: nil)
-  end
+  let(:base_path) { "daily/" }
+  let(:file_name_format) { "%Y-%m-%d" }
 
   around do |ex|
     Dir.mktmpdir("nob-vault") do |vault|
@@ -20,7 +19,7 @@ RSpec.describe Nob::Notes::Daily do
 
   describe ".create (normal mode)" do
     it "creates an empty file when template is nil and the file does not exist" do
-      result = described_class.create(vault: @vault, daily_settings: settings, template_text: nil, now: now)
+      result = described_class.create(vault: @vault, base_path: base_path, file_name_format: file_name_format, template_text: nil, now: now)
 
       expect(result.action).to eq(:created)
       expect(result.path).to eq(daily_path)
@@ -30,16 +29,14 @@ RSpec.describe Nob::Notes::Daily do
 
     it "renders the template when given" do
       template = "# {{title}}\n\nat {{date}}\n"
-      result = described_class.create(vault: @vault, daily_settings: settings, template_text: template, now: now)
+      result = described_class.create(vault: @vault, base_path: base_path, file_name_format: file_name_format, template_text: template, now: now)
 
       expect(result.action).to eq(:created)
       expect(File.read(result.path)).to eq("# 2026-05-04\n\nat 2026-05-04\n")
     end
 
     it "creates the basePath directory if missing" do
-      nested_settings = Nob::Config::DailySettings.new(base_path: "journal/2026/", file_name_format: "%Y-%m-%d", template_path: nil)
-
-      result = described_class.create(vault: @vault, daily_settings: nested_settings, template_text: nil, now: now)
+      result = described_class.create(vault: @vault, base_path: "journal/2026/", file_name_format: "%Y-%m-%d", template_text: nil, now: now)
 
       expect(result.path).to eq(File.join(@vault, "journal/2026/2026-05-04.md"))
       expect(File.exist?(result.path)).to be true
@@ -49,7 +46,7 @@ RSpec.describe Nob::Notes::Daily do
       FileUtils.mkdir_p(File.dirname(daily_path))
       File.write(daily_path, "existing\n")
 
-      result = described_class.create(vault: @vault, daily_settings: settings, template_text: "new", now: now)
+      result = described_class.create(vault: @vault, base_path: base_path, file_name_format: file_name_format, template_text: "new", now: now)
 
       expect(result.action).to eq(:skipped)
       expect(File.read(daily_path)).to eq("existing\n")
@@ -59,7 +56,7 @@ RSpec.describe Nob::Notes::Daily do
       FileUtils.mkdir_p(File.dirname(daily_path))
       File.write(daily_path, "")
 
-      result = described_class.create(vault: @vault, daily_settings: settings, template_text: "fresh", now: now)
+      result = described_class.create(vault: @vault, base_path: base_path, file_name_format: file_name_format, template_text: "fresh", now: now)
 
       expect(result.action).to eq(:recreated)
       expect(result.backup_path).to be_nil
@@ -69,7 +66,7 @@ RSpec.describe Nob::Notes::Daily do
 
   describe ".create (force mode)" do
     it "behaves like normal mode when the file does not exist" do
-      result = described_class.create(vault: @vault, daily_settings: settings, template_text: nil, now: now, force: true)
+      result = described_class.create(vault: @vault, base_path: base_path, file_name_format: file_name_format, template_text: nil, now: now, force: true)
 
       expect(result.action).to eq(:created)
       expect(result.backup_path).to be_nil
@@ -79,7 +76,7 @@ RSpec.describe Nob::Notes::Daily do
       FileUtils.mkdir_p(File.dirname(daily_path))
       File.write(daily_path, "old content")
 
-      result = described_class.create(vault: @vault, daily_settings: settings, template_text: "new", now: now, force: true)
+      result = described_class.create(vault: @vault, base_path: base_path, file_name_format: file_name_format, template_text: "new", now: now, force: true)
 
       expect(result.action).to eq(:recreated)
       expect(result.backup_path).to match(%r{/daily/2026-05-04\.backup-\d{8}-\d{6}\.md\z})
@@ -88,11 +85,11 @@ RSpec.describe Nob::Notes::Daily do
     end
 
     it "raises when the backup destination already exists (same-second collision)" do
-      described_class.create(vault: @vault, daily_settings: settings, template_text: nil, now: now)
-      described_class.create(vault: @vault, daily_settings: settings, template_text: "v1", now: now, force: true)
+      described_class.create(vault: @vault, base_path: base_path, file_name_format: file_name_format, template_text: nil, now: now)
+      described_class.create(vault: @vault, base_path: base_path, file_name_format: file_name_format, template_text: "v1", now: now, force: true)
 
       expect {
-        described_class.create(vault: @vault, daily_settings: settings, template_text: "v2", now: now, force: true)
+        described_class.create(vault: @vault, base_path: base_path, file_name_format: file_name_format, template_text: "v2", now: now, force: true)
       }.to raise_error(Nob::Error, /backup target already exists/)
     end
   end

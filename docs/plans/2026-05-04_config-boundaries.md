@@ -121,7 +121,7 @@ end
       - 「load 後に vault ディレクトリを削除しても `#vault` は当初の絶対パスを返し続ける（副作用消失の振る舞いベース確認）」 — 現状実装は `#vault` 内で `File.directory?` を走らせるので削除後に raise → fail。**`File.directory?` をモックする方式は採らない**（実装結合度が上がる、振る舞いベース spec で十分）
     - Green: `Config.new(path:, data:)` のコンストラクタで `data["vault"]` を expand + 検証して `@vault` に保持。検証ロジックは `Config.validate_vault!(raw)` 等の private クラスメソッドに切り出し、`new` から呼ぶ。`Config#vault` は `attr_reader :vault` 相当に縮める。`Config#daily_settings` 内部も `@vault`（= 検証済み絶対パス）を読むだけになる
     - 完了基準: `bundle exec rake` が green、新 spec 2 件 + 既存 spec が pass
-- [ ] **T2**: `Drop daily_settings: arg from Notes::Daily in favor of explicit fields`
+- [x] **T2**: `Drop daily_settings: arg from Notes::Daily in favor of explicit fields`
     - Red の最小単位: `spec/nob/notes/daily_spec.rb` の **先頭 1 example だけ** を `daily_settings:` から `base_path:` / `file_name_format:` を渡す形に書き換える。実装変更前なので `ArgumentError: unknown keywords :base_path, :file_name_format` で fail。残りの example は一旦そのまま（全部書き換えると Red が大きくなり、TDD の最小単位を超える）
     - Green:
       1. `lib/nob/notes/daily.rb` の `.create` を `(vault:, base_path:, file_name_format:, template_text:, now:, force:)` 受けに変更し、内部参照を `daily_settings.base_path` → `base_path` 等に

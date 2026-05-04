@@ -5,9 +5,9 @@ module Nob
     class Daily
       Result = Struct.new(:path, :backup_path, :action, keyword_init: true)
 
-      def self.create(vault:, daily_settings:, template_text: nil, now: Time.now, force: false)
-        date_str = now.strftime(daily_settings.file_name_format)
-        target_dir = File.join(vault, daily_settings.base_path)
+      def self.create(vault:, base_path:, file_name_format:, template_text: nil, now: Time.now, force: false)
+        date_str = now.strftime(file_name_format)
+        target_dir = File.join(vault, base_path)
         target_path = File.join(target_dir, "#{date_str}.md")
 
         backup_path = nil

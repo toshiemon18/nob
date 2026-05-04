@@ -82,7 +82,8 @@ module Nob
       template_text = read_template(settings.template_path)
       result = Nob::Notes::Daily.create(
         vault: config.vault,
-        daily_settings: settings,
+        base_path: settings.base_path,
+        file_name_format: settings.file_name_format,
         template_text: template_text,
         force: options[:force]
       )
