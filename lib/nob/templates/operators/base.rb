@@ -15,6 +15,10 @@ module Nob
         def hash
           [self.class, fmt].hash
         end
+
+        def call(**args)
+          raise NotImplementedError, "Operator must implement #call"
+        end
       end
     end
   end
