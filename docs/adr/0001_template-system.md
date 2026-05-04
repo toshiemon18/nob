@@ -148,7 +148,8 @@ class Nob::Templates::UndefinedVariable < Nob::Error; end
 
 - Renderer / Parser は文字列入力。`File.read` を呼ばない
 - 「config からテンプレパスを取り、vault 相対を絶対に解決し、読み込む」処理は **caller（CLI コマンド側）の責務**
-- 専用の loader クラスは導入しない。読み込み処理が複数 caller で重複し始めた時点で切り出す
+- ~~専用の loader クラスは導入しない。読み込み処理が複数 caller で重複し始めた時点で切り出す~~
+- **補追 (cli-aggregation サイクル, 2026-05-05)**: caller が単数でも、**CLI 層と core 層の境界をまたぐ薄いヘルパ**なら早めに切り出してよい。`Nob::Templates::Loader.read(path)` が該当（nil → nil、不在パス → `Nob::Error` ラップ、存在 → `File.read` の薄いラッパ）。理由: CLI の `Cli#read_template` のままだと将来 `create` の Templates 適用時に分散する、Notes 層に置くと「Notes がテンプレファイル I/O を持つ」責務違反になる、Templates 名前空間内なら「テンプレ周りの責務集約」として層境界が自然。Renderer / Parser は引き続き文字列入力のままで、Loader は Renderer / Parser を経由しない（caller が Loader → Renderer の順で呼ぶ）
 
 ## 公開 API（決定の集約）
 
