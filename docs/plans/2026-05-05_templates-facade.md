@@ -1,7 +1,7 @@
 ---
 title: Templates ファサード化と Loader 撤去
 slug: templates-facade
-status: implementing
+status: reviewing
 created: 2026-05-05
 updated: 2026-05-05
 ---
@@ -102,7 +102,7 @@ end
     - Green: `lib/nob/notes/daily.rb` の `create` 引数を `template_path:` に変更し、`Nob::Templates.render(path: template_path, title: date_str, now: now)` を直接呼ぶ。private `self.render` を削除。`lib/nob/cli.rb#daily` を `template_path: settings.template_path` を渡す形に変更し、`Nob::Templates::Loader.read(...)` 呼び出しを除去（Loader 自体はこの commit ではまだ残す）
     - 注: CLI の差分は spec を持たないが、`Notes::Daily.create` の signature 変更に伴う build-fix のため同 commit に含める。Daily 単独 commit では `bundle exec rake` が通らない
 
-- [ ] **T3**: `Remove Templates::Loader and its spec`
+- [x] **T3**: `Remove Templates::Loader and its spec`
     - Red: 削除専用 task のため新規 Red は無い。本 task の green 条件は「`bundle exec rake` 全 green かつ `grep -r 'Templates::Loader' lib spec` が 0 件」
     - Green: `lib/nob/templates/loader.rb` と `spec/nob/templates/loader_spec.rb` を削除
 
