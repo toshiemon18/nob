@@ -93,7 +93,7 @@ end
 
 ## TODO（TDDタスク分解）
 
-- [ ] **T1**: `Add Templates.render facade with path/text inputs`
+- [x] **T1**: `Add Templates.render facade with path/text inputs`
     - Red: `spec/nob/templates_spec.rb` を新設し、`Nob::Templates.render` の振る舞いを behavior レベルで固定する。example: text 渡しで render 結果が返る / path 渡しでファイル内容が render される / 両方 nil で `""` / path 指定でファイル不在で `Nob::Error`
     - Green: `lib/nob/templates.rb` に `self.render` と private `self.read_template` を追加。Renderer/Parser は触らない
 
