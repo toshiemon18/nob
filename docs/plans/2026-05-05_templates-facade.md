@@ -1,7 +1,7 @@
 ---
 title: Templates ファサード化と Loader 撤去
 slug: templates-facade
-status: refining
+status: done
 created: 2026-05-05
 updated: 2026-05-05
 ---
@@ -126,3 +126,28 @@ Critical 0 / Important 3 / Nice-to-have 2。Important の各指摘について 1
 - **Nice-to-have: `.render` spec の describe/context 構造化**: edge case 表との対応を読みやすくする任意の改善 → 採用しない（example のラベル（"returns an empty string when..." 等）で挙動の対応は読み取れる、追加 nesting は overkill と判断）
 
 ## 実装と計画の差分（recap）
+
+### 実装ハイライト
+
+- 8c80ac8 `Add Templates.render facade with path/text inputs`: ファサード本体追加。`self.render` と private `self.read_template` を `lib/nob/templates.rb` に直書き。Renderer/Parser は無変更
+- 856f881 `Switch Notes::Daily and CLI to Templates.render facade`: Daily.create の引数を `template_text:` → `template_path:` に rename。CLI も同期。private `Daily.render` は廃止し、ファサード呼び出しを `create` 内に直接インライン化
+- 5730339 `Remove Templates::Loader and its spec`: 単純な削除。本体 13 行 + spec 29 行が消えた
+- c6e1135 `Refine: restore template-supplied skip-protection assertion`: peer-review 2 回目の NTH#1 を反映し、daily skip ケースに `write_template("new")` を戻した
+
+### 意図的な変更
+
+- **`Templates.render` のキーワード並び**: plan の設計サンプルでは `path: nil, text: nil, title:, now:` 順だったが、standard linter の `Style/KeywordParametersOrder`（オプション kw を末尾に）により実装は `title:, now:, path: nil, text: nil` 順に並べ直した。挙動は等価。呼び出し側はキーワード名で渡すため API として支障なし
+- **daily_spec の skip ケース**: 一度 `template_path: nil` に薄めたが、Refine で `write_template("new")` を渡す形に戻して「テンプレ指定があっても既存の非空ファイルは保護される」回帰検出力を確保した
+
+### 想定外の追加
+
+- なし。plan の T1/T2/T3 にすべて収まった
+
+### 削除・スキップ
+
+- **`text` + `path` 両方指定で text 優先** (plan 1 回目 peer-review Imp#2 で削除): テスト都合のために本番 API に分岐を持ち込むのは余計と判断し、edge case 表と spec example から外した。実装上は `||=` で text が勝つが契約には含めない
+- **NTH#2 (`.render` spec の describe/context 構造化)**: example のラベルで edge case 表との対応は読み取れるため追加 nesting は overkill と判断し採用せず
+
+### サイクル全体の総括
+
+Loader という 13 行の薄いラッパーを撤去し、Templates モジュールを「文字列 → 出力」の純粋ユニット (Renderer/Parser) と「呼び出し側の便利エントリ」(`Templates.render` ファサード) に整理した。`Notes::Daily` から CLI まで「path を渡す」一貫した経路になり、将来テンプレートを使う他コマンドが増えても同じファサード 1 つで吸収できる。判断軸は会話冒頭で確認した「Templates の責務は文字列 → 出力で、ファイル I/O は外」と、メモリ `feedback_structure_over_yagni.md` の「呼び出し元が 1 つでも構造を先に揃える」。
