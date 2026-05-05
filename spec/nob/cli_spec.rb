@@ -169,14 +169,14 @@ RSpec.describe Nob::Cli do
     end
 
     context "without options" do
-      it "prints usage and exits 1" do
+      it "prints an Error-prefixed message and exits 1" do
         stderr = capture_stderr do
           expect {
             described_class.start(["config"])
           }.to raise_error(SystemExit) { |e| expect(e.status).to eq(1) }
         end
 
-        expect(stderr).to match(/Usage: nob config -e/)
+        expect(stderr).to match(/^Error: specify -e\/--path\/--show/)
       end
     end
 
@@ -270,25 +270,28 @@ RSpec.describe Nob::Cli do
     end
 
     it "creates today's daily note and prints Created:" do
-      output = capture_stdout { described_class.start(["daily"]) }
+      output = nil
+      capture_stderr { output = capture_stdout { described_class.start(["daily"]) } }
 
       expect(output).to match(/^Created: .*\/daily\/\d{4}-\d{2}-\d{2}\.md\n/)
     end
 
     it "prints Already exists: on the second run" do
-      capture_stdout { described_class.start(["daily"]) }
+      capture_stderr { capture_stdout { described_class.start(["daily"]) } }
       File.write(Dir.glob("#{@vault}/daily/*.md").first, "user content\n")
 
-      output = capture_stdout { described_class.start(["daily"]) }
+      output = nil
+      capture_stderr { output = capture_stdout { described_class.start(["daily"]) } }
 
       expect(output).to match(/^Already exists: /)
     end
 
     it "with --force backs up the existing note and recreates it" do
-      capture_stdout { described_class.start(["daily"]) }
+      capture_stderr { capture_stdout { described_class.start(["daily"]) } }
       File.write(Dir.glob("#{@vault}/daily/*.md").first, "user content\n")
 
-      output = capture_stdout { described_class.start(["daily", "--force"]) }
+      output = nil
+      capture_stderr { output = capture_stdout { described_class.start(["daily", "--force"]) } }
 
       expect(output).to match(/^Recreated: .* \(backup: .*\.backup-\d{8}-\d{6}\.md\)\n/)
     end
@@ -307,6 +310,30 @@ RSpec.describe Nob::Cli do
       end
 
       expect(stderr).to match(/Error:.*missing\.md/)
+    end
+
+    it "warns to stderr but still creates the note when no daily template is configured" do
+      stdout = nil
+      stderr = capture_stderr do
+        stdout = capture_stdout { described_class.start(["daily"]) }
+      end
+
+      expect(stdout).to match(/^Created: /)
+      expect(stderr).to match(/^Warning: no daily-note template configured/)
+    end
+
+    it "does not warn when a template is configured and exists" do
+      template_path = File.join(@vault, "tpl.md")
+      File.write(template_path, "# {{title}}\n")
+      File.write(@config_path, <<~TOML)
+        vault = "#{@vault}"
+        [dailyNote]
+        template = "tpl.md"
+      TOML
+
+      stderr = capture_stderr { capture_stdout { described_class.start(["daily"]) } }
+
+      expect(stderr).to eq("")
     end
   end
 

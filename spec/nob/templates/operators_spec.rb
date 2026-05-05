@@ -33,5 +33,11 @@ RSpec.describe Nob::Templates::Operators do
         Nob::Templates::UndefinedVariable, /title does not accept format/
       )
     end
+
+    it "rejects a name with mixed case (Title) as UndefinedVariable" do
+      expect { described_class.build(name: "Title", fmt: nil) }.to raise_error(
+        Nob::Templates::UndefinedVariable, /unknown variable: Title/
+      )
+    end
   end
 end

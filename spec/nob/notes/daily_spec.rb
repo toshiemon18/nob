@@ -17,9 +17,15 @@ RSpec.describe Nob::Notes::Daily do
     File.join(@vault, base, "#{date_str}.md")
   end
 
+  def write_template(body)
+    path = File.join(@vault, "tpl.md")
+    File.write(path, body)
+    path
+  end
+
   describe ".create (normal mode)" do
     it "creates an empty file when template is nil and the file does not exist" do
-      result = described_class.create(vault: @vault, base_path: base_path, file_name_format: file_name_format, template_text: nil, now: now)
+      result = described_class.create(vault: @vault, base_path: base_path, file_name_format: file_name_format, template_path: nil, now: now)
 
       expect(result.action).to eq(:created)
       expect(result.path).to eq(daily_path)
@@ -28,15 +34,15 @@ RSpec.describe Nob::Notes::Daily do
     end
 
     it "renders the template when given" do
-      template = "# {{title}}\n\nat {{date}}\n"
-      result = described_class.create(vault: @vault, base_path: base_path, file_name_format: file_name_format, template_text: template, now: now)
+      template_path = write_template("# {{title}}\n\nat {{date}}\n")
+      result = described_class.create(vault: @vault, base_path: base_path, file_name_format: file_name_format, template_path: template_path, now: now)
 
       expect(result.action).to eq(:created)
       expect(File.read(result.path)).to eq("# 2026-05-04\n\nat 2026-05-04\n")
     end
 
     it "creates the basePath directory if missing" do
-      result = described_class.create(vault: @vault, base_path: "journal/2026/", file_name_format: "%Y-%m-%d", template_text: nil, now: now)
+      result = described_class.create(vault: @vault, base_path: "journal/2026/", file_name_format: "%Y-%m-%d", template_path: nil, now: now)
 
       expect(result.path).to eq(File.join(@vault, "journal/2026/2026-05-04.md"))
       expect(File.exist?(result.path)).to be true
@@ -45,8 +51,9 @@ RSpec.describe Nob::Notes::Daily do
     it "skips when the file exists with size > 0" do
       FileUtils.mkdir_p(File.dirname(daily_path))
       File.write(daily_path, "existing\n")
+      template_path = write_template("new")
 
-      result = described_class.create(vault: @vault, base_path: base_path, file_name_format: file_name_format, template_text: "new", now: now)
+      result = described_class.create(vault: @vault, base_path: base_path, file_name_format: file_name_format, template_path: template_path, now: now)
 
       expect(result.action).to eq(:skipped)
       expect(File.read(daily_path)).to eq("existing\n")
@@ -55,8 +62,9 @@ RSpec.describe Nob::Notes::Daily do
     it "recreates when the file exists with size 0" do
       FileUtils.mkdir_p(File.dirname(daily_path))
       File.write(daily_path, "")
+      template_path = write_template("fresh")
 
-      result = described_class.create(vault: @vault, base_path: base_path, file_name_format: file_name_format, template_text: "fresh", now: now)
+      result = described_class.create(vault: @vault, base_path: base_path, file_name_format: file_name_format, template_path: template_path, now: now)
 
       expect(result.action).to eq(:recreated)
       expect(result.backup_path).to be_nil
@@ -66,7 +74,7 @@ RSpec.describe Nob::Notes::Daily do
 
   describe ".create (force mode)" do
     it "behaves like normal mode when the file does not exist" do
-      result = described_class.create(vault: @vault, base_path: base_path, file_name_format: file_name_format, template_text: nil, now: now, force: true)
+      result = described_class.create(vault: @vault, base_path: base_path, file_name_format: file_name_format, template_path: nil, now: now, force: true)
 
       expect(result.action).to eq(:created)
       expect(result.backup_path).to be_nil
@@ -75,8 +83,9 @@ RSpec.describe Nob::Notes::Daily do
     it "moves an existing file to a timestamped backup and recreates it" do
       FileUtils.mkdir_p(File.dirname(daily_path))
       File.write(daily_path, "old content")
+      template_path = write_template("new")
 
-      result = described_class.create(vault: @vault, base_path: base_path, file_name_format: file_name_format, template_text: "new", now: now, force: true)
+      result = described_class.create(vault: @vault, base_path: base_path, file_name_format: file_name_format, template_path: template_path, now: now, force: true)
 
       expect(result.action).to eq(:recreated)
       expect(result.backup_path).to match(%r{/daily/2026-05-04\.backup-\d{8}-\d{6}\.md\z})
@@ -85,11 +94,11 @@ RSpec.describe Nob::Notes::Daily do
     end
 
     it "raises when the backup destination already exists (same-second collision)" do
-      described_class.create(vault: @vault, base_path: base_path, file_name_format: file_name_format, template_text: nil, now: now)
-      described_class.create(vault: @vault, base_path: base_path, file_name_format: file_name_format, template_text: "v1", now: now, force: true)
+      described_class.create(vault: @vault, base_path: base_path, file_name_format: file_name_format, template_path: nil, now: now)
+      described_class.create(vault: @vault, base_path: base_path, file_name_format: file_name_format, template_path: nil, now: now, force: true)
 
       expect {
-        described_class.create(vault: @vault, base_path: base_path, file_name_format: file_name_format, template_text: "v2", now: now, force: true)
+        described_class.create(vault: @vault, base_path: base_path, file_name_format: file_name_format, template_path: nil, now: now, force: true)
       }.to raise_error(Nob::Error, /backup target already exists/)
     end
   end

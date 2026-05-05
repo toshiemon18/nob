@@ -1,7 +1,7 @@
 ---
 title: CLI 層の集約
 slug: cli-aggregation
-status: implementing
+status: done
 created: 2026-05-05
 updated: 2026-05-05
 ---
@@ -141,7 +141,7 @@ T2 / T3 を分けた理由: 前サイクル peer-review でも同パターン（
       1. `cli.rb#daily` を `Nob::Templates::Loader.read(settings.template_path)` 呼び出しに差し替え
       2. `cli.rb` の `no_commands` から `read_template` を撤去
     - 完了基準: `bundle exec rake` が green、`grep "read_template" -- lib/nob` で参照ゼロ、`#daily template not found` spec が引き続き pass
-- [ ] **T4**: `Warn when daily template is not configured (and document Warning: prefix)`
+- [x] **T4**: `Warn when daily template is not configured (and document Warning: prefix)`
     - Red: `spec/nob/cli_spec.rb#daily` に 2 つの example 追加
       - 「テンプレ未指定 (`[dailyNote].template` 無し) で `nob daily` 実行 → stderr に "Warning: ..." 行が出る + stdout に "Created: ..." が出る + exit 0」 — 現状実装は警告無しなので fail
       - 「テンプレ指定済み + 実在パスでは Warning 行が **出ない**」 negative example — 現状実装でも green（追加保証）
@@ -174,6 +174,43 @@ Critical: 0 件 / Important: 3 件 / Nice-to-have: 3 件
 - T4 の spec で「テンプレ指定済みでは警告が出ない」 negative example も入れる。
   - → **対応済**: T4 の Red に negative example を追加し、現状実装でも green になる確認込みで明記。
 
+### peer-review 2 回目（2026-05-05, code モード）
+
+range: cli-aggregation 関連 commit のみ（plan + T1〜T4 = 5 commit）。typeprof 系のユーザー別作業 (`966bdbc`, `afab8b4`, `4b284ee`) は対象外。
+
+Critical: 0 件 / Important: 2 件 / Nice-to-have: 3 件
+
+**Important**
+
+- `lib/nob/cli.rb:53` の `warn "Usage: nob config -e"` (`exit 1`) が design.md 出力チャンネル表のどのカテゴリにも当てはまらない。`exit 1` なら `Error:` prefix のはずで、本サイクルで追加した慣習表とコードが整合しない。
+  - → **対応済 (R1)**: `cli.rb#config` の `flags.zero?` ブランチを `Error: specify -e/--path/--show (use -h for usage)` に変更。spec も `^Error: specify -e\/--path\/--show` 期待に追従。これで `cli.rb` 内の stderr + exit 1 経路がすべて `Error: ` prefix で揃う。
+- design.md の Warning 行が `exit 0` だが、`config` の引数バリデーションは `Nob::Error` 経由なしの直接 `warn + exit 1` で慣習表に明示反映されていない。
+  - → **R1 で同時解決**: コード側を `Error:` prefix に揃えれば、design.md 表が経由ルートを問わない一般記述（`stderr + Error: + exit 1`）として成立する。`config` の引数バリデーションは ADR 0002 §D に明記済み（経由方法）、design.md は出力チャンネル（経路を問わず）の話、と切り分ければ整合する。
+
+**Nice-to-have**
+
+- `lib/nob/templates/loader.rb:8` の `File.read(path)` がエンコーディング指定無し。
+  - → **却下**: 現状 UTF-8 前提で実害なし。後続の `create` テンプレ対応で実装が増えたら再考する。
+- `spec/nob/cli_spec.rb` の既存 daily example で `expect(stderr).to eq("")` を足す案。
+  - → **却下**: レビュアー本人も「採用しなくてよい」と判断。"does not warn when configured" 1 例に集約済み。
+- 整合確認結果（テスト 148 green、`rescue Nob::Error` / `read_template` / `Config#daily_settings` の空文字 → nil 変換 / `#version` の動作確認）が問題なし。
+  - → **アクション不要**
+
 ## 実装と計画の差分（recap）
 
-（recap で記入）
+コミット: `f86c8ce (plan) → 69a595f (T1) → 836ba71 (T2) → a94b7b9 (T3) → 0af347a (T4) → 2fc50a4 (R1) → (recap)`。TODO 4 件は 1 task = 1 commit、Refine 1 commit、計 6 commit（typeprof 系のユーザー別作業 3 commit は本サイクル外で混入したため除外）。
+
+### 意図的な変更
+
+- **T1 を「リファクタ task + ADR 補追」として進めた**: 各 command の `rescue Nob::Error` 5 箇所の撤去自体は振る舞い不変で、既存の error 経路 spec が gate になった。同時に ADR 0002 §D の保留事項（集約方法）を埋めるドキュメント変更を 1 commit に同梱。spec 側も `#version` セーフティネット 1 件を追加し、override が非エラーパスを壊さないことを担保した。
+- **T2 / T3 を分割した**: 前サイクル peer-review でも同型指摘があったため、Loader 単体仕様の Red→Green と CLI 差し替えのリファクタを別 commit に切った。T2 では Loader が孤児コードになる過渡期を許容。
+- **ADR 0001 §I を本サイクルで補追した**: 「caller が複数になる前は loader を切り出さない」という保留方針を「CLI 層と core 層の境界をまたぐ薄いヘルパなら早めに切り出してよい」に補追。`Templates::Loader` 導入の論拠をコードと同 commit で残す形。学び: ADR の保留事項は次のサイクルが該当論点に触れたとき、コード変更とセットで埋める方が「実装と決定」の対応が追いやすい。
+- **design.md に出力チャンネル節を新設した**: T4 で初登場する `Warning:` prefix だけ書き残すのではなく、`Error:` / `Warning:` / プレーン stdout の 3 カテゴリを表で固定。後続コマンドで判断軸が一貫する。
+
+### 想定外の追加
+
+- **R1 (Refine)**: peer-review 2 回目で `cli.rb#config` の `Usage: nob config -e` が design.md 出力チャンネル表（`Error:` prefix + exit 1）に整合しないと指摘。本サイクルで導入した design.md 慣習との整合は本サイクル責務として 1 commit でリファインした。学び: 既存挙動を慣習表として明文化するときは、まさに今触っているコード自体が新慣習に従っているかを最初に grep するべきだった（`grep "warn " lib/nob/cli.rb` で 3 件中 1 件が non-conforming だったのが見落としポイント）。
+
+### 削除・スキップ
+
+- なし。peer-review 2 回目の Nice-to-have 3 件はそれぞれ却下、却下理由は「レビューフィードバック」セクションに記録済み。`Templates::Loader` のエンコーディング指定無しは、後続 `create` テンプレ対応で実装が増えた段階で再考する宿題として残す。

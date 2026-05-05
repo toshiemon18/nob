@@ -50,7 +50,7 @@ module Nob
         exit 1
       end
       if flags.zero?
-        warn "Usage: nob config -e"
+        warn "Error: specify -e/--path/--show (use -h for usage)"
         exit 1
       end
       path = Nob::Config.default_path
@@ -69,12 +69,14 @@ module Nob
     def daily
       config = Nob::Config.load
       settings = config.daily_settings
-      template_text = Nob::Templates::Loader.read(settings.template_path)
+      if settings.template_path.nil?
+        warn "Warning: no daily-note template configured ([dailyNote].template); creating an empty file."
+      end
       result = Nob::Notes::Daily.create(
         vault: config.vault,
         base_path: settings.base_path,
         file_name_format: settings.file_name_format,
-        template_text: template_text,
+        template_path: settings.template_path,
         force: options[:force]
       )
       puts format_note_action(result)
