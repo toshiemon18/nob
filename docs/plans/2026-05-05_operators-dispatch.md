@@ -1,18 +1,18 @@
 ---
-title: Operators ファクトリの dispatch 軽量化
+title: Operators ファクトリの dispatch 整理
 slug: operators-dispatch
-status: implementing
+status: done
 created: 2026-05-05
 updated: 2026-05-05
 ---
 
 ## 目的・背景
 
-`/peer-review` のアーキテクチャ指摘の本筋議論 4/4（最終）。前 3 サイクル (`config-boundaries`, `notes-unification`, `cli-aggregation`) で層境界・Result 統一・CLI 集約・エラー方針を片付けたので、最後に Templates の Operator 追加コストを下げる。
+`/peer-review` のアーキテクチャ指摘の本筋議論 4/4（最終）。前 3 サイクル (`config-boundaries`, `notes-unification`, `cli-aggregation`) で層境界・Result 統一・CLI 集約・エラー方針を片付けたので、最後に Templates の `Operators.build` の dispatch 表記を整理する。
 
 ### 解きたい問題
 
-`lib/nob/templates/operators.rb:4-13` のファクトリ:
+`lib/nob/templates/operators.rb` のファクトリは `case/when` で 4 つの Operator クラスを 1 行ずつ列挙していた:
 
 ```ruby
 def self.build(name:, fmt:)
@@ -27,106 +27,66 @@ def self.build(name:, fmt:)
 end
 ```
 
-- 4 つの Operator クラスごとに `case/when` のエントリが 1 行ずつ書かれている
-- Operator 追加時に必要な変更: (a) `lib/nob/templates/operators/<name>.rb` の新規追加、(b) `operators.rb` の `case/when` にエントリ追加、の **2 ファイル**
-- ADR 0001 §C は「変数追加は『Operator クラスを足す + ファクトリにエントリを 1 つ足す』の局所変更で済む」と書いていたが、peer-review でも「ADR の『局所変更』の謳い文句より一段重い」と指摘済み
-
-`Operators` モジュール直下のクラスと name (小文字) は **1 対 1 対応** （`title` → `Title`, `date` → `Date`, etc）で、これを const_get で動的解決すれば `case/when` テーブルが消え、Operator 追加が 1 ファイルで済む。
+dispatch 表が `case/when` の文法に埋まっていて、name → Class の対応が読み手に届くまでに 1 段挟まる。Operator が増えるほど読みにくさが効いてくる。「対応表」と「対応表を引く処理」を分離して、name → Class の写像をデータとして見せたい。
 
 スコープ外: なし（本サイクルが最後）。完了後 `done` で recap して全 5 サイクルが揃う。
 
 ## 設計
 
-### 1. `Operators.build` を const_get ベースの動的解決に置き換える
+### `Operators.build` を Hash registry 経由に置き換える
 
 ```ruby
 module Operators
-  CLASS_NAME_PATTERN = /\A[a-z]+\z/
+  REGISTRY = {
+    "title" => Title,
+    "date" => Date,
+    "time" => Time,
+    "id" => Id
+  }.freeze
 
   def self.build(name:, fmt:)
-    klass = lookup(name) or raise UndefinedVariable, "unknown variable: #{name}"
-    klass.new(fmt)
+    operator_class = REGISTRY.fetch(name) {
+      raise UndefinedVariable, "unknown variable: #{name}"
+    }
+    operator_class.new(fmt)
   end
-
-  def self.lookup(name)
-    return nil unless name.match?(CLASS_NAME_PATTERN)
-    const_name = name.capitalize.to_sym
-    klass = begin
-      const_get(const_name, false)
-    rescue NameError
-      return nil
-    end
-    (klass.is_a?(Class) && klass < Base) ? klass : nil
-  end
-
-  private_class_method :lookup
 end
 ```
 
 要点:
 
-- **name のバリデーション**: 小文字英字のみ（`/\A[a-z]+\z/`）。`Date` のような大文字始まりや `my-op` のようなハイフン入りは弾く（現状 case/when では fall through で `UndefinedVariable`、新実装でも同じ結果）
-- **直下のみ参照**: `const_get(const_name, false)` で `inherit: false` 指定。`Object` 階層の `Date` / `Time` などの組み込みクラスに到達しない
-- **`Class` 型ガード**: `klass.is_a?(Class)` で `Operators::CLASS_NAME_PATTERN` のような non-Class const（`Regexp` など）を弾く
-- **`Base` サブクラスガード**: 続く `klass < Base` で `Base` を継承していない Class を弾く。Operator は `Base` を継承する規約に乗せる
-- **autoload 発火**: Zeitwerk の autoload は `const_get` で発火するので、`operators/title.rb` 等が遅延ロード経路に乗ったまま動く（事前 require 不要）
-- **autoload 例外の扱い**: `Zeitwerk::NameError` は `NameError` のサブクラスなので `rescue NameError` で拾われ `nil` 返却 → `UndefinedVariable`。一方「ファイルは存在するが const を定義し損ねた」規約違反シナリオで `Zeitwerk::Error` 等が発生しうるが、これは規約違反として **意図的に拾わず**素通しする（ライブラリ実装ミスの早期発覚を優先、ADR 0002 §A の「ユーザーが直せないエラーは素通し」とも整合）
-- **`Base` 自身の保護**: `Base` は `klass < Base` の判定で `false` を返す（自分自身は自分のサブクラスではない）ので、`build(name: "base", fmt: ...)` は `UndefinedVariable` になる
+- **`REGISTRY` をモジュール直下の定数に切り出す**: 「name → Class の対応表」がコードを読まずデータとして一目で分かる
+- **`fetch` のブロック形式で UndefinedVariable**: 既存の `case/when` の `else` 節と同じ振る舞い（unknown name で `UndefinedVariable`）を 1 行で表現
+- **明示的 dispatch を選ぶ**: `const_get` 等の動的解決は採らない（メモリ `feedback_metaprogramming_caution.md` 「Factory / dispatch は明示的な Hash や case/when を第一候補に」に基づく判断）。Operator 追加時に `REGISTRY` に 1 行足す手間は、対応表が明示的に並ぶ可読性の対価として受け入れる
 
-### 2. ADR 0001 §C の補追
-
-「ファクトリ内部 dispatch は本 ADR で詳細を決めない」は維持しつつ、現在の dispatch 実装が `const_get` 式に変わったことと、それにより Operator 追加が **1 ファイル変更で済む**契約になったことを補追する。
-
-ADR §F (Parser の仕様) との切り分けを明文化:
-
-- **§F は変更しない**: Parser は引き続き「`name` を strip して空でなければ `Operators.build` に渡す」のみ。文字種の制約は §F に書かない
-- **§C で文字種を縛る**: 「`Operators.build` が受け付ける `name` は `/\A[a-z]+\z/`（小文字英字のみ）。それ以外は `UndefinedVariable`」を §C に追記
-- 責務分担の理由: 文字種は dispatch（`name → Class` 変換）の都合で決まる制約であり、Parser の字句解析の都合ではない。dispatch の実装が将来別形式に変わったら §C だけ更新すれば済む
-
-### 3. 「Operator 追加が 1 ファイルで済む」契約を spec で固定
-
-spec の中で `Operators::Foo < Operators::Base` を **動的に定義** し、`Operators.build(name: "foo", fmt: nil)` がそのクラスのインスタンスを返すことを assert する。これにより:
-
-- 「`operators.rb` を編集せずに Operator を追加できる」が回帰検出可能
-- 将来 dispatch を再度 case/when に戻したくなったときも、この spec が gate になる
+ADR 0001 §C は現行の文言（「ファクトリ内部の dispatch は本 ADR で詳細を決めない（case/when でも内部 Hash でも実装次第）」「変数追加は Operator クラスを足す + ファクトリにエントリを 1 つ足す」）が Hash registry 実装と既に整合しているため、補追は行わない。
 
 ## TODO（TDDタスク分解）
 
-- [x] **T1**: `Replace Operators dispatch with const_get-based lookup`
-    - Red: `spec/nob/templates/operators_spec.rb` に 3 example を追加
-      - 「`Operators` 配下に `Foo < Base` を動的定義 → `build(name: "foo", fmt: nil)` が `Foo.new(nil)` を返す」 — 現状 `case/when` では `UndefinedVariable` で fail
-      - 「name が大文字混じり (`"Title"`) → `UndefinedVariable`」 — 既存実装でも green（追加保証）
-      - 「`build(name: "base", fmt: nil)` は `UndefinedVariable`」 — 新実装で初めて固定される（現実装は `case/when` に `"base"` のエントリ無しで偶然 green）
-    - 動的定義 example の片付け: spec の `after` ブロックで `Operators.send(:remove_const, :Foo) if Operators.const_defined?(:Foo, false)` を呼ぶ。`after` は example raise 時も実行されるので（RSpec の hook 仕様、`ensure` 相当）、後続 example への漏れは起きない
-    - Green: `lib/nob/templates/operators.rb` を const_get 式に書き換える（設計 §1 通り、`CLASS_NAME_PATTERN` / `lookup` private、`Class` 型 + `Base` サブクラスのガード 2 段）
-    - 完了基準: `bundle exec rake` が green、既存 6 example + 新 3 example pass、`grep "case " lib/nob/templates/operators.rb` で 0 件
-- [ ] **T2** (docs task): `Loosen ADR 0001 §C to lock the const_get dispatch and 1-file Operator addition`
-    - 事前確認: `bundle exec rake` が green（T1 完了状態）
-    - 変更: `docs/adr/0001_template-system.md` §C を補追（設計 §2 通り、`const_get` 式の採用 / 1 ファイル追加で済む契約 / `name` 許容文字を §C で縛り §F は変更しない切り分け）
-    - 完了基準: `bundle exec rake` が green（コード変更なし）、ADR §C の補追セクションが `Token` 撤去 / `loader` 解禁の前例（cleanup-misc / cli-aggregation）と同じ書きぶり（cycle 名 + 日付 + 補追内容）で並ぶ
+- [x] **T1**: `Replace Operators dispatch with Hash-registry lookup`
+    - Red: `spec/nob/templates/operators_spec.rb` に「name が大文字混じり (`"Title"`) → `UndefinedVariable`」example を追加（既存実装でも green な追加保証 example）
+    - Green: `lib/nob/templates/operators.rb` を Hash `REGISTRY` 経由の `fetch` 式に書き換える（設計通り）
+    - 完了基準: `bundle exec rake` が green、既存 6 example + 新 1 example pass、`grep "case " lib/nob/templates/operators.rb` で 0 件
 
 ## レビューフィードバック
 
 ### peer-review 1 回目（2026-05-05, plan モード）
 
-Critical: 0 件 / Important: 2 件 / Nice-to-have: 3 件
-
-**Important**
-
-- `lookup` の `rescue NameError` で拾えない `Zeitwerk::Error` 系（規約違反シナリオ）の扱いが plan に明示されていない。
-  - → **対応済**: 設計 §1 の要点に「autoload 例外の扱い」を追加。`Zeitwerk::NameError` は `NameError` のサブクラスなので拾われる、`Zeitwerk::Error`（ファイルあるが const 未定義の規約違反）は意図的に素通し（ADR 0002 §A 「ユーザーが直せないエラーは素通し」とも整合）と明記。
-- `name` 文字種の責務切り分け（ADR §C で縛る / §F (Parser) は変えない）が ADR 補追で明示される旨の説明が plan で曖昧。
-  - → **対応済**: 設計 §2 を改稿。「§F は変更しない」「§C で文字種を縛る」「責務分担の理由（dispatch の都合で決まる制約）」を明文化。
-
-**Nice-to-have**
-
-- T1 が「実装 + spec + ADR 補追」を 1 task に詰めており、ADR 補追は Red/Green と無関係なので別 task に切ると差分レビューが楽。
-  - → **対応済**: T1 を T1（実装 + spec）と T2（ADR 補追、docs task）に分割。T2 は `cleanup-misc` の T4（Token 撤去 + ADR 0001 §B 改訂）や `cli-aggregation` の T1/T2（rescue 集約 + ADR 0002 §D 補追、Loader 新設 + ADR 0001 §I 補追）と同じく「実装後に ADR を別 commit で固定」のスタイルに揃える。
-- spec の動的 `Foo` 定義 → `remove_const` クリーンアップが example 失敗時にも漏れない保証を一言。
-  - → **対応済**: T1 の Red 説明に「`after` は example raise 時も実行される（RSpec hook 仕様、`ensure` 相当）」を明記。
-- `CLASS_NAME_PATTERN` のような non-Class const を `klass.is_a?(Class)` で弾く自衛が要点に並んでいない。
-  - → **対応済**: 設計 §1 の要点に「`Class` 型ガード」を独立項目として追加（`Base` サブクラスガードと並列）。
+const_get 動的解決を前提とした初版 plan に対するレビュー（Critical 0 / Important 2 / Nice-to-have 3）を受け、いったんすべての指摘に「対応済」を書き入れた。その後 Refine フェーズで「明示的な dispatch を優先する」方針（メモリ `feedback_metaprogramming_caution.md`）に切り替えて Hash registry 実装に差し替えたため、レビュー指摘の前提となる const_get 設計そのものが消えた。autoload 例外の扱い・`Class` 型ガード・動的 `Foo` 定義 spec のクリーンアップなど、const_get 固有の論点はいずれも Hash registry 実装では発生しないため、本サイクルでは追加対応は行わない。
 
 ## 実装と計画の差分（recap）
 
-（recap で記入）
+### 実装ハイライト
+
+- 8c2d4fa `Replace Operators dispatch with const_get-based lookup`: 初版 plan 通り `const_get` ベースの動的解決で実装。`CLASS_NAME_PATTERN` / `Class` 型ガード / `Base` サブクラスガードを乗せた lookup を private で実装し、動的 `Foo < Base` 定義 spec で「`operators.rb` を編集せず Operator を追加できる」契約を spec から固定
+- 362398e `Refine: switch Operators dispatch to explicit Hash registry`: メモリ `feedback_metaprogramming_caution.md` に基づき、明示的な Hash `REGISTRY` + `fetch` 式に差し替え。動的 `Foo` 定義 spec は「実装そのものを再記述する spec を書かない」（メモリ `feedback_no_implementation_mirror_specs.md`）にも抵触するため削除
+
+### 計画との差分
+
+- **dispatch 実装方針の転換**: 当初は const_get 動的解決を採用し「Operator 追加が 1 ファイルで済む契約」を成果物に掲げていたが、メモリで明示された「メタプロチックな dispatch を避ける」原則と照らして Refine で Hash registry に切り替えた。結果として「1 ファイル契約」は獲得せず、Operator 追加時は依然として `REGISTRY` に entry を追加する必要がある（操作するファイルは従来と同じ 2 つ）。本サイクルの実成果は「`case/when` で散らばっていた dispatch 表を `REGISTRY` 定数に集約し、name → Class の対応をデータとして可視化した」可読性 refactor に縮小した
+- **ADR 0001 §C 補追タスクの取り下げ**: 当初 plan の T2 で予定していた ADR §C 補追は、Hash registry 実装が ADR §C の現行文言（「dispatch 詳細は決めない」「entry 1 つ追加」）と既に整合するため不要と判断し、タスクごと削除した
+- **plan 設計セクションの整合性**: const_get 前提の設計記述（autoload 発火 / 例外の扱い / 文字種パターン / `Class` 型 + `Base` サブクラスガード 等）は Hash registry 実装では出番が無いため、本 recap と同時に Hash registry 版へ書き換えた
+
+### サイクル全体の総括
+
+`/peer-review` のアーキテクチャ指摘 4 件に対応する 5 サイクル（`config-boundaries` / `notes-unification` / `cli-aggregation` / `cleanup-misc` / `operators-dispatch`）が完了。最後の本サイクルは当初の野心（dispatch 動的化 + 1 ファイル契約）を Refine で縮小し、地味な可読性 refactor に着地した。peer-review 由来の宿題はこれで解消。
