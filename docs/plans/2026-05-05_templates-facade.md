@@ -1,7 +1,7 @@
 ---
 title: Templates ファサード化と Loader 撤去
 slug: templates-facade
-status: reviewing
+status: refining
 created: 2026-05-05
 updated: 2026-05-05
 ---
@@ -116,5 +116,13 @@ Critical 0 / Important 3 / Nice-to-have 2。Important の各指摘について 1
 - **`text` + `path` 両方指定で text 優先（Imp#2）**: 妥当な指摘として反映。テスト都合のために本番 API に分岐を持ち込むのは余計と判断し、edge case 表から該当行を削除し、T1 の spec example からも除いた。実装上は `||=` で `text` が勝つが、契約として固定しない
 - **T2 の Red/Green 境界（Imp#3）**: 軟着地。CLI の差分は Daily signature 変更に追従する build-fix で、独立 task に分けても新規 spec が増えるわけではないため bundle のままとし、T2 末尾にその旨を 1 行追記した
 - **Nice-to-have 2 件（ファサード化便益の補強 / T1 example の整合）**: Imp#2 の反映で T1 example 側は自動的に解消。便益の補強は「目的・背景」内の "解きたい問題" 3 点で既に表現できているため追加修正は行わない
+
+### peer-review 2 回目（2026-05-05, code モード）
+
+実装 3 commit (T1/T2/T3) に対するコードレビュー。Critical 0 / Important 1 / Nice-to-have 2。
+
+- **Important: `Templates.render` のキーワード並びが plan サンプルと差異**: plan の設計サンプルは `path: nil, text: nil, title:, now:` 順だが実装は `title:, now:, path: nil, text: nil` 順。standard linter の `Style/KeywordParametersOrder`（オプション kw を末尾に）に従って実装側で並び替えた。挙動は等価。recap セクションで明記する形で対応済み（このセクション + 「実装と計画の差分」）
+- **Nice-to-have: skip ケースの回帰検出力低下**: `spec/nob/notes/daily_spec.rb:55` の "skips when the file exists with size > 0" example は移行前 `template_text: "new"` で「テンプレがあっても既存ファイルは上書きされない」意図を表現していた。新コードでは `template_path: nil` にしたため意図が読み取りにくい。Refine で `write_template("new")` を渡す形に戻して回帰検出力を回復する → 反映
+- **Nice-to-have: `.render` spec の describe/context 構造化**: edge case 表との対応を読みやすくする任意の改善 → 採用しない（example のラベル（"returns an empty string when..." 等）で挙動の対応は読み取れる、追加 nesting は overkill と判断）
 
 ## 実装と計画の差分（recap）

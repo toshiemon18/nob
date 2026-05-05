@@ -51,8 +51,9 @@ RSpec.describe Nob::Notes::Daily do
     it "skips when the file exists with size > 0" do
       FileUtils.mkdir_p(File.dirname(daily_path))
       File.write(daily_path, "existing\n")
+      template_path = write_template("new")
 
-      result = described_class.create(vault: @vault, base_path: base_path, file_name_format: file_name_format, template_path: nil, now: now)
+      result = described_class.create(vault: @vault, base_path: base_path, file_name_format: file_name_format, template_path: template_path, now: now)
 
       expect(result.action).to eq(:skipped)
       expect(File.read(daily_path)).to eq("existing\n")
