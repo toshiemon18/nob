@@ -72,12 +72,11 @@ module Nob
       if settings.template_path.nil?
         warn "Warning: no daily-note template configured ([dailyNote].template); creating an empty file."
       end
-      template_text = Nob::Templates::Loader.read(settings.template_path)
       result = Nob::Notes::Daily.create(
         vault: config.vault,
         base_path: settings.base_path,
         file_name_format: settings.file_name_format,
-        template_text: template_text,
+        template_path: settings.template_path,
         force: options[:force]
       )
       puts format_note_action(result)

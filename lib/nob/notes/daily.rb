@@ -5,7 +5,7 @@ module Nob
     class Daily
       Result = Struct.new(:path, :backup_path, :action, keyword_init: true)
 
-      def self.create(vault:, base_path:, file_name_format:, template_text: nil, now: Time.now, force: false)
+      def self.create(vault:, base_path:, file_name_format:, template_path: nil, now: Time.now, force: false)
         date_str = now.strftime(file_name_format)
         target_dir = File.join(vault, base_path)
         target_path = File.join(target_dir, "#{date_str}.md")
@@ -28,16 +28,9 @@ module Nob
         return Result.new(path: target_path, backup_path: nil, action: :skipped) if action == :skipped
 
         FileUtils.mkdir_p(target_dir)
-        File.write(target_path, render(template_text: template_text, title: date_str, now: now))
+        File.write(target_path, Nob::Templates.render(path: template_path, title: date_str, now: now))
         Result.new(path: target_path, backup_path: backup_path, action: action)
       end
-
-      def self.render(template_text:, title:, now:)
-        return "" if template_text.nil?
-        Nob::Templates::Renderer.render(template_text, title: title, now: now)
-      end
-
-      private_class_method :render
     end
   end
 end

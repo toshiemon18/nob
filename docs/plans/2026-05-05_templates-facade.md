@@ -97,7 +97,7 @@ end
     - Red: `spec/nob/templates_spec.rb` を新設し、`Nob::Templates.render` の振る舞いを behavior レベルで固定する。example: text 渡しで render 結果が返る / path 渡しでファイル内容が render される / 両方 nil で `""` / path 指定でファイル不在で `Nob::Error`
     - Green: `lib/nob/templates.rb` に `self.render` と private `self.read_template` を追加。Renderer/Parser は触らない
 
-- [ ] **T2**: `Switch Notes::Daily and CLI to Templates.render facade`
+- [x] **T2**: `Switch Notes::Daily and CLI to Templates.render facade`
     - Red: `spec/nob/notes/daily_spec.rb` の `template_text:` キーワードを `template_path:` に書き換え、必要に応じてテンプレ fixture を tmpdir に書いて path を渡す形に修正（既存の振る舞い assertion は維持）。現状の private `Daily.render` を直接 assert している spec は無いので影響範囲は `template_text:` 引数だけ
     - Green: `lib/nob/notes/daily.rb` の `create` 引数を `template_path:` に変更し、`Nob::Templates.render(path: template_path, title: date_str, now: now)` を直接呼ぶ。private `self.render` を削除。`lib/nob/cli.rb#daily` を `template_path: settings.template_path` を渡す形に変更し、`Nob::Templates::Loader.read(...)` 呼び出しを除去（Loader 自体はこの commit ではまだ残す）
     - 注: CLI の差分は spec を持たないが、`Notes::Daily.create` の signature 変更に伴う build-fix のため同 commit に含める。Daily 単独 commit では `bundle exec rake` が通らない
