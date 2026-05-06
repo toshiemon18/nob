@@ -12,7 +12,7 @@ run = "bundle exec rspec"
 
 [tasks.lint]
 description = "Run rubyfmt"
-run = "rubyfmt -o ./"
+run = "rubyfmt --check ./"
 
 [tasks.fix]
 description = "Auto formtting with rubyfmt"
