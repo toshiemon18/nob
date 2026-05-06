@@ -1,7 +1,7 @@
 ---
 title: Templates.render の引数規約を厳格化する
 slug: templates-render-args
-status: planning
+status: done
 created: 2026-05-06
 updated: 2026-05-06
 ---
@@ -91,17 +91,17 @@ File.write(target_path, content)
 
 ## TODO（TDDタスク分解）
 
-- [ ] **T1**: `Move empty-template fallback into Notes::Daily`
+- [x] **T1**: `Move empty-template fallback into Notes::Daily`
     - Red: 既存の `daily_spec.rb` で「template 未設定なら空ファイルを書く」振る舞いを引き続き green に保つ。実装ミラーの新規 spec は書かない（memory: 実装そのものを再記述する spec を書かない）
     - Green: `Notes::Daily.create` で `template_path.nil? ? "" : Nob::Templates.render(...)` に分岐を追加。`Templates.render(path: nil)` の経路をこの caller から消す
     - Refactor: なし
 
-- [ ] **T2**: `Reject path: and text: double-spec in Templates.render`
+- [x] **T2**: `Reject path: and text: double-spec in Templates.render`
     - Red: `spec/nob/templates_spec.rb` で `Templates.render(path: ..., text: ..., title:, now:)` が `ArgumentError` を raise することを assert
     - Green: `lib/nob/templates.rb` の `render` 先頭で両指定を `ArgumentError` で弾く分岐を追加
     - Refactor: なし
 
-- [ ] **T3**: `Reject path: and text: both-nil in Templates.render`
+- [x] **T3**: `Reject path: and text: both-nil in Templates.render`
     - Red: 既存「両 nil で空文字を返す」テストを削除し、「両 nil で `ArgumentError` を raise する」テストに置き換え
     - Green: `Templates.render` の早期 return (`return "" if text.nil?`) を削除し、両 nil で `ArgumentError` を raise する分岐に置き換え。`read_template` 内の `return nil if path.nil?` も削除
     - Refactor: なし
@@ -110,8 +110,35 @@ T1 → T2 → T3 の順で進める理由: T1 を先に行わないと T3 で `D
 
 ## レビューフィードバック
 
-(plan 完了時に peer-review 結果を追記)
+plan 段階の peer-review は未実行。plan 着地直後にユーザが実装に着手したため、plan レビュー → user レビューの段取りはスキップされた。本 plan のスコープは小さく（commit 2 件、差分 ~25 行）、設計判断も peer-review (Templates 実装レビュー) Important #1, #2 に直結する形で出ているため、plan レビュー省略のリスクは低いと判断した。
 
 ## 実装と計画の差分（recap）
 
-(recap フェーズで追記)
+### path 不在時の例外型を `ArgumentError` ではなく `Nob::Error` で据え置きに修正
+
+plan の「設計 > 例外メッセージ」では `path: と text: の組み合わせ違反は ArgumentError`、その並びで「path 不在も同じく caller のプログラマエラー扱いにできる」かのような書き方を匂わせていた。実装中の暫定差分でも `raise ArgumentError, "path must exist"` に倒した版が出たが、これは ADR 0002 判断軸 A「ユーザが直せるエラーかどうか」に照らすと:
+
+- path 自体が config 由来（`[dailyNote].template`）で、設定したテンプレファイルが消える / リネームされるシナリオは **ユーザが直せる** 経路
+- なので元実装の `Nob::Error, "template file not found: #{path}"` のまま `Cli#invoke_command` で拾わせるのが筋
+
+最終的に path 不在時は `Nob::Error` 据え置き、両 nil / 両指定だけ `ArgumentError` という分け方で着地した。plan の設計記述を後追いで補強する形になっている。
+
+### `text` 引数を再代入せず `content` 変数に移し替えた
+
+plan には書いていなかった微小な実装スタイル判断。`text ||= File.read(path)` で引数を上書きする形を避け、`content = text` から始めて `path` ありなら `File.read(path)` で上書きする。引数の immutability を保つ意図。
+
+### TODO の commit 分割は plan 通りにならなかった
+
+plan は T1 → T2 → T3 の 3 commit を想定していたが、実際にはユーザが先に直接編集で実装を進め、テスト修正と spec 追加を私が後追いで行った結果、impl 系は 1 commit (`57111db Tighten Templates.render arg contract and move empty fallback to Daily`) にまとまった。plan ドキュメント自体は別 commit (`2a8dec3 Add templates-render-args plan`)。
+
+このサイクルは「plan を書いてから実装」ではなく「実装が一部進んだ状態で plan を後追い起草 → ユーザの直接編集とテスト修正で着地」という流れになっており、dev-workflow の標準フェーズ進行とは異なる。今回は対象が小さく事故にはつながらなかったが、今後 plan を書くタイミングは「実装着手前」に揃える方が plan の意義が立つ。
+
+### text-only モードのバグを途中で捕捉
+
+暫定差分に `raise ArgumentError, "path must exist" unless path && File.exist?(path)` が混入し、`path: nil, text: "..."` 経路で誤って raise する状態が一時的に存在した。`spec/nob/templates_spec.rb` の `renders the given text directly` ケースで検出し、最終的に `if path` ブロック内に file 存在チェックを移して解消した。plan の「エッジケース > text: '' は正常系」記述が落とし穴の検出に効いた格好。
+
+### スコープ外の確認
+
+- `Renderer.render` の signature 統一（positional vs kwargs）: 手付かず、別 plan 候補として残置
+- `Operators::Date` / `Operators::Time` の空 fmt 不整合: 手付かず、Plan B 相当として別 plan 化予定
+- ADR 0001 §I 補追と facade のファイル I/O 内包の齟齬: 本 plan で触らず、ADR 整合を扱う別 plan で対応する
