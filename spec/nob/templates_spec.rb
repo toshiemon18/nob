@@ -6,8 +6,16 @@ RSpec.describe Nob::Templates do
     let(:now) { Time.new(2026, 5, 5, 9, 0, 0) }
     let(:title) { "My Note" }
 
-    it "returns an empty string when neither path nor text is given" do
-      expect(described_class.render(path: nil, text: nil, title: title, now: now)).to eq("")
+    it "raises ArgumentError when neither path nor text is given" do
+      expect {
+        described_class.render(path: nil, text: nil, title: title, now: now)
+      }.to raise_error(ArgumentError, /specify path: or text:/)
+    end
+
+    it "raises ArgumentError when both path and text are given" do
+      expect {
+        described_class.render(path: "tpl.md", text: "x", title: title, now: now)
+      }.to raise_error(ArgumentError, /specify only one of path: or text:/)
     end
 
     it "renders the given text directly" do
