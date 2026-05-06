@@ -11,19 +11,18 @@ module Nob
         target_path = File.join(target_dir, "#{date_str}.md")
 
         backup_path = nil
-        action =
-          if File.exist?(target_path)
-            if force
-              backup_path = Backup.move(target_path, now: now)
-              :recreated
-            elsif File.size(target_path) > 0
-              :skipped
-            else
-              :recreated
-            end
+        action = if File.exist?(target_path)
+          if force
+            backup_path = Backup.move(target_path, now: now)
+            :recreated
+          elsif File.size(target_path) > 0
+            :skipped
           else
-            :created
+            :recreated
           end
+        else
+          :created
+        end
 
         return Result.new(path: target_path, backup_path: nil, action: :skipped) if action == :skipped
 

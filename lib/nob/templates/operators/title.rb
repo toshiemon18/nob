@@ -6,6 +6,7 @@ module Nob
           unless fmt.nil?
             raise UndefinedVariable, "title does not accept format: #{fmt}"
           end
+
           super
         end
 

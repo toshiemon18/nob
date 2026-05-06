@@ -22,11 +22,11 @@ RSpec.describe Nob::Notes::Viewer do
 
       detail = described_class.show(vault: vault, title: "README")
 
-      expect(detail).to be_a(Nob::Entities::NoteDetail)
-      expect(detail.note).to eq(Nob::Entities::Note.new(absolute_path: abs, relative_path: "README.md"))
-      expect(detail.size).to eq(body.bytesize)
-      expect(detail.chars).to eq(body.length)
-      expect(detail.frontmatter).to eq({})
+      expect(detail).to(be_a(Nob::Entities::NoteDetail))
+      expect(detail.note).to(eq(Nob::Entities::Note.new(absolute_path: abs, relative_path: "README.md")))
+      expect(detail.size).to(eq(body.bytesize))
+      expect(detail.chars).to(eq(body.length))
+      expect(detail.frontmatter).to(eq({}))
     end
 
     it "parses frontmatter and counts chars excluding the frontmatter block" do
@@ -42,8 +42,8 @@ RSpec.describe Nob::Notes::Viewer do
 
       detail = described_class.show(vault: vault, title: "note")
 
-      expect(detail.frontmatter).to eq("title" => "My Note", "date" => Date.new(2026, 4, 27))
-      expect(detail.chars).to eq("body here\n".length)
+      expect(detail.frontmatter).to(eq("title" => "My Note", "date" => Date.new(2026, 4, 27)))
+      expect(detail.chars).to(eq("body here\n".length))
     end
 
     it "finds a note nested under subdirectories by basename" do
@@ -51,8 +51,8 @@ RSpec.describe Nob::Notes::Viewer do
 
       detail = described_class.show(vault: vault, title: "27")
 
-      expect(detail.note.absolute_path).to eq(abs)
-      expect(detail.note.relative_path).to eq("daily/2026/04/27.md")
+      expect(detail.note.absolute_path).to(eq(abs))
+      expect(detail.note.relative_path).to(eq("daily/2026/04/27.md"))
     end
 
     it "does not treat title metacharacters as glob patterns" do
@@ -62,7 +62,8 @@ RSpec.describe Nob::Notes::Viewer do
       # If "*" were interpreted as a glob, this would match both foo.md and bar.md.
       expect {
         described_class.show(vault: vault, title: "*")
-      }.to raise_error(Nob::Notes::Viewer::NotFound)
+      }
+        .to(raise_error(Nob::Notes::Viewer::NotFound))
     end
 
     it "ignores dotfiles and dot-directories when resolving the title" do
@@ -73,10 +74,12 @@ RSpec.describe Nob::Notes::Viewer do
 
       expect {
         described_class.show(vault: vault, title: "hidden")
-      }.to raise_error(Nob::Notes::Viewer::NotFound)
+      }
+        .to(raise_error(Nob::Notes::Viewer::NotFound))
       expect {
         described_class.show(vault: vault, title: "note")
-      }.to raise_error(Nob::Notes::Viewer::NotFound)
+      }
+        .to(raise_error(Nob::Notes::Viewer::NotFound))
     end
 
     it "returns size 0 and chars 0 for a zero-byte file" do
@@ -84,9 +87,9 @@ RSpec.describe Nob::Notes::Viewer do
 
       detail = described_class.show(vault: vault, title: "empty")
 
-      expect(detail.size).to eq(0)
-      expect(detail.chars).to eq(0)
-      expect(detail.frontmatter).to eq({})
+      expect(detail.size).to(eq(0))
+      expect(detail.chars).to(eq(0))
+      expect(detail.frontmatter).to(eq({}))
     end
 
     it "raises Ambiguous with candidate paths when multiple notes match" do
@@ -95,11 +98,14 @@ RSpec.describe Nob::Notes::Viewer do
 
       expect {
         described_class.show(vault: vault, title: "Plan")
-      }.to raise_error(Nob::Notes::Viewer::Ambiguous) { |e|
-        expect(e.message).to include("archive/Plan.md")
-        expect(e.message).to include("projects/Plan.md")
-        expect(e.message.index("archive/Plan.md")).to be < e.message.index("projects/Plan.md")
       }
+        .to(
+          raise_error(Nob::Notes::Viewer::Ambiguous) { |e|
+            expect(e.message).to(include("archive/Plan.md"))
+            expect(e.message).to(include("projects/Plan.md"))
+            expect(e.message.index("archive/Plan.md")).to(be < e.message.index("projects/Plan.md"))
+          }
+        )
     end
 
     it "raises NotFound when no note matches the title" do
@@ -107,7 +113,8 @@ RSpec.describe Nob::Notes::Viewer do
 
       expect {
         described_class.show(vault: vault, title: "missing")
-      }.to raise_error(Nob::Notes::Viewer::NotFound, /missing/)
+      }
+        .to(raise_error(Nob::Notes::Viewer::NotFound, /missing/))
     end
 
     it "raises InvalidFrontmatter when the YAML cannot be parsed" do
@@ -123,7 +130,8 @@ RSpec.describe Nob::Notes::Viewer do
 
       expect {
         described_class.show(vault: vault, title: "broken")
-      }.to raise_error(Nob::Notes::Viewer::InvalidFrontmatter)
+      }
+        .to(raise_error(Nob::Notes::Viewer::InvalidFrontmatter))
     end
 
     it "preserves the YAML key order in the frontmatter Hash" do
@@ -140,7 +148,7 @@ RSpec.describe Nob::Notes::Viewer do
 
       detail = described_class.show(vault: vault, title: "ordered")
 
-      expect(detail.frontmatter.keys).to eq(%w[zeta alpha mid])
+      expect(detail.frontmatter.keys).to(eq(%w[zeta alpha mid]))
     end
   end
 end

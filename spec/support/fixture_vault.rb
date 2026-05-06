@@ -25,13 +25,13 @@ module FixtureVault
   ].freeze
 end
 
-RSpec.shared_context "fixture vault" do
+RSpec.shared_context("fixture vault") do
   before do
     @_fixture_cfg_dir = Dir.mktmpdir("nob-cfg")
     config_path = File.join(@_fixture_cfg_dir, "nob", "config.toml")
     FileUtils.mkdir_p(File.dirname(config_path))
-    File.write(config_path, %(vault = "#{FixtureVault::VAULT_PATH}"\n))
-    allow(Nob::Config).to receive(:default_path).and_return(config_path)
+    File.write(config_path, "vault = \"#{FixtureVault::VAULT_PATH}\"\n")
+    allow(Nob::Config).to(receive(:default_path).and_return(config_path))
   end
 
   after do

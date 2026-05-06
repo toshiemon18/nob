@@ -70,10 +70,12 @@ module Nob
       if raw.empty?
         raise Nob::Error, "vault is not configured. Edit #{path} (or run `nob config -e`)."
       end
+
       expanded = File.expand_path(raw)
       unless File.directory?(expanded)
         raise Nob::Error, "vault directory does not exist: #{expanded}"
       end
+
       expanded
     end
   end
