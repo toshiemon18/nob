@@ -106,6 +106,69 @@ RSpec.describe Nob::Cli do
 
         expect(stderr).to(match(/Error.*missing/))
       end
+
+      it "does not treat title metacharacters as glob patterns" do
+        stderr = capture_stderr do
+          expect {
+            capture_stdout { described_class.start(["show", "*"]) }
+          }
+            .to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
+        end
+
+        expect(stderr).to(match(/Error.*not found/))
+      end
+    end
+
+    context("with title resolution edge cases") do
+      before do
+        @vault = Dir.mktmpdir("nob-vault")
+        @cfg_dir = Dir.mktmpdir("nob-cfg")
+        config_path = File.join(@cfg_dir, "nob", "config.toml")
+        FileUtils.mkdir_p(File.dirname(config_path))
+        File.write(config_path, "vault = \"#{@vault}\"\n")
+        allow(Nob::Config).to(receive(:default_path).and_return(config_path))
+      end
+
+      after do
+        FileUtils.remove_entry(@vault) if @vault
+        FileUtils.remove_entry(@cfg_dir) if @cfg_dir
+      end
+
+      def touch(relative_path, content = "")
+        abs = File.join(@vault, relative_path)
+        FileUtils.mkdir_p(File.dirname(abs))
+        File.write(abs, content)
+        abs
+      end
+
+      it "ignores notes under dot-directories when resolving the title" do
+        touch(".cache/note.md", "x")
+
+        stderr = capture_stderr do
+          expect {
+            capture_stdout { described_class.start(["show", "note"]) }
+          }
+            .to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
+        end
+
+        expect(stderr).to(match(/Error.*not found/))
+      end
+
+      it "warns with candidate paths sorted by basename then path on ambiguity" do
+        touch("projects/Plan.md", "a")
+        touch("archive/Plan.md", "b")
+
+        stderr = capture_stderr do
+          expect {
+            capture_stdout { described_class.start(["show", "Plan"]) }
+          }
+            .to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
+        end
+
+        expect(stderr).to(include("archive/Plan.md"))
+        expect(stderr).to(include("projects/Plan.md"))
+        expect(stderr.index("archive/Plan.md")).to(be < stderr.index("projects/Plan.md"))
+      end
     end
   end
 

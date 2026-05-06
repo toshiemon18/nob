@@ -35,7 +35,7 @@ module Nob
     def show(title)
       config = Nob::Config.load
       relative = resolve_title!(config.vault, title)
-      absolute = File.join(config.vault, relative)
+      absolute = Nob::Vault.path_for(config.vault, relative)
       parsed = Nob::Vault.frontmatter(absolute)
 
       puts("Path     : #{relative}")
