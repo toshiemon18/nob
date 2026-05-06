@@ -5,8 +5,7 @@ module Nob
   module Nob::Notes
     class Nob::Notes::Daily
       Nob::Notes::Daily::Result: untyped
-      def self.create: (vault: untyped, base_path: untyped, file_name_format: untyped, ?template_text: nil, ?now: Time, ?force: false) -> untyped
-      def self.render: (template_text: nil, title: String, now: Time) -> String
+      def self.create: (vault: untyped, base_path: untyped, file_name_format: untyped, ?template_path: nil, ?now: Time, ?force: false) -> untyped
     end
   end
 end

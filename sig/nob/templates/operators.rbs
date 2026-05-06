@@ -4,6 +4,7 @@
 module Nob
   module Nob::Templates
     module Nob::Templates::Operators
+      Nob::Templates::Operators::REGISTRY: Hash[String, singleton(Time)]
       def self.build: (name: untyped, fmt: untyped) -> Time
     end
   end
