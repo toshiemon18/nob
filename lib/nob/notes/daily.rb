@@ -28,7 +28,12 @@ module Nob
         return Result.new(path: target_path, backup_path: nil, action: :skipped) if action == :skipped
 
         FileUtils.mkdir_p(target_dir)
-        File.write(target_path, Nob::Templates.render(path: template_path, title: date_str, now: now))
+        content = if template_path.nil?
+          ""
+        else
+          Nob::Templates.render(title: date_str, now:, path: template_path)
+        end
+        File.write(target_path, content)
         Result.new(path: target_path, backup_path: backup_path, action: action)
       end
     end

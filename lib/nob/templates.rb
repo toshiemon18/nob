@@ -14,13 +14,17 @@ module Nob
     # @return [String] レンダリング結果の文字列
     # (String, Time, Pathname|String, String) -> String
     def self.render(title:, now:, path: nil, text: nil)
-      raise ArgumentError, "path or text must be provided" unless path || text
-      raise ArgumentError, "path must exist" unless path && File.exist?(path)
+      raise ArgumentError, "specify path: or text:" if path.nil? && text.nil?
+      raise ArgumentError, "specify only one of path: or text:" if path && text
 
-      text ||= File.read(path)
-      return "" if text.nil?
+      content = text
+      if path
+        raise Nob::Error, "template file not found: #{path}" unless File.exist?(path)
 
-      Renderer.render(text, title: title, now: now)
+        content = File.read(path)
+      end
+
+      Renderer.render(content, title: title, now: now)
     end
   end
 end
