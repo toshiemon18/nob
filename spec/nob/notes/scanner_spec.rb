@@ -21,7 +21,7 @@ RSpec.describe Nob::Notes::Scanner do
       touch("readme.txt")
       touch("image.png")
 
-      expect(described_class.markdown_files(base)).to eq(["a.md", "nested/b.md"])
+      expect(described_class.markdown_files(base)).to(eq(["a.md", "nested/b.md"]))
     end
 
     it "returns the relative paths sorted ascending" do
@@ -29,7 +29,7 @@ RSpec.describe Nob::Notes::Scanner do
       touch("alpha.md")
       touch("mid/beta.md")
 
-      expect(described_class.markdown_files(base)).to eq(["alpha.md", "mid/beta.md", "zeta.md"])
+      expect(described_class.markdown_files(base)).to(eq(["alpha.md", "mid/beta.md", "zeta.md"]))
     end
 
     it "skips dotfiles and dot-directories" do
@@ -38,13 +38,13 @@ RSpec.describe Nob::Notes::Scanner do
       touch(".obsidian/config.md")
       touch("nested/.cache/x.md")
 
-      expect(described_class.markdown_files(base)).to eq(["visible.md"])
+      expect(described_class.markdown_files(base)).to(eq(["visible.md"]))
     end
 
     it "returns an empty array when the base has no markdown files" do
       touch("note.txt")
 
-      expect(described_class.markdown_files(base)).to eq([])
+      expect(described_class.markdown_files(base)).to(eq([]))
     end
   end
 end

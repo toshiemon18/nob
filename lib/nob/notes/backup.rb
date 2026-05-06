@@ -11,6 +11,7 @@ module Nob
         if File.exist?(backup_path)
           raise Nob::Error, "backup target already exists: #{backup_path}"
         end
+
         FileUtils.mv(path, backup_path)
         backup_path
       end

@@ -26,6 +26,7 @@ module Nob
             tokens << Literal.new(chunk) unless chunk.empty?
           end
         end
+
         tokens
       end
 

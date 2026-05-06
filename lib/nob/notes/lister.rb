@@ -1,8 +1,11 @@
 module Nob
   module Notes
     class Lister
-      class InvalidPrefix < Nob::Error; end
-      class PrefixNotFound < Nob::Error; end
+      class InvalidPrefix < Nob::Error
+      end
+
+      class PrefixNotFound < Nob::Error
+      end
 
       def self.list(vault:, prefix: nil)
         normalized_prefix = normalize_prefix(prefix, vault: vault)
@@ -44,6 +47,7 @@ module Nob
         unless File.exist?(base)
           raise PrefixNotFound, "prefix directory not found: #{normalized_prefix}"
         end
+
         unless File.directory?(base)
           raise InvalidPrefix, "prefix must be a directory: #{normalized_prefix}"
         end

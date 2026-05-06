@@ -4,9 +4,14 @@ require "date"
 module Nob
   module Notes
     class Viewer
-      class NotFound < Nob::Error; end
-      class Ambiguous < Nob::Error; end
-      class InvalidFrontmatter < Nob::Error; end
+      class NotFound < Nob::Error
+      end
+
+      class Ambiguous < Nob::Error
+      end
+
+      class InvalidFrontmatter < Nob::Error
+      end
 
       # Creator は Date を frontmatter に書き出すため、loader 側で Date/Time を許可しておく
       YAML_LOADER = FrontMatterParser::Loader::Yaml.new(
@@ -23,7 +28,7 @@ module Nob
 
         if matches.size > 1
           sorted = matches.sort_by { |m| [File.basename(m), m] }
-          raise Ambiguous, %(multiple notes match "#{title}": #{sorted.join(", ")})
+          raise Ambiguous, "multiple notes match \"#{title}\": #{sorted.join(", ")}"
         end
 
         rel = matches.first
@@ -34,6 +39,7 @@ module Nob
         rescue Psych::SyntaxError => e
           raise InvalidFrontmatter, "invalid YAML frontmatter in #{rel}: #{e.message}"
         end
+
         frontmatter = parsed.front_matter || {}
         content = parsed.content
 

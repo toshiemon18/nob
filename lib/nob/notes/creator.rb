@@ -5,7 +5,8 @@ require "yaml"
 module Nob
   module Notes
     class Creator
-      class AlreadyExists < Nob::Error; end
+      class AlreadyExists < Nob::Error
+      end
 
       # 作成オペレーション結果。既存ノートの値オブジェクト Nob::Entities::Note とは別物。
       Result = Struct.new(:path, :backup_path, :action, keyword_init: true)
@@ -20,6 +21,7 @@ module Nob
           unless force
             raise AlreadyExists, "Note already exists: #{target_path}"
           end
+
           backup_path = Backup.move(target_path)
           action = :recreated
         end

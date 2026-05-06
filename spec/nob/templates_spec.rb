@@ -9,17 +9,19 @@ RSpec.describe Nob::Templates do
     it "raises ArgumentError when neither path nor text is given" do
       expect {
         described_class.render(path: nil, text: nil, title: title, now: now)
-      }.to raise_error(ArgumentError, /specify path: or text:/)
+      }
+        .to(raise_error(ArgumentError, /specify path: or text:/))
     end
 
     it "raises ArgumentError when both path and text are given" do
       expect {
         described_class.render(path: "tpl.md", text: "x", title: title, now: now)
-      }.to raise_error(ArgumentError, /specify only one of path: or text:/)
+      }
+        .to(raise_error(ArgumentError, /specify only one of path: or text:/))
     end
 
     it "renders the given text directly" do
-      expect(described_class.render(text: "# {{title}}\n", title: title, now: now)).to eq("# My Note\n")
+      expect(described_class.render(text: "# {{title}}\n", title: title, now: now)).to(eq("# My Note\n"))
     end
 
     it "reads the template at path and renders it" do
@@ -27,7 +29,7 @@ RSpec.describe Nob::Templates do
         path = File.join(dir, "tpl.md")
         File.write(path, "# {{title}}\n")
 
-        expect(described_class.render(path: path, title: title, now: now)).to eq("# My Note\n")
+        expect(described_class.render(path: path, title: title, now: now)).to(eq("# My Note\n"))
       end
     end
 
@@ -37,27 +39,28 @@ RSpec.describe Nob::Templates do
 
         expect {
           described_class.render(path: missing, title: title, now: now)
-        }.to raise_error(Nob::Error, /template file not found.*#{Regexp.escape(missing)}/)
+        }
+          .to(raise_error(Nob::Error, /template file not found.*#{Regexp.escape(missing)}/))
       end
     end
   end
 
   describe Nob::Templates::UndefinedVariable do
     it "inherits from Nob::Error" do
-      expect(described_class.ancestors).to include(Nob::Error)
+      expect(described_class.ancestors).to(include(Nob::Error))
     end
   end
 
   describe Nob::Templates::ParseError do
     it "inherits from Nob::Error" do
-      expect(described_class.ancestors).to include(Nob::Error)
+      expect(described_class.ancestors).to(include(Nob::Error))
     end
   end
 
   describe Nob::Templates::Literal do
     it "compares by text" do
-      expect(described_class.new("x")).to eq(described_class.new("x"))
-      expect(described_class.new("x")).not_to eq(described_class.new("y"))
+      expect(described_class.new("x")).to(eq(described_class.new("x")))
+      expect(described_class.new("x")).not_to(eq(described_class.new("y")))
     end
   end
 
@@ -66,8 +69,8 @@ RSpec.describe Nob::Templates do
       op1 = Nob::Templates::Operators::Date.new("%Y")
       op2 = Nob::Templates::Operators::Date.new("%Y")
       op3 = Nob::Templates::Operators::Date.new("%m")
-      expect(described_class.new(op1)).to eq(described_class.new(op2))
-      expect(described_class.new(op1)).not_to eq(described_class.new(op3))
+      expect(described_class.new(op1)).to(eq(described_class.new(op2)))
+      expect(described_class.new(op1)).not_to(eq(described_class.new(op3)))
     end
   end
 end

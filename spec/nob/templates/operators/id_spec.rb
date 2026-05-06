@@ -5,15 +5,18 @@ RSpec.describe Nob::Templates::Operators::Id do
 
   describe ".new" do
     it "raises UndefinedVariable when fmt is provided" do
-      expect { described_class.new("foo") }.to raise_error(
-        Nob::Templates::UndefinedVariable, /id does not accept format: foo/
+      expect { described_class.new("foo") }.to(
+        raise_error(
+          Nob::Templates::UndefinedVariable,
+          /id does not accept format: foo/
+        )
       )
     end
   end
 
   describe "#call" do
     it "returns YYYYMMDDHHMMSS" do
-      expect(described_class.new(nil).call(title: "x", now: now)).to eq("20260503090730")
+      expect(described_class.new(nil).call(title: "x", now: now)).to(eq("20260503090730"))
     end
   end
 end

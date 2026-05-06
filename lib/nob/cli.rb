@@ -6,7 +6,7 @@ module Nob
 
     desc "version", "Print nob version"
     def version
-      puts Nob::VERSION
+      puts(Nob::VERSION)
     end
 
     desc "create TITLE", "Create a new note under the vault"
@@ -20,21 +20,21 @@ module Nob
         dir: options[:dir],
         force: options[:force]
       )
-      puts format_note_action(result)
+      puts(format_note_action(result))
     end
 
     desc "show TITLE", "Print path, size, character count, and frontmatter for a note"
     def show(title)
       config = Nob::Config.load
       detail = Nob::Notes::Viewer.show(vault: config.vault, title: title)
-      puts "Path     : #{detail.note.relative_path}"
-      puts "Size     : #{format_size(detail.size)}"
-      puts "Chars    : #{detail.chars}"
+      puts("Path     : #{detail.note.relative_path}")
+      puts("Size     : #{format_size(detail.size)}")
+      puts("Chars    : #{detail.chars}")
       unless detail.frontmatter.empty?
-        puts "---frontmatter---"
+        puts("---frontmatter---")
         key_width = detail.frontmatter.keys.map(&:to_s).map(&:length).max
         detail.frontmatter.each do |key, value|
-          puts "#{key.to_s.ljust([key_width, 8].max)} : #{value}"
+          puts("#{key.to_s.ljust([key_width, 8].max)} : #{value}")
         end
       end
     end
@@ -46,21 +46,23 @@ module Nob
     def config
       flags = [options[:edit], options[:path], options[:show]].count(true)
       if flags > 1
-        warn "Error: specify only one of -e/--path/--show"
-        exit 1
+        warn("Error: specify only one of -e/--path/--show")
+        exit(1)
       end
+
       if flags.zero?
-        warn "Error: specify -e/--path/--show (use -h for usage)"
-        exit 1
+        warn("Error: specify -e/--path/--show (use -h for usage)")
+        exit(1)
       end
+
       path = Nob::Config.default_path
       Nob::Config.ensure_exists(path)
       if options[:edit]
         Nob::Config::Editor.open(path: path)
       elsif options[:path]
-        puts path
+        puts(path)
       elsif options[:show]
-        print File.read(path)
+        print(File.read(path))
       end
     end
 
@@ -70,8 +72,9 @@ module Nob
       config = Nob::Config.load
       settings = config.daily_settings
       if settings.template_path.nil?
-        warn "Warning: no daily-note template configured ([dailyNote].template); creating an empty file."
+        warn("Warning: no daily-note template configured ([dailyNote].template); creating an empty file.")
       end
+
       result = Nob::Notes::Daily.create(
         vault: config.vault,
         base_path: settings.base_path,
@@ -79,7 +82,7 @@ module Nob
         template_path: settings.template_path,
         force: options[:force]
       )
-      puts format_note_action(result)
+      puts(format_note_action(result))
     end
 
     desc "list", "List notes under the vault"
@@ -87,24 +90,26 @@ module Nob
     def list
       config = Nob::Config.load
       entries = Nob::Notes::Lister.list(vault: config.vault, prefix: options[:prefix])
-      entries.each { |entry| puts entry.relative_path }
+      entries.each { |entry| puts(entry.relative_path) }
     end
 
     no_commands do
       def invoke_command(command, *args)
         super
       rescue Nob::Error => e
-        warn "Error: #{e.message}"
-        exit 1
+        warn("Error: #{e.message}")
+        exit(1)
       end
 
       def format_note_action(result)
         case result.action
-        when :created then "Created: #{result.path}"
+        when :created
+          "Created: #{result.path}"
         when :recreated
           base = "Recreated: #{result.path}"
           result.backup_path ? "#{base} (backup: #{result.backup_path})" : base
-        when :skipped then "Already exists: #{result.path}"
+        when :skipped
+          "Already exists: #{result.path}"
         end
       end
 

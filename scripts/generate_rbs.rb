@@ -15,7 +15,7 @@ Dir.glob(File.join(lib_dir.to_s, "**", "*.rb")).each do |entry|
   Open3.popen3(cmd) do |stdin, stdout, stderr, wait_thr|
     err = stderr.read
     unless err.empty?
-      puts err
+      puts(err)
     end
   end
   # puts cmd
