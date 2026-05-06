@@ -17,3 +17,7 @@ run = "rubyfmt --check ./"
 [tasks.fix]
 description = "Auto formtting with rubyfmt"
 run = "rubyfmt -i ./"
+
+[tasks."generate:typesig"]
+description = "Generate type signature with typeprof"
+run = "ruby ./scripts/generate_rbs.rb"
