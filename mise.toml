@@ -4,6 +4,7 @@ task_output = "interleave"
 
 [tools]
 gh = "latest"
+"github:fables-tales/rubyfmt" = "latest"
 
 [tasks.test]
 description = "Run RSpec"
