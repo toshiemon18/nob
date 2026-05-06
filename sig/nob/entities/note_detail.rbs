@@ -1,8 +1,0 @@
-# TypeProf 0.31.1
-
-# lib/nob/entities/note_detail.rb
-module Nob
-  module Nob::Entities
-    Nob::Entities::NoteDetail: untyped
-  end
-end

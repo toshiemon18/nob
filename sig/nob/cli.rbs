@@ -11,7 +11,10 @@ module Nob
     def daily: -> nil
     def list: -> untyped
     def invoke_command: (untyped, *untyped) -> bot
-    def format_note_action: (untyped) -> String?
+    def render_create_content: (untyped, untyped) -> String
+    def resolve_title!: (untyped, untyped) -> untyped
+    def format_write_result: (untyped, nil, recreated: bool) -> String
+    def print_frontmatter: (untyped) -> nil
     def format_size: (untyped) -> String
   end
 end

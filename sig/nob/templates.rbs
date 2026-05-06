@@ -9,6 +9,6 @@ module Nob
     end
     Nob::Templates::Literal: untyped
     Nob::Templates::Variable: untyped
-    def self.render: (title: String, now: Time, ?path: nil | Pathname | String, ?text: String) -> String
+    def self.render: (title: untyped, now: untyped, ?path: nil, ?text: nil) -> untyped
   end
 end

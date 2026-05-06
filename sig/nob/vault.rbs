@@ -1,0 +1,23 @@
+# TypeProf 0.31.1
+
+# lib/nob/vault.rb
+module Nob
+  module Nob::Vault
+    class Nob::Vault::InvalidPrefix # failed to identify its superclass
+    end
+    class Nob::Vault::PrefixNotFound # failed to identify its superclass
+    end
+    class Nob::Vault::InvalidFrontmatter # failed to identify its superclass
+    end
+    Nob::Vault::YAML_LOADER: untyped
+    def self.path_for: (untyped, *untyped) -> String
+    def self.exists?: (untyped) -> bool
+    def self.size: (untyped) -> Integer
+    def self.write: (untyped, untyped) -> Integer
+    def self.list: (untyped, ?prefix: nil) -> Array[String]
+    def self.backup: (untyped, ?now: Time) -> String
+    def self.frontmatter: (untyped) -> Hash[:body | :frontmatter, Hash[untyped, untyped]]
+    def self.normalize_prefix: (nil, vault: untyped) -> nil
+    def self.validate_base!: (String, nil) -> nil
+  end
+end

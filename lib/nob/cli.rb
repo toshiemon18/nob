@@ -1,4 +1,6 @@
+require "date"
 require "thor"
+require "yaml"
 
 module Nob
   class Cli < Thor
@@ -14,29 +16,32 @@ module Nob
     method_option :force, aliases: "-f", type: :boolean, default: false, desc: "Backup existing file and recreate"
     def create(title)
       config = Nob::Config.load
-      result = Nob::Notes::Creator.create(
-        title: title,
-        vault: config.vault,
-        dir: options[:dir],
-        force: options[:force]
-      )
-      puts(format_note_action(result))
+      path = Nob::Vault.path_for(config.vault, options[:dir], "#{title}.md")
+
+      backup_path = nil
+      if Nob::Vault.exists?(path)
+        unless options[:force]
+          raise Nob::Error, "Note already exists: #{path}"
+        end
+
+        backup_path = Nob::Vault.backup(path)
+      end
+
+      Nob::Vault.write(path, render_create_content(title, Date.today))
+      puts(format_write_result(path, backup_path, recreated: !backup_path.nil?))
     end
 
     desc "show TITLE", "Print path, size, character count, and frontmatter for a note"
     def show(title)
       config = Nob::Config.load
-      detail = Nob::Notes::Viewer.show(vault: config.vault, title: title)
-      puts("Path     : #{detail.note.relative_path}")
-      puts("Size     : #{format_size(detail.size)}")
-      puts("Chars    : #{detail.chars}")
-      unless detail.frontmatter.empty?
-        puts("---frontmatter---")
-        key_width = detail.frontmatter.keys.map(&:to_s).map(&:length).max
-        detail.frontmatter.each do |key, value|
-          puts("#{key.to_s.ljust([key_width, 8].max)} : #{value}")
-        end
-      end
+      relative = resolve_title!(config.vault, title)
+      absolute = Nob::Vault.path_for(config.vault, relative)
+      parsed = Nob::Vault.frontmatter(absolute)
+
+      puts("Path     : #{relative}")
+      puts("Size     : #{format_size(Nob::Vault.size(absolute))}")
+      puts("Chars    : #{parsed[:body].length}")
+      print_frontmatter(parsed[:frontmatter])
     end
 
     desc "config", "View or edit the config file (use -e/--path/--show)"
@@ -75,22 +80,39 @@ module Nob
         warn("Warning: no daily-note template configured ([dailyNote].template); creating an empty file.")
       end
 
-      result = Nob::Notes::Daily.create(
-        vault: config.vault,
-        base_path: settings.base_path,
-        file_name_format: settings.file_name_format,
-        template_path: settings.template_path,
-        force: options[:force]
-      )
-      puts(format_note_action(result))
+      now = Time.now
+      date_str = now.strftime(settings.file_name_format)
+      path = Nob::Vault.path_for(config.vault, settings.base_path, "#{date_str}.md")
+
+      backup_path = nil
+      recreated = false
+      if Nob::Vault.exists?(path)
+        if options[:force]
+          backup_path = Nob::Vault.backup(path, now: now)
+          recreated = true
+        elsif Nob::Vault.size(path) > 0
+          puts("Already exists: #{path}")
+          return
+        else
+          recreated = true
+        end
+      end
+
+      content = if settings.template_path.nil?
+        ""
+      else
+        Nob::Templates.render(title: date_str, now: now, path: settings.template_path)
+      end
+
+      Nob::Vault.write(path, content)
+      puts(format_write_result(path, backup_path, recreated: recreated))
     end
 
     desc "list", "List notes under the vault"
     method_option :prefix, type: :string, desc: "Filter by vault-relative subdirectory (e.g. daily, projects/2026)"
     def list
       config = Nob::Config.load
-      entries = Nob::Notes::Lister.list(vault: config.vault, prefix: options[:prefix])
-      entries.each { |entry| puts(entry.relative_path) }
+      Nob::Vault.list(config.vault, prefix: options[:prefix]).each { |rel| puts(rel) }
     end
 
     no_commands do
@@ -101,15 +123,38 @@ module Nob
         exit(1)
       end
 
-      def format_note_action(result)
-        case result.action
-        when :created
-          "Created: #{result.path}"
-        when :recreated
-          base = "Recreated: #{result.path}"
-          result.backup_path ? "#{base} (backup: #{result.backup_path})" : base
-        when :skipped
-          "Already exists: #{result.path}"
+      def render_create_content(title, date)
+        front_matter = YAML.dump({"title" => title, "date" => date})
+        "#{front_matter}---\n\n"
+      end
+
+      def resolve_title!(vault, title)
+        matches = Nob::Vault.list(vault).select { |rel| File.basename(rel, ".md") == title }
+        raise Nob::Error, "note not found: #{title}" if matches.empty?
+
+        if matches.size > 1
+          sorted = matches.sort_by { |m| [File.basename(m), m] }
+          raise Nob::Error, "multiple notes match \"#{title}\": #{sorted.join(", ")}"
+        end
+
+        matches.first
+      end
+
+      def format_write_result(path, backup_path, recreated:)
+        if recreated
+          backup_path ? "Recreated: #{path} (backup: #{backup_path})" : "Recreated: #{path}"
+        else
+          "Created: #{path}"
+        end
+      end
+
+      def print_frontmatter(frontmatter)
+        return if frontmatter.empty?
+
+        puts("---frontmatter---")
+        key_width = frontmatter.keys.map(&:to_s).map(&:length).max
+        frontmatter.each do |key, value|
+          puts("#{key.to_s.ljust([key_width, 8].max)} : #{value}")
         end
       end
 
