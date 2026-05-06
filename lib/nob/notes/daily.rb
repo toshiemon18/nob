@@ -32,6 +32,7 @@ module Nob
         else
           Nob::Templates.render(title: date_str, now:, path: template_path)
         end
+
         File.write(target_path, content)
         Result.new(path: target_path, backup_path: backup_path, action: action)
       end
