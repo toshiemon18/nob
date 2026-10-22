@@ -69,7 +69,7 @@ Nob::Vault.path_for(vault, *segments)
 - [x] **T1**: `Reject vault-escaping segments in Vault.path_for`
     - Red: `spec/nob/vault_spec.rb` の `.path_for` に、上のエッジケース表の各行を追加する（脱出は `InvalidPath`、それ以外は従来の返り値）。`InvalidPath < Nob::Error` も assert する。
     - Green: `InvalidPath` を定義し、`path_for` に包含判定を入れる。Refactor で `within?` を切り出し、`normalize_prefix` にも適用する。
-- [ ] **T2**: `Add CLI regression specs for vault escape via create and daily`
+- [x] **T2**: `Add CLI regression specs for vault escape via create and daily`
     - 回帰テスト（T1 で実装済みなので Red は成立しない。CLI 経路の結線確認が目的）。`spec/nob/cli_spec.rb` に次を追加する。
       - `create x --dir ../escaped` と `create ../evil` が `Error: path escapes the vault` で exit 1 になること。ファイルも `../escaped` ディレクトリも作られないこと。
       - basePath が `../out` の `daily` が同様に exit 1 になり、何も作られないこと。

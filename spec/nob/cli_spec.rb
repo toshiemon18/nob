@@ -319,6 +319,34 @@ RSpec.describe Nob::Cli do
 
       expect(output).to(match(%r{\ARecreated: .*/Dup\.md \(backup: .*Dup\.backup-\d{8}-\d{6}\.md\)\n\z}))
     end
+
+    it "exits 1 without writing when --dir escapes the vault" do
+      escaped_dir = File.join(File.dirname(@vault), "escaped")
+
+      stderr = capture_stderr do
+        expect {
+          capture_stdout { described_class.start(["create", "x", "--dir", "../escaped"]) }
+        }
+          .to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
+      end
+
+      expect(stderr).to(include("Error: path escapes the vault: ../escaped/x.md"))
+      expect(File.exist?(escaped_dir)).to(be(false))
+    end
+
+    it "exits 1 without writing when the title escapes the vault" do
+      evil_path = File.join(File.dirname(@vault), "evil.md")
+
+      stderr = capture_stderr do
+        expect {
+          capture_stdout { described_class.start(["create", "../evil"]) }
+        }
+          .to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
+      end
+
+      expect(stderr).to(include("Error: path escapes the vault: ../evil.md"))
+      expect(File.exist?(evil_path)).to(be(false))
+    end
   end
 
   describe "#daily" do
@@ -408,6 +436,28 @@ RSpec.describe Nob::Cli do
       stderr = capture_stderr { capture_stdout { described_class.start(["daily"]) } }
 
       expect(stderr).to(eq(""))
+    end
+
+    it "exits 1 without writing when basePath escapes the vault" do
+      out_dir = File.join(File.dirname(@vault), "out")
+      File.write(
+        @config_path,
+        <<~TOML
+          vault = "#{@vault}"
+          [dailyNote]
+          basePath = "../out"
+        TOML
+      )
+
+      stderr = capture_stderr do
+        expect {
+          capture_stdout { described_class.start(["daily"]) }
+        }
+          .to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
+      end
+
+      expect(stderr).to(match(%r{Error: path escapes the vault: \.\./out/\d{4}-\d{2}-\d{2}\.md}))
+      expect(File.exist?(out_dir)).to(be(false))
     end
   end
 
