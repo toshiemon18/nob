@@ -13,18 +13,24 @@ module Nob
     class InvalidFrontmatter < Nob::Error
     end
 
+    class InvalidPath < Nob::Error
+    end
+
     YAML_LOADER = FrontMatterParser::Loader::Yaml.new(
       allowlist_classes: [Date, Time]
     )
 
     def self.path_for(vault, *segments)
-      parts = [vault]
-      segments.each do |seg|
-        next if seg.nil? || seg.to_s.empty?
-        parts << seg.to_s
+      relatives = segments.map(&:to_s).reject(&:empty?)
+      absolute = relatives.find { |seg| File.absolute_path?(seg) }
+      raise InvalidPath, "path must be relative to the vault: #{absolute}" if absolute
+
+      path = File.join(vault, *relatives)
+      unless within?(File.expand_path(vault), File.expand_path(path))
+        raise InvalidPath, "path escapes the vault: #{relatives.join("/")}"
       end
 
-      File.join(*parts)
+      path
     end
 
     def self.exists?(path) = File.exist?(path)
@@ -78,11 +84,17 @@ module Nob
 
       vault_real = File.realpath(vault)
       candidate = File.expand_path(stripped, vault_real)
-      unless candidate == vault_real || candidate.start_with?("#{vault_real}#{File::SEPARATOR}")
+      unless within?(vault_real, candidate)
         raise InvalidPrefix, "prefix escapes the vault: #{prefix}"
       end
 
       stripped
+    end
+
+    def self.within?(root, candidate)
+      return true if candidate == root
+
+      candidate.start_with?("#{root.chomp(File::SEPARATOR)}#{File::SEPARATOR}")
     end
 
     def self.validate_base!(base, normalized_prefix)
@@ -97,6 +109,6 @@ module Nob
       end
     end
 
-    private_class_method :normalize_prefix, :validate_base!
+    private_class_method :normalize_prefix, :validate_base!, :within?
   end
 end

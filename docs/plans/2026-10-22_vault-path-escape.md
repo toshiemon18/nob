@@ -66,7 +66,7 @@ Nob::Vault.path_for(vault, *segments)
 
 ## TODO（TDDタスク分解）
 
-- [ ] **T1**: `Reject vault-escaping segments in Vault.path_for`
+- [x] **T1**: `Reject vault-escaping segments in Vault.path_for`
     - Red: `spec/nob/vault_spec.rb` の `.path_for` に、上のエッジケース表の各行を追加する（脱出は `InvalidPath`、それ以外は従来の返り値）。`InvalidPath < Nob::Error` も assert する。
     - Green: `InvalidPath` を定義し、`path_for` に包含判定を入れる。Refactor で `within?` を切り出し、`normalize_prefix` にも適用する。
 - [ ] **T2**: `Add CLI regression specs for vault escape via create and daily`

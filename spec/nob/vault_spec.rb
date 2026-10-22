@@ -31,6 +31,48 @@ RSpec.describe Nob::Vault do
     it "returns vault when only nil/empty segments are given" do
       expect(described_class.path_for("/v", nil, "")).to(eq("/v"))
     end
+
+    it "allows .. that stays inside the vault" do
+      expect(described_class.path_for("/v", "a/../b.md")).to(eq("/v/a/../b.md"))
+    end
+
+    it "allows any segment when the vault is the filesystem root" do
+      expect(described_class.path_for("/", "a.md")).to(eq("/a.md"))
+    end
+
+    it "raises InvalidPath when a segment escapes the vault via .." do
+      expect { described_class.path_for("/v", "../x.md") }.to(
+        raise_error(Nob::Vault::InvalidPath, "path escapes the vault: ../x.md")
+      )
+    end
+
+    it "raises InvalidPath when nested .. climbs above the vault" do
+      expect { described_class.path_for("/v", "a/../../x.md") }.to(
+        raise_error(Nob::Vault::InvalidPath, /escapes the vault/)
+      )
+    end
+
+    it "raises InvalidPath for a sibling directory sharing the vault name prefix" do
+      expect { described_class.path_for("/vault", "../vault2/x.md") }.to(
+        raise_error(Nob::Vault::InvalidPath, /escapes the vault/)
+      )
+    end
+
+    it "raises InvalidPath when the escape spans multiple segments" do
+      expect { described_class.path_for("/v", "..", "x.md") }.to(
+        raise_error(Nob::Vault::InvalidPath, "path escapes the vault: ../x.md")
+      )
+    end
+
+    it "raises InvalidPath when a segment is an absolute path" do
+      expect { described_class.path_for("/v", "/etc", "x.md") }.to(
+        raise_error(Nob::Vault::InvalidPath, "path must be relative to the vault: /etc")
+      )
+    end
+
+    it "defines InvalidPath as a Nob::Error" do
+      expect(Nob::Vault::InvalidPath.ancestors).to(include(Nob::Error))
+    end
   end
 
   describe ".exists? and .size" do
