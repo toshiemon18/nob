@@ -1,7 +1,7 @@
 ---
 title: 書き込み系コマンドで vault の外へ出るパスを拒否する
 slug: vault-path-escape
-status: refining
+status: done
 created: 2026-10-22
 updated: 2026-10-23
 ---
@@ -116,3 +116,16 @@ Critical: なし / Important: なし（全件 3 件）
   - CI の `@master` から `@main` への変更は妥当
 
 ## 実装と計画の差分（recap）
+
+### 意図的な変更
+- 絶対パスの segment（初版 plan では「File.join の結果が vault 配下に収まるので許可」）: `InvalidPath` で拒否する — plan peer-review で `--prefix` の扱いと揃っていないと指摘された。初版の表に書いた `File.join` の結果（`"/v//etc/x.md"`）も誤りだった
+- エラーメッセージの segment 連結（初版の設計は `"/"` で join）: `File.join` に変更 — 既定の basePath `daily/` で `daily//../..` と二重スラッシュになることが、Refine の spec で分かった
+- エッジケース表の `fileNameFormat = "../%Y"`: `"../../%Y"` に訂正 — 既定の basePath だと `daily/../` で vault 内に収まり、脱出しない。学び: 表に載せたエッジケースは、実際の既定値と組み合わせて確かめる
+
+### 想定外の追加
+- T4 `Point setup-homebrew at main in CI`: Homebrew/actions のデフォルトブランチが `master` から `main` に変わり、check-format ジョブが起動前に失敗していた。main ブランチでも同じ原因で落ちるため、この PR で直した
+- Refine の追加 spec（CLI 経路で絶対パスの `--dir` と fileNameFormat を確認）: code peer-review の Nice-to-have を採用した
+
+### 削除・スキップ
+- `create b --dir a/..` で空の `a/` ができる副作用: 設計どおりなので対応しない
+- TODO とコミットの対応: T1〜T4 がそれぞれ 1 コミット、Refine が 1 コミット。plan の TODO と git log が 1 対 1 で対応している
