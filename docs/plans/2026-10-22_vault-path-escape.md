@@ -1,7 +1,7 @@
 ---
 title: 書き込み系コマンドで vault の外へ出るパスを拒否する
 slug: vault-path-escape
-status: implementing
+status: reviewing
 created: 2026-10-22
 updated: 2026-10-23
 ---
@@ -73,7 +73,7 @@ Nob::Vault.path_for(vault, *segments)
     - 回帰テスト（T1 で実装済みなので Red は成立しない。CLI 経路の結線確認が目的）。`spec/nob/cli_spec.rb` に次を追加する。
       - `create x --dir ../escaped` と `create ../evil` が `Error: path escapes the vault` で exit 1 になること。ファイルも `../escaped` ディレクトリも作られないこと。
       - basePath が `../out` の `daily` が同様に exit 1 になり、何も作られないこと。
-- [ ] **T3**: `Document vault-confined write paths in RBS, ADR and design`
+- [x] **T3**: `Document vault-confined write paths in RBS, ADR and design`
     - `mise run generate:typesig` で `sig/nob/vault.rbs` を再生成し、vault.rbs の差分だけをコミットする。他ファイルに無関係な差分が出たら捨てる。
     - `docs/adr/0002_error-policy.md` の例外表に 1 行足す。
     - `docs/design.md` の「ノート管理」に次を明記する。書き込み先（create の title / `--dir`、daily の basePath / fileNameFormat）は vault 内に限り、絶対パスと vault 外を指す `..` は拒否する。symlink は検査しない。

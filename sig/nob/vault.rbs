@@ -9,6 +9,8 @@ module Nob
     end
     class Nob::Vault::InvalidFrontmatter # failed to identify its superclass
     end
+    class Nob::Vault::InvalidPath # failed to identify its superclass
+    end
     Nob::Vault::YAML_LOADER: untyped
     def self.path_for: (untyped, *untyped) -> String
     def self.exists?: (untyped) -> bool
@@ -18,6 +20,7 @@ module Nob
     def self.backup: (untyped, ?now: Time) -> String
     def self.frontmatter: (untyped) -> Hash[:body | :frontmatter, Hash[untyped, untyped]]
     def self.normalize_prefix: (nil, vault: untyped) -> nil
+    def self.within?: (String, String) -> bool
     def self.validate_base!: (String, nil) -> nil
   end
 end
