@@ -27,7 +27,7 @@ module Nob
 
       path = File.join(vault, *relatives)
       unless within?(File.expand_path(vault), File.expand_path(path))
-        raise InvalidPath, "path escapes the vault: #{relatives.join("/")}"
+        raise InvalidPath, "path escapes the vault: #{File.join(*relatives)}"
       end
 
       path

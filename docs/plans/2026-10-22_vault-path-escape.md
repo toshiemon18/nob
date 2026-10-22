@@ -1,7 +1,7 @@
 ---
 title: 書き込み系コマンドで vault の外へ出るパスを拒否する
 slug: vault-path-escape
-status: reviewing
+status: refining
 created: 2026-10-22
 updated: 2026-10-23
 ---
@@ -57,7 +57,7 @@ Nob::Vault.path_for(vault, *segments)
 | `path_for("/v", nil, "")` | `"/v"`（vault 自身。従来どおり） |
 | `path_for("/vault", "../vault2/x.md")` | `InvalidPath`（前方一致の誤判定を `File::SEPARATOR` で防ぐ） |
 | `path_for("/", "a.md")` | `"/a.md"`（vault が `/` でも誤って拒否しない） |
-| daily で `fileNameFormat = "../%Y"` | `InvalidPath`（daily は basePath と日付文字列を両方 `path_for` に渡すので、同じ経路で防げる） |
+| daily で `fileNameFormat = "../../%Y"`（既定の basePath `daily/` から 2 段上がる） | `InvalidPath`（daily は basePath と日付文字列を両方 `path_for` に渡すので、同じ経路で防げる。`"../%Y"` は `daily/../` で vault 内に収まるので許可） |
 
 ### ADR 0002 との整合
 
@@ -96,5 +96,23 @@ Critical: なし
   - fileNameFormat の `../` ケース → **反映**（エッジケース表）
   - 「show も守られる」の書き方が不正確 → **反映**（脱出しうる経路を明記）
 - Out of scope（plan の判断を維持）: symlink の realpath 検査、vault 外の template_path の読み込み、ADR 旧クラス名の一括更新（別 PR）
+
+### Code peer-review (2026-10-23)
+
+Critical: なし / Important: なし（全件 3 件）
+
+- Important: なし
+  - 補足: `path_for` の呼び出し 3 箇所（create・daily・show）はすべて検査を通る。例外は `mkdir_p` と backup より前に raise され、`invoke_command` が `Error:` / exit 1 に変換する。148 examples, 0 failures。
+- Nice-to-have
+  - daily の `fileNameFormat = "../%Y"` を CLI 経路で確かめる spec がない（plan のエッジケース表には載っているが、CLI 経路の spec は basePath だけ）
+    → 対応済（Refine コミット `Add CLI regression specs for absolute --dir and fileNameFormat`）。エッジケース表の `"../%Y"` は既定の basePath だと vault 内に収まるため、`"../../%Y"` に訂正した。spec を書く中で、エラーメッセージが `daily//../..` と二重スラッシュになる問題が見つかった。segment の連結を `File.join` に変えて同じコミットで直した
+  - `create x --dir /tmp` のような絶対パスを CLI から渡す回帰 spec がない（`path_for` の単体 spec では確認済み）
+    → 対応済（同上のコミット）
+  - vault 内に収まる `..` を許可した副作用で、`create b --dir a/..` は `mkdir_p("/v/a/..")` により空の `a/` を作る → plan で許可すると決めた範囲内。記録に残すだけにする
+    → 見送り（設計どおり。vault 外への副作用ではない）
+- Out of scope
+  - symlink 先の検査（plan と design.md でスコープ外と明記済み）
+  - ADR 0002 の表で旧クラス名と `Vault::InvalidPath` の表記が混在している → PR-B（chore/cleanup-docs-lint）で一括更新
+  - CI の `@master` から `@main` への変更は妥当
 
 ## 実装と計画の差分（recap）

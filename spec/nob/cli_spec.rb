@@ -347,6 +347,23 @@ RSpec.describe Nob::Cli do
       expect(stderr).to(include("Error: path escapes the vault: ../evil.md"))
       expect(File.exist?(evil_path)).to(be(false))
     end
+
+    it "exits 1 without writing when --dir is an absolute path" do
+      outside = Dir.mktmpdir("nob-outside")
+
+      stderr = capture_stderr do
+        expect {
+          capture_stdout { described_class.start(["create", "x", "--dir", outside]) }
+        }
+          .to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
+      end
+
+      expect(stderr).to(include("Error: path must be relative to the vault: #{outside}"))
+      expect(Dir.children(outside)).to(be_empty)
+      expect(Dir.children(@vault)).to(be_empty)
+    ensure
+      FileUtils.remove_entry(outside) if outside
+    end
   end
 
   describe "#daily" do
@@ -458,6 +475,28 @@ RSpec.describe Nob::Cli do
 
       expect(stderr).to(match(%r{Error: path escapes the vault: \.\./out/\d{4}-\d{2}-\d{2}\.md}))
       expect(File.exist?(out_dir)).to(be(false))
+    end
+
+    it "exits 1 without writing when fileNameFormat escapes the vault" do
+      File.write(
+        @config_path,
+        <<~TOML
+          vault = "#{@vault}"
+          [dailyNote]
+          fileNameFormat = "../../%Y-escaped"
+        TOML
+      )
+      escaped_path = File.join(File.dirname(@vault), "#{Time.now.year}-escaped.md")
+
+      stderr = capture_stderr do
+        expect {
+          capture_stdout { described_class.start(["daily"]) }
+        }
+          .to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
+      end
+
+      expect(stderr).to(match(%r{Error: path escapes the vault: daily/\.\./\.\./\d{4}-escaped\.md}))
+      expect(File.exist?(escaped_path)).to(be(false))
     end
   end
 
