@@ -77,6 +77,8 @@ Nob::Vault.path_for(vault, *segments)
     - `mise run generate:typesig` で `sig/nob/vault.rbs` を再生成し、vault.rbs の差分だけをコミットする。他ファイルに無関係な差分が出たら捨てる。
     - `docs/adr/0002_error-policy.md` の例外表に 1 行足す。
     - `docs/design.md` の「ノート管理」に次を明記する。書き込み先（create の title / `--dir`、daily の basePath / fileNameFormat）は vault 内に限り、絶対パスと vault 外を指す `..` は拒否する。symlink は検査しない。
+- [x] **T4**: `Point setup-homebrew at main in CI`（Implement 中に追加）
+    - Homebrew/actions のデフォルトブランチが `master` から `main` に変わり、check-format ジョブが Set up job の段階で `Unable to resolve action homebrew/actions@master` になっていた。main ブランチでも同様に落ちるため、この PR で直す。
 
 ## レビューフィードバック
 
