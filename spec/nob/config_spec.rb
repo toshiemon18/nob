@@ -11,6 +11,23 @@ RSpec.describe Nob::Config do
     end
   end
 
+  describe "DEFAULT_CONTENT" do
+    it "parses as TOML with the [dailyNote] example left commented out" do
+      data = TomlRB.parse(described_class::DEFAULT_CONTENT)
+
+      expect(data).to(eq({"vault" => ""}))
+    end
+
+    it "documents a [dailyNote] example that matches DAILY_DEFAULTS when uncommented" do
+      uncommented = described_class::DEFAULT_CONTENT.lines
+        .grep(/^# (\[dailyNote\]$|basePath |fileNameFormat )/)
+        .map { |line| line.delete_prefix("# ") }
+        .join
+
+      expect(TomlRB.parse(uncommented)["dailyNote"]).to(eq(described_class::DAILY_DEFAULTS))
+    end
+  end
+
   describe ".load" do
     def write_config(contents)
       dir = Dir.mktmpdir("nob-cfg")

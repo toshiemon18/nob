@@ -9,6 +9,14 @@ module Nob
       # Vault root: absolute path to your Obsidian vault.
       # Edit this before using nob.
       vault = ""
+
+      # Daily notes (`nob daily`). Uncomment to override the defaults.
+      # Paths are relative to the vault; formats use strftime.
+      # [dailyNote]
+      # basePath = "daily/"
+      # fileNameFormat = "%Y-%m-%d"
+      # Template file (vault-relative or absolute). Without it, an empty note is created.
+      # template = "templates/daily.md"
     TOML
 
     attr_reader :path, :vault
