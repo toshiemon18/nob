@@ -5,6 +5,8 @@ status: accepted
 date: 2026-05-04
 ---
 
+> 改訂（2026-10-23）: 2026-05-06 の vault-flatten で `Notes::*` を `Nob::Vault` に統合したため、決定 B〜D のクラス名を現行の実装に合わせた。コンテキスト節は採択時の記述のまま残している。
+
 ## コンテキスト
 
 `nob` のドメイン層 (`Notes::*`, `Templates::*`, `Config`) は実行中にさまざまな例外に遭遇する。出どころを大別すると 3 種類:
@@ -38,15 +40,15 @@ CLI 層 (`Nob::Cli`) は現状サブコマンド単位で `rescue Nob::Error => 
 | 状況 | 元例外 | 扱い | 派生クラス |
 |------|--------|------|-----------|
 | `vault` 未設定 / 不在ディレクトリ | （無し、自前検出） | raise | `Nob::Error`（直接） |
-| `--prefix` が vault を抜けている | （無し、自前検出） | raise | `Notes::Lister::InvalidPrefix` |
-| `--prefix` ディレクトリが存在しない | （無し、自前検出） | raise | `Notes::Lister::PrefixNotFound` |
+| `--prefix` が vault を抜けている | （無し、自前検出） | raise | `Vault::InvalidPrefix` |
+| `--prefix` ディレクトリが存在しない | （無し、自前検出） | raise | `Vault::PrefixNotFound` |
 | 書き込み先パスが vault を抜けている / 絶対パス（create の title・`--dir`、daily の basePath・fileNameFormat） | （無し、自前検出） | raise | `Vault::InvalidPath` |
-| `nob show` で title 未マッチ | （無し、自前検出） | raise | `Notes::Viewer::NotFound` |
-| `nob show` で title 複数マッチ | （無し、自前検出） | raise | `Notes::Viewer::Ambiguous` |
-| frontmatter YAML が壊れている | `Psych::SyntaxError` | **ラップ** | `Notes::Viewer::InvalidFrontmatter` |
+| `nob show` で title 未マッチ | （無し、自前検出） | raise | `Nob::Error`（直接） |
+| `nob show` で title 複数マッチ | （無し、自前検出） | raise | `Nob::Error`（直接） |
+| frontmatter YAML が壊れている | `Psych::SyntaxError` | **ラップ** | `Vault::InvalidFrontmatter` |
 | テンプレートに未定義変数 | （無し、自前検出） | raise | `Templates::UndefinedVariable` |
 | テンプレート構文エラー | （無し、自前検出） | raise | `Templates::ParseError` |
-| `nob create` で既存ファイル（force 無し） | （無し、自前検出） | raise | `Notes::Creator::AlreadyExists` |
+| `nob create` で既存ファイル（force 無し） | （無し、自前検出） | raise | `Nob::Error`（直接） |
 | `--force` 同秒バックアップ衝突（create / daily 共通） | （無し、自前検出） | raise | `Nob::Error`（直接） |
 | 対象ファイルがレースで消えた | `Errno::ENOENT` | **素通し** | — |
 | パーミッション不足 | `Errno::EACCES` | **素通し** | — |
@@ -57,11 +59,11 @@ CLI 層 (`Nob::Cli`) は現状サブコマンド単位で `rescue Nob::Error => 
 
 - `Nob::Error` 派生は `Nob::<モジュール>::<具体エラー名>` の階層に置く
 - 具体エラー名は短い名詞句にする（`NotFound`, `Ambiguous`, `InvalidPrefix`, `AlreadyExists`, `InvalidFrontmatter`, `ParseError`, `UndefinedVariable` 等）
-- 名前空間が共通の例外でも、別モジュールで同名のクラスを作って構わない（衝突回避のため `Notes::Viewer::NotFound` のように完全修飾で参照）
+- 名前空間が共通の例外でも、別モジュールで同名のクラスを作って構わない（衝突回避のため `Vault::InvalidPrefix` のように完全修飾で参照）
 
 ### D. CLI 層の責務
 
-- CLI 層は `rescue Nob::Error => e` で全派生をまとめて拾う前提。`Notes::Viewer::NotFound` 等の具体クラスを CLI が個別に rescue することは原則しない
+- CLI 層は `rescue Nob::Error => e` で全派生をまとめて拾う前提。`Vault::InvalidPrefix` 等の具体クラスを CLI が個別に rescue することは原則しない
 - ライブラリ例外が CLI 層に到達した場合は素通しでよい（`exit_on_failure?` が Thor 側で例外を表示してくれる）。CLI は ライブラリ例外を catch しない
 - **集約方式**: Thor の `Thor::Invocation#invoke_command(command, *args)` を `Cli` 内で override し、`super` を `rescue Nob::Error => e` で囲む。これで全サブコマンドが共通の rescue 経路を通る（`cli-aggregation` サイクル, 2026-05-05 で採用）
 
