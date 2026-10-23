@@ -189,11 +189,13 @@ RSpec.describe Nob::Config do
 
     it "resolves [note].template relative to the vault" do
       vault = Dir.mktmpdir("nob-vault")
-      config, cfg_dir = write_config(<<~TOML)
-        vault = "#{vault}"
-        [note]
-        template = "templates/note.md"
-      TOML
+      config, cfg_dir = write_config(
+        <<~TOML
+          vault = "#{vault}"
+          [note]
+          template = "templates/note.md"
+        TOML
+      )
 
       expect(config.note_settings.template_path).to(eq(File.join(vault, "templates/note.md")))
     ensure
@@ -203,11 +205,13 @@ RSpec.describe Nob::Config do
 
     it "rejects a [note].template that escapes the vault, naming the config key" do
       vault = Dir.mktmpdir("nob-vault")
-      config, cfg_dir = write_config(<<~TOML)
-        vault = "#{vault}"
-        [note]
-        template = "../note.md"
-      TOML
+      config, cfg_dir = write_config(
+        <<~TOML
+          vault = "#{vault}"
+          [note]
+          template = "../note.md"
+        TOML
+      )
 
       expect { config.note_settings }.to(
         raise_error(Nob::Config::InvalidTemplatePath, "template path escapes the vault: ../note.md ([note].template)")

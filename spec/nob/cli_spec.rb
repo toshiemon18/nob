@@ -334,6 +334,7 @@ RSpec.describe Nob::Cli do
           FileUtils.mkdir_p(File.dirname(abs))
           File.write(abs, template_body)
         end
+
         File.write(
           @config_path,
           <<~TOML
