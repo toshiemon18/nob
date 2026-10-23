@@ -3,6 +3,9 @@ require "toml-rb"
 
 module Nob
   class Config
+    class InvalidTemplatePath < Nob::Error
+    end
+
     DEFAULT_CONTENT = <<~TOML
       # nob configuration
 
@@ -53,20 +56,20 @@ module Nob
 
     def daily_settings
       raw = data["dailyNote"] || {}
-      template = raw["template"]
-      template_path = if template.nil? || template.to_s.empty?
-        nil
-      elsif File.absolute_path?(template)
-        template
-      else
-        File.join(vault, template)
-      end
 
       DailySettings.new(
         base_path: raw["basePath"] || DAILY_DEFAULTS["basePath"],
         file_name_format: raw["fileNameFormat"] || DAILY_DEFAULTS["fileNameFormat"],
-        template_path: template_path
+        template_path: resolve_template(raw["template"], source: "[dailyNote].template")
       )
+    end
+
+    def resolve_template(raw, source:)
+      return nil if raw.nil? || raw.to_s.empty?
+
+      Nob::Vault.path_for(vault, raw.to_s)
+    rescue Nob::Vault::InvalidPath => e
+      raise InvalidTemplatePath, "template #{e.message} (#{source})"
     end
 
     private

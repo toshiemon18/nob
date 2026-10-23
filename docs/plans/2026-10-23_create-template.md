@@ -74,7 +74,7 @@ config.daily_settings  # -> DailySettings（template_path を source "[dailyNote
 
 各 TODO は 1 本の縦スライス（テスト 1 つ → 最小の実装）を積み重ね、green になったら 1 コミットにする。
 
-- [ ] **T1**: `Confine template paths to the vault in Config`（S2）
+- [x] **T1**: `Confine template paths to the vault in Config`（S2）
     - `resolve_template(raw, source:)` と `InvalidTemplatePath` を追加し、`daily_settings` から使う
     - 既存の spec「leaves an absolute template path as-is」は、絶対パスを拒否する spec に置き換える（破壊的変更）
 - [ ] **T2**: `Add Config#note_settings for [note].template`（S2）
