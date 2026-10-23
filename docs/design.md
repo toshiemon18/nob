@@ -137,6 +137,8 @@ nob show <title>             # ノート情報参照
 - ノートはMarkdownファイルとして実ファイルで管理する
 - メタデータはfrontmatter（YAMLヘッダ）で管理する
 - 管理対象ディレクトリ（vault）はconfigで指定する
+- 書き込み先は vault 内に限る。`create` の title・`--dir`、`daily` の basePath・fileNameFormat に絶対パスや vault の外を指す `..` が含まれる場合は `Error: ` で終了する
+  - 判定はパスの字句的な正規化（`File.expand_path`）で行い、symlink の追跡はしない
 
 ---
 

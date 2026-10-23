@@ -40,6 +40,7 @@ CLI 層 (`Nob::Cli`) は現状サブコマンド単位で `rescue Nob::Error => 
 | `vault` 未設定 / 不在ディレクトリ | （無し、自前検出） | raise | `Nob::Error`（直接） |
 | `--prefix` が vault を抜けている | （無し、自前検出） | raise | `Notes::Lister::InvalidPrefix` |
 | `--prefix` ディレクトリが存在しない | （無し、自前検出） | raise | `Notes::Lister::PrefixNotFound` |
+| 書き込み先パスが vault を抜けている / 絶対パス（create の title・`--dir`、daily の basePath・fileNameFormat） | （無し、自前検出） | raise | `Vault::InvalidPath` |
 | `nob show` で title 未マッチ | （無し、自前検出） | raise | `Notes::Viewer::NotFound` |
 | `nob show` で title 複数マッチ | （無し、自前検出） | raise | `Notes::Viewer::Ambiguous` |
 | frontmatter YAML が壊れている | `Psych::SyntaxError` | **ラップ** | `Notes::Viewer::InvalidFrontmatter` |
