@@ -19,7 +19,8 @@ RSpec.describe Nob::Config do
     end
 
     it "documents a [dailyNote] example that matches DAILY_DEFAULTS when uncommented" do
-      uncommented = described_class::DEFAULT_CONTENT.lines
+      uncommented = described_class::DEFAULT_CONTENT
+        .lines
         .grep(/^# (\[dailyNote\]$|basePath |fileNameFormat )/)
         .map { |line| line.delete_prefix("# ") }
         .join
