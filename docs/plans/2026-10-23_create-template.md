@@ -1,7 +1,7 @@
 ---
 title: create のテンプレート対応とテンプレートパスの vault 内制限
 slug: create-template
-status: implementing
+status: reviewing
 created: 2026-10-23
 updated: 2026-10-23
 ---
@@ -96,3 +96,9 @@ config.daily_settings  # -> DailySettings（template_path を source "[dailyNote
 ## レビューフィードバック
 
 ## 実装と計画の差分（recap）
+
+### 実装中に分かったこと（Review 前のメモ）
+- T3: plan では「未設定時の frontmatter は既存の spec で担保」としていたが、既存の spec は出力行しか見ていなかった。`:` を含むタイトルのクォートも含めて spec を追加した
+- T3 / T4 / T1 の一部の spec は、先行するスライスの実装で最初から通った。展開の順序の spec は、順序を逆にした実装で失敗することを確認した
+- 後続の候補: Thor が未定義オプションで `exit` すると、RSpec は途中で止まったまま「0 failures」/ exit 0 で終わる（T4 の Red で発覚）。CLI の spec が黙って打ち切られるテスト基盤の穴
+- 後続の候補: typeprof の推論が不正確（`resolve_template -> nil`、`recreated: false`）。生成物なので手では直していない
