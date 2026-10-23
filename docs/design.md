@@ -156,12 +156,19 @@ nob show <title>             # ノート情報参照
 
 ### テンプレート
 
-#### テンプレートフォルダ
+#### テンプレートファイル
 
-- configでテンプレートフォルダのパスを指定する
-- テンプレートは通常のMarkdownファイルとして管理する
-- テンプレートの編集はエディタで直接行う
-- 特定機能においてテンプレートをファイルパスで任意に指定できる
+- テンプレートは vault 内の通常の Markdown ファイルとして管理し、エディタで直接編集する
+- 機能ごとの config キーで指定する（`[note].template`、`[dailyNote].template`）。共通のテンプレートフォルダは持たない（ADR 0001）
+- `nob create` は `--template PATH`（`-t`）で、その回だけテンプレートを指定できる
+- パスはすべて vault 相対で解決する（`--template` も cwd ではなく vault 基準）。絶対パスと vault の外を指すパスは `Error: ` で終了する。メッセージには指定元（`--template` / `[note].template` / `[dailyNote].template`）を付ける
+
+#### 展開と書き込み
+
+- 展開結果はそのまま書き込む。nob は frontmatter を足さず、YAML として正しいかも検証しない
+- テンプレートがない、構文エラーがある、未定義の変数がある場合は `Error: ` で終了し、ノートを作らない
+- テンプレートの展開に成功してから、`--force` のバックアップと書き込みを行う。失敗したときは既存ファイルにも vault にも手を付けない
+- 変数はエスケープしない。frontmatter の中で使うときは `title: "{{title}}"` のようにクォートする。タイトルに `"` が含まれる場合は、クォートしても YAML として壊れる
 
 #### 変数展開
 
@@ -183,6 +190,18 @@ nob show <title>             # ノート情報参照
 
 ---
 
+### ノート作成（`nob create`）
+
+```toml
+[note]
+template = "templates/note.md"   # vault 相対。省略時は title / date の frontmatter を書く
+```
+
+- 使うテンプレートの優先順位は `--template` > `[note].template` > 既定の出力
+- 既定の出力は `YAML.dump` で作るので、`:` などを含むタイトルも正しくクォートされる
+
+---
+
 ### デイリーノート
 
 #### 設定
@@ -191,7 +210,7 @@ nob show <title>             # ノート情報参照
 [dailyNote]
 basePath = "daily/"            # vault 相対。省略時は "daily/"
 fileNameFormat = "%Y-%m-%d"    # strftime 形式。省略時は "%Y-%m-%d"
-template = "templates/daily.md" # vault 相対または絶対パス。省略時は空ファイルを作成し Warning を出す
+template = "templates/daily.md" # vault 相対。省略時は空ファイルを作成し Warning を出す
 ```
 
 #### 通常作成 `nob daily`

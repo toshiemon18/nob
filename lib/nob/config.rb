@@ -18,8 +18,13 @@ module Nob
       # [dailyNote]
       # basePath = "daily/"
       # fileNameFormat = "%Y-%m-%d"
-      # Template file (vault-relative or absolute). Without it, an empty note is created.
+      # Template file (vault-relative). Without it, an empty note is created.
       # template = "templates/daily.md"
+
+      # Notes created by `nob create`. Without a template, a title/date frontmatter is written.
+      # `nob create --template PATH` overrides this for one invocation.
+      # [note]
+      # template = "templates/note.md"
     TOML
 
     attr_reader :path, :vault

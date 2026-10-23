@@ -3,6 +3,8 @@
 # lib/nob/config.rb
 module Nob
   class Nob::Config
+    class Nob::Config::InvalidTemplatePath # failed to identify its superclass
+    end
     Nob::Config::DEFAULT_CONTENT: String
     def path: -> String
     def vault: -> String
@@ -13,6 +15,9 @@ module Nob
     Nob::Config::DailySettings: untyped
     Nob::Config::DAILY_DEFAULTS: Hash[String, String]
     def daily_settings: -> untyped
+    Nob::Config::NoteSettings: untyped
+    def note_settings: -> untyped
+    def resolve_template: (untyped, source: String) -> nil
     def data: -> untyped
     def resolve_vault!: -> String
   end
