@@ -15,8 +15,8 @@ ObsidianライクなノートをCLIおよびNeovimから操作できるノート
 
 ### 対象
 
-- `lib/nob/core` : コアロジック
-- `lib/nob/cli` : CLIコマンド定義
+- `lib/nob/` : コアロジック（Vault / Config / Templates）
+- `lib/nob/cli.rb` : CLIコマンド定義
 - `exe/nob` : エントリーポイント
 - Neovimプラグイン : CLIをサブプロセスで呼び出す
 
@@ -44,17 +44,29 @@ ObsidianライクなノートをCLIおよびNeovimから操作できるノート
 
 ## プロジェクト構成
 
-単一gemとして管理する。コアロジックとCLIを同一プロジェクト内でディレクトリ分離する。
+単一gemとして管理する。ロードは zeitwerk に任せ、`lib/nob/` 配下のファイルパスと定数名を一致させる。
 
 ```
 nob/
   lib/
+    nob.rb              # エントリ（zeitwerk の setup、Nob::Error）
     nob/
-      core/   # コアロジック
-      cli/    # CLIコマンド定義
+      cli.rb            # CLIコマンド定義（Thor）
+      config.rb         # config.toml の読み込みと検証
+      config/
+        editor.rb       # nob config -e のエディタ起動
+      vault.rb          # vault 内のファイル操作（パス組み立て、列挙、frontmatter、バックアップ）
+      templates.rb      # テンプレートの facade（Templates.render）
+      templates/
+        parser.rb       # 字句解析
+        renderer.rb     # 評価
+        operators.rb    # 変数名 → オペレータのファクトリ
+        operators/      # title / date / time / id
+      version.rb
   exe/
-    nob       # 実行可能ファイル
-  spec/       # テスト
+    nob                 # 実行可能ファイル
+  sig/                  # RBS（typeprof で生成）
+  spec/                 # テスト
   nob.gemspec
 ```
 
@@ -159,10 +171,11 @@ nob show <title>             # ノート情報参照
 |------|--------|------|
 | `{{title}}` | `My Note` | ノートのタイトル |
 | `{{date}}` | `2024-03-27` | 今日の日付（YYYY-MM-DD） |
-| `{{date:YYYY/MM/DD}}` | `2024/03/27` | フォーマット指定 |
+| `{{date:%Y/%m/%d}}` | `2024/03/27` | フォーマット指定（strftime 形式） |
 | `{{date:timestamp}}` | `1711497600` | unixtime |
 | `{{time}}` | `09:00` | 現在時刻（HH:mm） |
-| `{{time:HH:mm:ss}}` | `09:00:00` | フォーマット指定 |
+| `{{time:%H:%M:%S}}` | `09:00:00` | フォーマット指定（strftime 形式） |
+| `{{time:timestamp}}` | `1711497600` | unixtime |
 | `{{id}}` | `20240327090000` | ZettelkastenのID |
 
 - 変数展開は固定変数＋フォーマット指定のみ対応する
@@ -174,28 +187,29 @@ nob show <title>             # ノート情報参照
 
 #### 設定
 
-```yaml
-dailyNote:
-  basePath: "daily/"
-  fileNameFormat: "YYYY-MM-DD"
+```toml
+[dailyNote]
+basePath = "daily/"            # vault 相対。省略時は "daily/"
+fileNameFormat = "%Y-%m-%d"    # strftime 形式。省略時は "%Y-%m-%d"
+template = "templates/daily.md" # vault 相対または絶対パス。省略時は空ファイルを作成し Warning を出す
 ```
 
-#### 通常作成 `note daily`
+#### 通常作成 `nob daily`
 
 ```
-1. {basePath}/YYYY-MM-DD.md のパスを決定
+1. {basePath}/{fileNameFormat}.md のパスを決定
 2. ファイルが存在しない → テンプレートから作成
 3. ファイルが存在 かつ 1byte以上 → スキップ（何もしない）
 4. ファイルが存在 かつ 0byte → テンプレートから作成
 ```
 
-#### 強制作成 `note daily --force`
+#### 強制作成 `nob daily --force`
 
 ```
-1. {basePath}/YYYY-MM-DD.md のパスを決定
+1. {basePath}/{fileNameFormat}.md のパスを決定
 2. ファイルが存在しない → テンプレートから作成
 3. ファイルが存在 →
-     {basePath}/YYYY-MM-DD.backup-YYYYMMDDHHmmss.md に移動
+     {basePath}/{fileNameFormat}.backup-YYYYMMDD-HHmmss.md に移動
      → テンプレートから新規作成
      → バックアップパスを通知する
 ```
@@ -221,9 +235,9 @@ daily/2024-03-27.backup-20240327-153045.md
 
 未解決リンクがあってもシステムはエラーにならず動作を継続する。
 
-#### note show でのリンク表示
+#### nob show でのリンク表示
 
-`note show`はそのノートのリンク一覧を出力する。未解決の場合はその旨を表示する。
+`nob show`はそのノートのリンク一覧を出力する。未解決の場合はその旨を表示する。
 
 ```
 Path     : daily/2024-03-27.md
@@ -240,7 +254,7 @@ date     : 2024-03-27
 #### 未解決リンクの一覧
 
 ```
-note links --unresolved   # vault全体の未解決リンクを一覧表示
+nob links --unresolved    # vault全体の未解決リンクを一覧表示
 ```
 
 #### 新規ノート作成時の配置
@@ -277,7 +291,7 @@ note links --unresolved   # vault全体の未解決リンクを一覧表示
 ### 実装フェーズ
 
 ```
-フェーズ1: vim.fn.system('note create xxx') で叩くだけ
+フェーズ1: vim.fn.system('nob create xxx') で叩くだけ
 フェーズ2: Telescopeと組み合わせてノート一覧をファジー検索
 フェーズ3: ちゃんとしたNeovimプラグインとしてパッケージ化
 ```
