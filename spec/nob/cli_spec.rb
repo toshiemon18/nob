@@ -352,6 +352,30 @@ RSpec.describe Nob::Cli do
         expect(File.read(File.join(@vault, "Meeting.md"))).to(eq("---\ntitle: \"Meeting\"\n---\n# Meeting\n"))
       end
 
+      it "prefers --template (vault-relative) over [note].template" do
+        configure_note_template("from config\n")
+        FileUtils.mkdir_p(File.join(@vault, "templates"))
+        File.write(File.join(@vault, "templates/meeting.md"), "meeting: {{title}}\n")
+
+        capture_stdout { described_class.start(["create", "Weekly", "--template", "templates/meeting.md"]) }
+
+        expect(File.read(File.join(@vault, "Weekly.md"))).to(eq("meeting: Weekly\n"))
+      end
+
+      it "exits 1 naming --template when it escapes the vault" do
+        configure_note_template("from config\n")
+
+        stderr = capture_stderr do
+          expect {
+            capture_stdout { described_class.start(["create", "Weekly", "-t", "../outside.md"]) }
+          }
+            .to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
+        end
+
+        expect(stderr).to(include("Error: template path escapes the vault: ../outside.md (--template)"))
+        expect(File.exist?(File.join(@vault, "Weekly.md"))).to(be(false))
+      end
+
       it "exits 1 without creating the note when the template file is missing" do
         configure_note_template(nil, path: "templates/missing.md")
 

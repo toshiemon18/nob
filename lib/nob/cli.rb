@@ -14,11 +14,13 @@ module Nob
     desc "create TITLE", "Create a new note under the vault"
     method_option :dir, aliases: "-d", type: :string, desc: "Subdirectory under vault (e.g. projects, daily/2026)"
     method_option :force, aliases: "-f", type: :boolean, default: false, desc: "Backup existing file and recreate"
+    method_option :template, aliases: "-t", type: :string, desc: "Vault-relative template path (overrides [note].template)"
     def create(title)
       config = Nob::Config.load
       path = Nob::Vault.path_for(config.vault, options[:dir], "#{title}.md")
       now = Time.now
-      template_path = config.note_settings.template_path
+      template_path = config.resolve_template(options[:template], source: "--template") ||
+        config.note_settings.template_path
       content = if template_path.nil?
         render_create_content(title, now.to_date)
       else

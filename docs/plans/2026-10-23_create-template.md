@@ -84,7 +84,7 @@ config.daily_settings  # -> DailySettings（template_path を source "[dailyNote
     - 未設定なら従来の frontmatter になる（既存の spec は出力行だけを見ていて中身を検証していなかったため、`:` を含むタイトルのクォートも含めて spec を追加）
     - テンプレートがない / 構文エラーなら exit 1 にし、ファイルを作らない
     - `--force` のとき、展開に失敗したら既存ファイルをバックアップせず元のまま残す
-- [ ] **T4**: `Add --template option to create`（S1）
+- [x] **T4**: `Add --template option to create`（S1）
     - `--template` が `[note].template` より優先される
     - vault 基準で解決し、vault の外を指せば `(--template)` 付きのエラーで exit 1 にする
 - [ ] **T5**: `Render daily template before backing up on --force`（S1）
