@@ -79,9 +79,9 @@ config.daily_settings  # -> DailySettings（template_path を source "[dailyNote
     - 既存の spec「leaves an absolute template path as-is」は、絶対パスを拒否する spec に置き換える（破壊的変更）
 - [x] **T2**: `Add Config#note_settings for [note].template`（S2）
     - 未設定なら `template_path` は nil。設定されていれば vault 相対で解決する。vault の外を指せば source が `[note].template` のエラーにする
-- [ ] **T3**: `Render create from [note].template`（S1）
+- [x] **T3**: `Render create from [note].template`（S1）
     - テンプレートを設定すると、展開結果がそのまま書かれる
-    - 未設定なら従来の frontmatter になる（既存 spec で担保）
+    - 未設定なら従来の frontmatter になる（既存の spec は出力行だけを見ていて中身を検証していなかったため、`:` を含むタイトルのクォートも含めて spec を追加）
     - テンプレートがない / 構文エラーなら exit 1 にし、ファイルを作らない
     - `--force` のとき、展開に失敗したら既存ファイルをバックアップせず元のまま残す
 - [ ] **T4**: `Add --template option to create`（S1）

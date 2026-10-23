@@ -17,6 +17,13 @@ module Nob
     def create(title)
       config = Nob::Config.load
       path = Nob::Vault.path_for(config.vault, options[:dir], "#{title}.md")
+      now = Time.now
+      template_path = config.note_settings.template_path
+      content = if template_path.nil?
+        render_create_content(title, now.to_date)
+      else
+        Nob::Templates.render(title: title, now: now, path: template_path)
+      end
 
       backup_path = nil
       if Nob::Vault.exists?(path)
@@ -27,7 +34,7 @@ module Nob
         backup_path = Nob::Vault.backup(path)
       end
 
-      Nob::Vault.write(path, render_create_content(title, Date.today))
+      Nob::Vault.write(path, content)
       puts(format_write_result(path, backup_path, recreated: !backup_path.nil?))
     end
 

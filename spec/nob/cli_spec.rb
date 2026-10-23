@@ -320,6 +320,83 @@ RSpec.describe Nob::Cli do
       expect(output).to(match(%r{\ARecreated: .*/Dup\.md \(backup: .*Dup\.backup-\d{8}-\d{6}\.md\)\n\z}))
     end
 
+    it "writes a quoted title/date frontmatter when no template is configured" do
+      capture_stdout { described_class.start(["create", "会議: 定例"]) }
+
+      content = File.read(File.join(@vault, "会議: 定例.md"))
+      expect(content).to(match(/\A---\ntitle: '会議: 定例'\ndate: \d{4}-\d{2}-\d{2}\n---\n\n\z/))
+    end
+
+    context("with [note].template configured") do
+      def configure_note_template(template_body, path: "templates/note.md")
+        if template_body
+          abs = File.join(@vault, path)
+          FileUtils.mkdir_p(File.dirname(abs))
+          File.write(abs, template_body)
+        end
+        File.write(
+          @config_path,
+          <<~TOML
+            vault = "#{@vault}"
+            [note]
+            template = "#{path}"
+          TOML
+        )
+      end
+
+      it "writes the rendered template verbatim" do
+        configure_note_template("---\ntitle: \"{{title}}\"\n---\n# {{title}}\n")
+
+        capture_stdout { described_class.start(["create", "Meeting"]) }
+
+        expect(File.read(File.join(@vault, "Meeting.md"))).to(eq("---\ntitle: \"Meeting\"\n---\n# Meeting\n"))
+      end
+
+      it "exits 1 without creating the note when the template file is missing" do
+        configure_note_template(nil, path: "templates/missing.md")
+
+        stderr = capture_stderr do
+          expect {
+            capture_stdout { described_class.start(["create", "Meeting"]) }
+          }
+            .to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
+        end
+
+        expect(stderr).to(match(%r{Error: template file not found: .*templates/missing\.md}))
+        expect(File.exist?(File.join(@vault, "Meeting.md"))).to(be(false))
+      end
+
+      it "exits 1 without creating the note when the template has a syntax error" do
+        configure_note_template("# {{unknown}}\n")
+
+        stderr = capture_stderr do
+          expect {
+            capture_stdout { described_class.start(["create", "Meeting"]) }
+          }
+            .to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
+        end
+
+        expect(stderr).to(match(/^Error: .*unknown/))
+        expect(File.exist?(File.join(@vault, "Meeting.md"))).to(be(false))
+      end
+
+      it "leaves the existing note untouched and makes no backup when --force fails to render" do
+        configure_note_template("# {{unknown}}\n")
+        existing = File.join(@vault, "Meeting.md")
+        File.write(existing, "original\n")
+
+        capture_stderr do
+          expect {
+            capture_stdout { described_class.start(["create", "Meeting", "--force"]) }
+          }
+            .to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
+        end
+
+        expect(File.read(existing)).to(eq("original\n"))
+        expect(Dir.glob(File.join(@vault, "Meeting.backup-*.md"))).to(be_empty)
+      end
+    end
+
     it "exits 1 without writing when --dir escapes the vault" do
       escaped_dir = File.join(File.dirname(@vault), "escaped")
 
