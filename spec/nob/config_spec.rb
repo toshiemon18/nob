@@ -169,6 +169,55 @@ RSpec.describe Nob::Config do
     end
   end
 
+  describe "#note_settings" do
+    def write_config(contents)
+      dir = Dir.mktmpdir("nob-cfg")
+      path = File.join(dir, "config.toml")
+      File.write(path, contents)
+      [described_class.load(path: path), dir]
+    end
+
+    it "has no template when [note] is absent" do
+      vault = Dir.mktmpdir("nob-vault")
+      config, cfg_dir = write_config("vault = \"#{vault}\"\n")
+
+      expect(config.note_settings.template_path).to(be_nil)
+    ensure
+      FileUtils.remove_entry(cfg_dir) if cfg_dir
+      FileUtils.remove_entry(vault) if vault
+    end
+
+    it "resolves [note].template relative to the vault" do
+      vault = Dir.mktmpdir("nob-vault")
+      config, cfg_dir = write_config(<<~TOML)
+        vault = "#{vault}"
+        [note]
+        template = "templates/note.md"
+      TOML
+
+      expect(config.note_settings.template_path).to(eq(File.join(vault, "templates/note.md")))
+    ensure
+      FileUtils.remove_entry(cfg_dir) if cfg_dir
+      FileUtils.remove_entry(vault) if vault
+    end
+
+    it "rejects a [note].template that escapes the vault, naming the config key" do
+      vault = Dir.mktmpdir("nob-vault")
+      config, cfg_dir = write_config(<<~TOML)
+        vault = "#{vault}"
+        [note]
+        template = "../note.md"
+      TOML
+
+      expect { config.note_settings }.to(
+        raise_error(Nob::Config::InvalidTemplatePath, "template path escapes the vault: ../note.md ([note].template)")
+      )
+    ensure
+      FileUtils.remove_entry(cfg_dir) if cfg_dir
+      FileUtils.remove_entry(vault) if vault
+    end
+  end
+
   describe "#resolve_template" do
     let(:vault) { Dir.mktmpdir("nob-vault") }
     let(:cfg_dir) { Dir.mktmpdir("nob-cfg") }

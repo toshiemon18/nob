@@ -64,6 +64,14 @@ module Nob
       )
     end
 
+    NoteSettings = Struct.new(:template_path, keyword_init: true)
+
+    def note_settings
+      raw = data["note"] || {}
+
+      NoteSettings.new(template_path: resolve_template(raw["template"], source: "[note].template"))
+    end
+
     def resolve_template(raw, source:)
       return nil if raw.nil? || raw.to_s.empty?
 

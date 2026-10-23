@@ -77,7 +77,7 @@ config.daily_settings  # -> DailySettings（template_path を source "[dailyNote
 - [x] **T1**: `Confine template paths to the vault in Config`（S2）
     - `resolve_template(raw, source:)` と `InvalidTemplatePath` を追加し、`daily_settings` から使う
     - 既存の spec「leaves an absolute template path as-is」は、絶対パスを拒否する spec に置き換える（破壊的変更）
-- [ ] **T2**: `Add Config#note_settings for [note].template`（S2）
+- [x] **T2**: `Add Config#note_settings for [note].template`（S2）
     - 未設定なら `template_path` は nil。設定されていれば vault 相対で解決する。vault の外を指せば source が `[note].template` のエラーにする
 - [ ] **T3**: `Render create from [note].template`（S1）
     - テンプレートを設定すると、展開結果がそのまま書かれる
