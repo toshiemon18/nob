@@ -93,18 +93,10 @@ module Nob
       date_str = now.strftime(settings.file_name_format)
       path = Nob::Vault.path_for(config.vault, settings.base_path, "#{date_str}.md")
 
-      backup_path = nil
-      recreated = false
-      if Nob::Vault.exists?(path)
-        if options[:force]
-          backup_path = Nob::Vault.backup(path, now: now)
-          recreated = true
-        elsif Nob::Vault.size(path) > 0
-          puts("Already exists: #{path}")
-          return
-        else
-          recreated = true
-        end
+      exists = Nob::Vault.exists?(path)
+      if exists && !options[:force] && Nob::Vault.size(path) > 0
+        puts("Already exists: #{path}")
+        return
       end
 
       content = if settings.template_path.nil?
@@ -112,6 +104,9 @@ module Nob
       else
         Nob::Templates.render(title: date_str, now: now, path: settings.template_path)
       end
+
+      backup_path = (Nob::Vault.backup(path, now: now) if exists && options[:force])
+      recreated = exists
 
       Nob::Vault.write(path, content)
       puts(format_write_result(path, backup_path, recreated: recreated))

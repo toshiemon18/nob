@@ -87,7 +87,7 @@ config.daily_settings  # -> DailySettings（template_path を source "[dailyNote
 - [x] **T4**: `Add --template option to create`（S1）
     - `--template` が `[note].template` より優先される
     - vault 基準で解決し、vault の外を指せば `(--template)` 付きのエラーで exit 1 にする
-- [ ] **T5**: `Render daily template before backing up on --force`（S1）
+- [x] **T5**: `Render daily template before backing up on --force`（S1）
     - テンプレートがない状態で `daily --force` を実行したとき、既存ファイルが元のまま残り、バックアップも作られないこと
 - [ ] **T6**: `Document note templates and vault-relative template paths`
     - `design.md`（config 例、`--template`、クォートの注意、順序）、README、ADR 0001 の改訂注記、ADR 0002 の例外表、`DEFAULT_CONTENT` の `[note]` 例（コメントアウト）

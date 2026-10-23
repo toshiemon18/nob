@@ -556,6 +556,30 @@ RSpec.describe Nob::Cli do
       expect(stderr).to(eq(""))
     end
 
+    it "leaves today's note untouched and makes no backup when --force cannot render the template" do
+      capture_stderr { capture_stdout { described_class.start(["daily"]) } }
+      existing = Dir.glob("#{@vault}/daily/*.md").first
+      File.write(existing, "user content\n")
+      File.write(
+        @config_path,
+        <<~TOML
+          vault = "#{@vault}"
+          [dailyNote]
+          template = "templates/missing.md"
+        TOML
+      )
+
+      capture_stderr do
+        expect {
+          capture_stdout { described_class.start(["daily", "--force"]) }
+        }
+          .to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
+      end
+
+      expect(File.read(existing)).to(eq("user content\n"))
+      expect(Dir.glob("#{@vault}/daily/*.backup-*.md")).to(be_empty)
+    end
+
     it "exits 1 without writing when basePath escapes the vault" do
       out_dir = File.join(File.dirname(@vault), "out")
       File.write(
