@@ -1,4 +1,5 @@
 require "date"
+require "did_you_mean"
 require "thor"
 require "yaml"
 
@@ -21,7 +22,7 @@ module Nob
       desc: "Vault-relative template path (overrides #{Nob::Config::Keys::NOTE_TEMPLATE})"
     )
     def create(title)
-      config = Nob::Config.load
+      config = load_config
       path = Nob::Vault.path_for(config.vault, options[:dir], "#{title}.md")
       now = Time.now
       raw_template, source = if options[:template]
@@ -52,7 +53,7 @@ module Nob
 
     desc "show TITLE", "Print path, size, character count, and frontmatter for a note"
     def show(title)
-      config = Nob::Config.load
+      config = load_config
       relative = resolve_title!(config.vault, title)
       absolute = Nob::Vault.path_for(config.vault, relative)
       parsed = Nob::Vault.frontmatter(absolute)
@@ -93,7 +94,7 @@ module Nob
     desc "daily", "Create today's daily note"
     method_option :force, aliases: "-f", type: :boolean, default: false, desc: "Backup existing and recreate"
     def daily
-      config = Nob::Config.load
+      config = load_config
       settings = config.daily_settings
       template_path = Nob::Templates.locate(config.vault, settings.template, source: Nob::Config::Keys::DAILY_TEMPLATE)
       if template_path.nil?
@@ -128,7 +129,7 @@ module Nob
     desc "list", "List notes under the vault"
     method_option :prefix, type: :string, desc: "Filter by vault-relative subdirectory (e.g. daily, projects/2026)"
     def list
-      config = Nob::Config.load
+      config = load_config
       Nob::Vault.list(config.vault, prefix: options[:prefix]).each { |rel| puts(rel) }
     end
 
@@ -138,6 +139,18 @@ module Nob
       rescue Nob::Error => e
         warn("Error: #{e.message}")
         exit(1)
+      end
+
+      def load_config
+        config = Nob::Config.load
+        known = Nob::Config::Keys.all.map(&:to_s)
+        spell_checker = DidYouMean::SpellChecker.new(dictionary: known)
+        config.unknown_keys.each do |key|
+          suggestion = spell_checker.correct(key).first
+          hint = suggestion ? " (did you mean #{suggestion}?)" : ""
+          warn("Warning: unknown config key #{key} in #{config.path}#{hint}")
+        end
+        config
       end
 
       def render_create_content(title, date)

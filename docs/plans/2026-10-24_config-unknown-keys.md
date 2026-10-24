@@ -78,7 +78,7 @@ end
 - [x] **T1**: `Fail specs that exit without expecting SystemExit`（S4）
 - [x] **T2**: `Add Config#unknown_keys`（S1）
     - `Keys.all` を追加する
-- [ ] **T3**: `Warn about unknown config keys`（S2）
+- [x] **T3**: `Warn about unknown config keys`（S2）
     - `load_config` ヘルパ、`DidYouMean::SpellChecker` による候補
 - [ ] **T4**: `Check list prefixes with Vault.path_for`（S3）
 - [ ] **T5**: `Document unknown config key warnings`
