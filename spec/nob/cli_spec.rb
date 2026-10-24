@@ -117,6 +117,29 @@ RSpec.describe Nob::Cli do
         abs
       end
 
+      it "resolves the title case-insensitively" do
+        touch("projects/Plan.md", "a")
+
+        output = capture_stdout { described_class.start(["show", "plan"]) }
+
+        expect(output).to(include("Path     : projects/Plan.md\n"))
+      end
+
+      it "reports notes differing only in case as ambiguous" do
+        touch("projects/Plan.md", "a")
+        touch("archive/plan.md", "b")
+
+        stderr = capture_stderr do
+          expect {
+            capture_stdout { described_class.start(["show", "PLAN"]) }
+          }
+            .to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
+        end
+
+        expect(stderr).to(include("archive/plan.md"))
+        expect(stderr).to(include("projects/Plan.md"))
+      end
+
       it "ignores notes under dot-directories when resolving the title" do
         touch(".cache/note.md", "x")
 

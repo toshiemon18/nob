@@ -53,9 +53,15 @@ module Nob
       relatives.map { |rel| File.join(normalized, rel) }
     end
 
+    # ノート名やリンク先を照合するための鍵。NFC に正規化し、大文字と小文字を区別しない
+    def self.name_key(name)
+      name.unicode_normalize(:nfc).downcase(:fold)
+    end
+
     # ファイル名（拡張子を除く）が title と一致するノートの vault 相対パス
     def self.find_notes(vault, title)
-      list(vault).select { |rel| File.basename(rel, ".md") == title }
+      key = name_key(title)
+      list(vault).select { |rel| name_key(File.basename(rel, ".md")) == key }
     end
 
     def self.backup(path, now: Time.now)

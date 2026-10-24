@@ -214,6 +214,17 @@ RSpec.describe Nob::Vault do
     end
   end
 
+  describe ".name_key" do
+    it "folds case and normalizes to NFC" do
+      expect(described_class.name_key("Plan")).to(eq(described_class.name_key("PLAN")))
+      expect(described_class.name_key("\u30AB\u3099")).to(eq(described_class.name_key("\u30AC")))
+    end
+
+    it "keeps different names apart" do
+      expect(described_class.name_key("Plan")).not_to(eq(described_class.name_key("Plans")))
+    end
+  end
+
   describe ".find_notes" do
     it "returns every note whose file name matches the title, sorted by path" do
       touch("projects/Plan.md")
@@ -221,6 +232,18 @@ RSpec.describe Nob::Vault do
       touch("Planning.md")
 
       expect(described_class.find_notes(vault, "Plan")).to(eq(["archive/Plan.md", "projects/Plan.md"]))
+    end
+
+    it "matches the title case-insensitively" do
+      touch("projects/Plan.md")
+
+      expect(described_class.find_notes(vault, "plan")).to(eq(["projects/Plan.md"]))
+    end
+
+    it "matches a decomposed (NFD) file name against a composed (NFC) title" do
+      touch("\u30AB\u3099\u30A4\u30C9.md")
+
+      expect(described_class.find_notes(vault, "\u30AC\u30A4\u30C9")).to(eq(["\u30AB\u3099\u30A4\u30C9.md"]))
     end
 
     it "returns an empty array when no note matches" do
