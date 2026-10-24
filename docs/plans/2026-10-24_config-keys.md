@@ -1,7 +1,7 @@
 ---
 title: 設定キーを Config::Keys で表し、テンプレートのパス解決を Templates に移す
 slug: config-keys
-status: reviewing
+status: done
 created: 2026-10-24
 updated: 2026-10-24
 ---

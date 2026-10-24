@@ -1,7 +1,7 @@
 ---
 title: cli_spec の準備の共通化、テストの穴埋め、ADR の更新
 slug: spec-setup-and-adr-sync
-status: reviewing
+status: done
 created: 2026-10-24
 updated: 2026-10-24
 ---

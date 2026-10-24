@@ -1,7 +1,7 @@
 ---
 title: create のテンプレート対応とテンプレートパスの vault 内制限
 slug: create-template
-status: reviewing
+status: done
 created: 2026-10-23
 updated: 2026-10-23
 ---

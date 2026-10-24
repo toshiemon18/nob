@@ -9,6 +9,7 @@ module Nob
       Nob::Config::Keys::DAILY_FILE_NAME_FORMAT: untyped
       Nob::Config::Keys::DAILY_TEMPLATE: untyped
       Nob::Config::Keys::NOTE_TEMPLATE: untyped
+      def self.all: -> Array[untyped]
     end
   end
 end

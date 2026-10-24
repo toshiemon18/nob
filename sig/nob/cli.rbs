@@ -11,6 +11,7 @@ module Nob
     def daily: -> nil
     def list: -> untyped
     def invoke_command: (untyped, *untyped) -> bot
+    def load_config: -> untyped
     def render_create_content: (untyped, untyped) -> String
     def resolve_title!: (untyped, untyped) -> untyped
     def format_write_result: (untyped, nil, recreated: false) -> String
