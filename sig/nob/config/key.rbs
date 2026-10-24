@@ -1,0 +1,10 @@
+# TypeProf 0.31.1
+
+# lib/nob/config/key.rb
+module Nob
+  class Nob::Config
+    Nob::Config::Key: untyped
+    def to_s: -> String
+    def read: (untyped) -> untyped
+  end
+end

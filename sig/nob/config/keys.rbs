@@ -1,0 +1,14 @@
+# TypeProf 0.31.1
+
+# lib/nob/config/keys.rb
+module Nob
+  class Nob::Config
+    module Nob::Config::Keys
+      Nob::Config::Keys::VAULT: untyped
+      Nob::Config::Keys::DAILY_BASE_PATH: untyped
+      Nob::Config::Keys::DAILY_FILE_NAME_FORMAT: untyped
+      Nob::Config::Keys::DAILY_TEMPLATE: untyped
+      Nob::Config::Keys::NOTE_TEMPLATE: untyped
+    end
+  end
+end

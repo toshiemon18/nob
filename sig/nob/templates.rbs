@@ -7,8 +7,11 @@ module Nob
     end
     class Nob::Templates::ParseError # failed to identify its superclass
     end
+    class Nob::Templates::InvalidPath # failed to identify its superclass
+    end
     Nob::Templates::Literal: untyped
     Nob::Templates::Variable: untyped
     def self.render: (title: untyped, now: untyped, ?path: nil, ?text: nil) -> untyped
+    def self.locate: (untyped, untyped, source: untyped) -> nil
   end
 end
