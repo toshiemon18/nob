@@ -5,6 +5,8 @@ status: accepted
 date: 2026-05-03
 ---
 
+> 改訂（2026-10-23, create-template）: 前提の「テンプレートは vault 相対パスで指定する」に実装を揃えた。テンプレートのパスは `Config#resolve_template` が `Vault.path_for` で解決し、絶対パスと vault の外を指すパスは `Config::InvalidTemplatePath` で拒否する。これに伴い、決定 I の「vault 相対を絶対に解決する」処理は CLI ではなく Config が担う。
+
 ## コンテキスト
 
 `nob` には `create`, `daily`, 将来の zettel など複数のノート作成シーンがあり、決まったテンプレートからノートを生成したい。design.md で対応すべき変数（`{{title}}`, `{{date}}`, `{{date:fmt}}`, `{{time}}`, `{{time:fmt}}`, `{{id}}`）と「任意コード実行を許さない」方針が定義されている。

@@ -128,7 +128,27 @@ RSpec.describe Nob::Config do
       FileUtils.remove_entry(vault) if vault
     end
 
-    it "leaves an absolute template path as-is" do
+    it "rejects a template path that escapes the vault, naming the config key" do
+      vault = Dir.mktmpdir("nob-vault")
+      contents = <<~TOML
+        vault = "#{vault}"
+        [dailyNote]
+        template = "../tpl.md"
+      TOML
+      config, cfg_dir = write_config(contents)
+
+      expect { config.daily_settings }.to(
+        raise_error(
+          Nob::Config::InvalidTemplatePath,
+          "template path escapes the vault: ../tpl.md ([dailyNote].template)"
+        )
+      )
+    ensure
+      FileUtils.remove_entry(cfg_dir) if cfg_dir
+      FileUtils.remove_entry(vault) if vault
+    end
+
+    it "rejects an absolute template path, naming the config key" do
       vault = Dir.mktmpdir("nob-vault")
       contents = <<~TOML
         vault = "#{vault}"
@@ -137,10 +157,102 @@ RSpec.describe Nob::Config do
       TOML
       config, cfg_dir = write_config(contents)
 
-      expect(config.daily_settings.template_path).to(eq("/etc/nob/daily.md"))
+      expect { config.daily_settings }.to(
+        raise_error(
+          Nob::Config::InvalidTemplatePath,
+          "template path must be relative to the vault: /etc/nob/daily.md ([dailyNote].template)"
+        )
+      )
     ensure
       FileUtils.remove_entry(cfg_dir) if cfg_dir
       FileUtils.remove_entry(vault) if vault
+    end
+  end
+
+  describe "#note_settings" do
+    def write_config(contents)
+      dir = Dir.mktmpdir("nob-cfg")
+      path = File.join(dir, "config.toml")
+      File.write(path, contents)
+      [described_class.load(path: path), dir]
+    end
+
+    it "has no template when [note] is absent" do
+      vault = Dir.mktmpdir("nob-vault")
+      config, cfg_dir = write_config("vault = \"#{vault}\"\n")
+
+      expect(config.note_settings.template_path).to(be_nil)
+    ensure
+      FileUtils.remove_entry(cfg_dir) if cfg_dir
+      FileUtils.remove_entry(vault) if vault
+    end
+
+    it "resolves [note].template relative to the vault" do
+      vault = Dir.mktmpdir("nob-vault")
+      config, cfg_dir = write_config(
+        <<~TOML
+          vault = "#{vault}"
+          [note]
+          template = "templates/note.md"
+        TOML
+      )
+
+      expect(config.note_settings.template_path).to(eq(File.join(vault, "templates/note.md")))
+    ensure
+      FileUtils.remove_entry(cfg_dir) if cfg_dir
+      FileUtils.remove_entry(vault) if vault
+    end
+
+    it "rejects a [note].template that escapes the vault, naming the config key" do
+      vault = Dir.mktmpdir("nob-vault")
+      config, cfg_dir = write_config(
+        <<~TOML
+          vault = "#{vault}"
+          [note]
+          template = "../note.md"
+        TOML
+      )
+
+      expect { config.note_settings }.to(
+        raise_error(Nob::Config::InvalidTemplatePath, "template path escapes the vault: ../note.md ([note].template)")
+      )
+    ensure
+      FileUtils.remove_entry(cfg_dir) if cfg_dir
+      FileUtils.remove_entry(vault) if vault
+    end
+  end
+
+  describe "#resolve_template" do
+    let(:vault) { Dir.mktmpdir("nob-vault") }
+    let(:cfg_dir) { Dir.mktmpdir("nob-cfg") }
+    let(:config) do
+      path = File.join(cfg_dir, "config.toml")
+      File.write(path, "vault = \"#{vault}\"\n")
+      described_class.load(path: path)
+    end
+
+    after do
+      FileUtils.remove_entry(vault)
+      FileUtils.remove_entry(cfg_dir)
+    end
+
+    it "returns nil for a blank value" do
+      expect(config.resolve_template("", source: "--template")).to(be_nil)
+      expect(config.resolve_template(nil, source: "--template")).to(be_nil)
+    end
+
+    it "resolves a vault-relative path" do
+      expect(config.resolve_template("tpl/note.md", source: "--template")).to(eq(File.join(vault, "tpl/note.md")))
+    end
+
+    it "names the given source in the error" do
+      expect { config.resolve_template("../../x.md", source: "--template") }.to(
+        raise_error(Nob::Config::InvalidTemplatePath, "template path escapes the vault: ../../x.md (--template)")
+      )
+    end
+
+    it "is a Nob::Error so the CLI reports it" do
+      expect(Nob::Config::InvalidTemplatePath.ancestors).to(include(Nob::Error))
     end
   end
 end

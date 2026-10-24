@@ -3,6 +3,9 @@ require "toml-rb"
 
 module Nob
   class Config
+    class InvalidTemplatePath < Nob::Error
+    end
+
     DEFAULT_CONTENT = <<~TOML
       # nob configuration
 
@@ -15,8 +18,13 @@ module Nob
       # [dailyNote]
       # basePath = "daily/"
       # fileNameFormat = "%Y-%m-%d"
-      # Template file (vault-relative or absolute). Without it, an empty note is created.
+      # Template file (vault-relative). Without it, an empty note is created.
       # template = "templates/daily.md"
+
+      # Notes created by `nob create`. Without a template, a title/date frontmatter is written.
+      # `nob create --template PATH` overrides this for one invocation.
+      # [note]
+      # template = "templates/note.md"
     TOML
 
     attr_reader :path, :vault
@@ -53,20 +61,28 @@ module Nob
 
     def daily_settings
       raw = data["dailyNote"] || {}
-      template = raw["template"]
-      template_path = if template.nil? || template.to_s.empty?
-        nil
-      elsif File.absolute_path?(template)
-        template
-      else
-        File.join(vault, template)
-      end
 
       DailySettings.new(
         base_path: raw["basePath"] || DAILY_DEFAULTS["basePath"],
         file_name_format: raw["fileNameFormat"] || DAILY_DEFAULTS["fileNameFormat"],
-        template_path: template_path
+        template_path: resolve_template(raw["template"], source: "[dailyNote].template")
       )
+    end
+
+    NoteSettings = Struct.new(:template_path, keyword_init: true)
+
+    def note_settings
+      raw = data["note"] || {}
+
+      NoteSettings.new(template_path: resolve_template(raw["template"], source: "[note].template"))
+    end
+
+    def resolve_template(raw, source:)
+      return nil if raw.nil? || raw.to_s.empty?
+
+      Nob::Vault.path_for(vault, raw.to_s)
+    rescue Nob::Vault::InvalidPath => e
+      raise InvalidTemplatePath, "template #{e.message} (#{source})"
     end
 
     private

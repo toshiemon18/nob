@@ -13,7 +13,7 @@ module Nob
     def invoke_command: (untyped, *untyped) -> bot
     def render_create_content: (untyped, untyped) -> String
     def resolve_title!: (untyped, untyped) -> untyped
-    def format_write_result: (untyped, nil, recreated: bool) -> String
+    def format_write_result: (untyped, nil, recreated: false) -> String
     def print_frontmatter: (untyped) -> nil
     def format_size: (untyped) -> String
   end

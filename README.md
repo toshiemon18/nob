@@ -29,8 +29,13 @@ vault = "~/Documents/MyVault"
 [dailyNote]
 basePath = "daily/"              # vault 相対。省略時は "daily/"
 fileNameFormat = "%Y-%m-%d"      # strftime 形式。省略時は "%Y-%m-%d"
-template = "templates/daily.md"  # vault 相対または絶対パス。省略時は空ファイルを作る
+template = "templates/daily.md"  # vault 相対。省略時は空ファイルを作る
+
+[note]
+template = "templates/note.md"   # nob create 用。vault 相対。省略時は title / date の frontmatter を書く
 ```
+
+テンプレートのパスは vault 相対で書きます（`--template` も同じ）。絶対パスや vault の外を指すパスはエラーになります。テンプレートの変数はエスケープされないので、frontmatter の中では `title: "{{title}}"` のようにクォートしてください。
 
 テンプレートでは `{{title}}` `{{date}}` `{{date:%Y/%m/%d}}` `{{time}}` `{{id}}` などの変数を使えます。一覧は [docs/design.md](docs/design.md) の「テンプレート」を参照してください。
 
@@ -38,7 +43,7 @@ template = "templates/daily.md"  # vault 相対または絶対パス。省略時
 
 | コマンド | 説明 |
 |----------|------|
-| `nob create TITLE [--dir DIR] [--force]` | ノートを作る。`--force` は既存ファイルをバックアップしてから作り直す |
+| `nob create TITLE [--dir DIR] [--force] [--template PATH]` | ノートを作る。`--force` は既存ファイルをバックアップしてから作り直す。`--template`（`-t`）はその回だけ使うテンプレート |
 | `nob list [--prefix PATH]` | vault 内のノートを vault 相対パスで 1 行ずつ出力する |
 | `nob show TITLE` | ノートのパス、サイズ、文字数、frontmatter を表示する |
 | `nob daily [--force]` | 今日のデイリーノートを作る |

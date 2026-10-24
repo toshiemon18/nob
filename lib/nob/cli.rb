@@ -14,9 +14,23 @@ module Nob
     desc "create TITLE", "Create a new note under the vault"
     method_option :dir, aliases: "-d", type: :string, desc: "Subdirectory under vault (e.g. projects, daily/2026)"
     method_option :force, aliases: "-f", type: :boolean, default: false, desc: "Backup existing file and recreate"
+    method_option(
+      :template,
+      aliases: "-t",
+      type: :string,
+      desc: "Vault-relative template path (overrides [note].template)"
+    )
     def create(title)
       config = Nob::Config.load
       path = Nob::Vault.path_for(config.vault, options[:dir], "#{title}.md")
+      now = Time.now
+      template_path = config.resolve_template(options[:template], source: "--template") ||
+        config.note_settings.template_path
+      content = if template_path.nil?
+        render_create_content(title, now.to_date)
+      else
+        Nob::Templates.render(title: title, now: now, path: template_path)
+      end
 
       backup_path = nil
       if Nob::Vault.exists?(path)
@@ -27,7 +41,7 @@ module Nob
         backup_path = Nob::Vault.backup(path)
       end
 
-      Nob::Vault.write(path, render_create_content(title, Date.today))
+      Nob::Vault.write(path, content)
       puts(format_write_result(path, backup_path, recreated: !backup_path.nil?))
     end
 
@@ -84,18 +98,10 @@ module Nob
       date_str = now.strftime(settings.file_name_format)
       path = Nob::Vault.path_for(config.vault, settings.base_path, "#{date_str}.md")
 
-      backup_path = nil
-      recreated = false
-      if Nob::Vault.exists?(path)
-        if options[:force]
-          backup_path = Nob::Vault.backup(path, now: now)
-          recreated = true
-        elsif Nob::Vault.size(path) > 0
-          puts("Already exists: #{path}")
-          return
-        else
-          recreated = true
-        end
+      exists = Nob::Vault.exists?(path)
+      if exists && !options[:force] && Nob::Vault.size(path) > 0
+        puts("Already exists: #{path}")
+        return
       end
 
       content = if settings.template_path.nil?
@@ -103,6 +109,9 @@ module Nob
       else
         Nob::Templates.render(title: date_str, now: now, path: settings.template_path)
       end
+
+      backup_path = (Nob::Vault.backup(path, now: now) if exists && options[:force])
+      recreated = exists
 
       Nob::Vault.write(path, content)
       puts(format_write_result(path, backup_path, recreated: recreated))
