@@ -1,7 +1,7 @@
 ---
 title: cli_spec の準備の共通化、テストの穴埋め、ADR の更新
 slug: spec-setup-and-adr-sync
-status: implementing
+status: reviewing
 created: 2026-10-24
 updated: 2026-10-24
 ---
@@ -54,3 +54,8 @@ end
 ## レビューフィードバック
 
 ## 実装と計画の差分（recap）
+
+- T1: 置き換えたのは `show`（2 か所）、`create`、`daily`、`list`（2 か所）の 6 か所。`config` コマンドの 4 か所は vault を持たないため対象外のまま。example 数は 176 で変わらない
+- T2: どちらも既存の挙動なので、追加した時点で green だった。daily の判定を `>= 0` に、create の `--dir` を無視するように実装を一時的に壊し、追加した spec が落ちることを確かめた
+- T3: ADR 0001 の Loader の補追は、消さずに取り消し線を引き、削除した経緯を補追として足した。エラーメッセージの例は実際に `Templates.render` を呼んで確かめた値にした
+
