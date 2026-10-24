@@ -62,6 +62,7 @@ module Nob
       puts("Size     : #{format_size(Nob::Vault.size(absolute))}")
       puts("Chars    : #{parsed[:body].length}")
       print_frontmatter(parsed[:frontmatter])
+      print_links(config.vault, relative, Nob::Links.extract(File.read(absolute)))
     end
 
     desc "config", "View or edit the config file (use -e/--path/--show)"
@@ -186,6 +187,26 @@ module Nob
         key_width = frontmatter.keys.map(&:to_s).map(&:length).max
         frontmatter.each do |key, value|
           puts("#{key.to_s.ljust([key_width, 8].max)} : #{value}")
+        end
+      end
+
+      def print_links(vault, from, links)
+        distinct = links.uniq(&:raw)
+        return if distinct.empty?
+
+        resolver = Nob::Links::Resolver.new(Nob::Vault.files(vault))
+        width = distinct.map { |link| link.raw.length }.max
+        puts("---links---")
+        distinct.each do |link|
+          puts("#{link.raw.ljust(width)}  → #{format_resolution(resolver.resolve(link.target, from: from))}")
+        end
+      end
+
+      def format_resolution(resolution)
+        case resolution.status
+        when :resolved then resolution.paths.first
+        when :unresolved then "(unresolved)"
+        when :ambiguous then "(ambiguous: #{resolution.paths.join(", ")})"
         end
       end
 

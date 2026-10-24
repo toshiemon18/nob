@@ -44,6 +44,43 @@ RSpec.describe Nob::Cli do
       end
     end
 
+    context("with links") do
+      include_context("tmp vault")
+
+      def touch(relative_path, content = "")
+        abs = File.join(@vault, relative_path)
+        FileUtils.mkdir_p(File.dirname(abs))
+        File.write(abs, content)
+      end
+
+      it "lists each distinct link once with its resolution, after the frontmatter" do
+        touch("projects/Plan.md")
+        touch("a/Note.md")
+        touch("b/Note.md")
+        touch("projects/Hub.md", "---\ntitle: Hub\n---\n[[Plan|計画]] [[missing]]\n[[Note]] [[Plan|計画]]\n")
+
+        output = capture_stdout { described_class.start(["show", "Hub"]) }
+
+        expect(output).to(
+          end_with(
+            "title    : Hub\n" \
+              "---links---\n" \
+              "[[Plan|計画]]  → projects/Plan.md\n" \
+              "[[missing]]  → (unresolved)\n" \
+              "[[Note]]     → (ambiguous: a/Note.md, b/Note.md)\n"
+          )
+        )
+      end
+
+      it "omits the links section when the note has no links" do
+        touch("plain.md", "no links here\n")
+
+        output = capture_stdout { described_class.start(["show", "plain"]) }
+
+        expect(output).not_to(include("---links---"))
+      end
+    end
+
     context("with size formatting") do
       include_context("tmp vault")
 
