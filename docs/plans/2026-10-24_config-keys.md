@@ -1,7 +1,7 @@
 ---
 title: 設定キーを Config::Keys で表し、テンプレートのパス解決を Templates に移す
 slug: config-keys
-status: implementing
+status: reviewing
 created: 2026-10-24
 updated: 2026-10-24
 ---
@@ -121,3 +121,10 @@ warn("Warning: no daily-note template configured (#{Nob::Config::Keys::DAILY_TEM
 ## レビューフィードバック
 
 ## 実装と計画の差分（recap）
+
+### 実装中に分かったこと（Review 前のメモ）
+- T3: plan では「`Config#resolve_template` の spec を `Templates.locate` に移す」としていたが、T3 では `Templates.locate` の spec を足すだけにし、Config 側の spec は実装と一緒に T4 で削除した
+- T4: Config の spec から拒否のテストを外すと、CLI が正しいキーをラベルに渡しているかを確かめるテストがなくなる。そこで CLI spec に `([note].template)` と `([dailyNote].template)` のエラーを足した（既存の CLI spec は変更していない）
+- T5: Warning の文言（ラベル部分）と `--template` の説明は spec で検証していなかった。置き換える前に spec で固定した
+- `design.md` のプロジェクト構成に `config/key.rb` と `config/keys.rb`、`Templates.locate` を追記した（plan の T6 には書いていなかった）
+- 後続の候補: typeprof は `Data.define` のブロック内のメソッド（`Key#to_s` / `#read`）を `Nob::Config` のメソッドとして出力し、`Templates.locate` を `-> nil` と推論する。生成物なので手では直していない
