@@ -1,9 +1,9 @@
 ---
 title: 未知の設定キーの警告、spec の打ち切り対策、prefix 判定の統一
 slug: config-unknown-keys
-status: implementing
+status: reviewing
 created: 2026-10-24
-updated: 2026-10-24
+updated: 2026-10-25
 ---
 
 ## 目的・背景
@@ -88,3 +88,8 @@ end
 ## レビューフィードバック
 
 ## 実装と計画の差分（recap）
+
+- T2: 最初の実装で最上位のキーと未知のセクションの分岐まで書いたため、後から足した spec は最初から green だった。最上位のキーの分岐を壊すと spec が落ちることを確かめた
+- T4: prefix のエラーメッセージは spec で固定されていなかった。置き換える前に固定した。末尾に `/` が付いた prefix もメッセージにそのまま出す（今までどおり）
+- 手動確認: `[dailyNote] basepath` と `[notes] template` で候補付きの警告が出て exit 0、`list --prefix ../x` は従来どおり `Error: prefix escapes the vault: ../x`、`nob config --path` は警告を出さない
+
