@@ -49,7 +49,7 @@ end
 - [x] **T1**: `Share tmp vault setup across CLI specs`
     - shared context を追加し、cli_spec の 6 か所を置き換える。example 数は変わらないこと
 - [x] **T2**: `Cover daily recreation of an empty note and create --dir`
-- [ ] **T3**: `Sync ADRs 0001 and 0002 with the current template code`
+- [x] **T3**: `Sync ADRs 0001 and 0002 with the current template code`
 
 ## レビューフィードバック
 

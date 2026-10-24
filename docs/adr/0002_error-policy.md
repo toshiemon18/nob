@@ -47,6 +47,7 @@ CLI 層 (`Nob::Cli`) は現状サブコマンド単位で `rescue Nob::Error => 
 | `nob show` で title 複数マッチ | （無し、自前検出） | raise | `Nob::Error`（直接） |
 | frontmatter YAML が壊れている | `Psych::SyntaxError` | **ラップ** | `Vault::InvalidFrontmatter` |
 | テンプレートのパスが vault を抜けている / 絶対パス（`--template`、`[note].template`、`[dailyNote].template`） | `Vault::InvalidPath` | **ラップ**（指定元を付ける） | `Templates::InvalidPath` |
+| テンプレートファイルが存在しない | （無し、自前検出） | raise | `Nob::Error`（直接） |
 | テンプレートに未定義変数 | （無し、自前検出） | raise | `Templates::UndefinedVariable` |
 | テンプレート構文エラー | （無し、自前検出） | raise | `Templates::ParseError` |
 | `nob create` で既存ファイル（force 無し） | （無し、自前検出） | raise | `Nob::Error`（直接） |
