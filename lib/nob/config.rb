@@ -75,6 +75,7 @@ module Nob
           [Key.new(section: nil, name: name, default: nil).to_s]
         end
       end
+
       present - known
     end
 

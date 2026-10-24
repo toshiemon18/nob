@@ -150,6 +150,7 @@ module Nob
           hint = suggestion ? " (did you mean #{suggestion}?)" : ""
           warn("Warning: unknown config key #{key} in #{config.path}#{hint}")
         end
+
         config
       end
 
