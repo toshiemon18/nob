@@ -29,6 +29,7 @@ module Nob
       else
         [config.note_settings.template, Nob::Config::Keys::NOTE_TEMPLATE]
       end
+
       template_path = Nob::Templates.locate(config.vault, raw_template, source: source)
       content = if template_path.nil?
         render_create_content(title, now.to_date)
@@ -96,7 +97,9 @@ module Nob
       settings = config.daily_settings
       template_path = Nob::Templates.locate(config.vault, settings.template, source: Nob::Config::Keys::DAILY_TEMPLATE)
       if template_path.nil?
-        warn("Warning: no daily-note template configured (#{Nob::Config::Keys::DAILY_TEMPLATE}); creating an empty file.")
+        warn(
+          "Warning: no daily-note template configured (#{Nob::Config::Keys::DAILY_TEMPLATE}); creating an empty file."
+        )
       end
 
       now = Time.now

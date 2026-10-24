@@ -96,7 +96,10 @@ RSpec.describe Nob::Templates do
 
     it "rejects an absolute path, naming a config key as the source" do
       expect { described_class.locate(vault, "/etc/tpl.md", source: Nob::Config::Keys::NOTE_TEMPLATE) }.to(
-        raise_error(Nob::Templates::InvalidPath, "template path must be relative to the vault: /etc/tpl.md ([note].template)")
+        raise_error(
+          Nob::Templates::InvalidPath,
+          "template path must be relative to the vault: /etc/tpl.md ([note].template)"
+        )
       )
     end
 
