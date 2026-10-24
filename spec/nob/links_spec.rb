@@ -34,5 +34,45 @@ RSpec.describe Nob::Links do
     it "strips spaces around the target" do
       expect(described_class.extract("[[ Plan | 計画 ]]\n").map(&:target)).to(eq(["Plan"]))
     end
+
+    context("with frontmatter") do
+      it "skips links in the frontmatter but keeps counting its lines" do
+        text = "---\nrelated: \"[[A]]\"\n---\n[[B]]\n"
+
+        expect(described_class.extract(text)).to(eq([link("[[B]]", "B", 4)]))
+      end
+
+      it "treats the whole text as body when the frontmatter is not closed" do
+        expect(described_class.extract("---\n[[A]]\n")).to(eq([link("[[A]]", "A", 2)]))
+      end
+
+      it "only treats a --- on the first line as frontmatter" do
+        expect(described_class.extract("intro\n---\n[[A]]\n---\n").map(&:target)).to(eq(["A"]))
+      end
+    end
+
+    context("with code") do
+      it "skips links inside fenced code blocks" do
+        text = "```\n[[A]]\n```\n~~~ruby\n[[B]]\n~~~\n[[C]]\n"
+
+        expect(described_class.extract(text)).to(eq([link("[[C]]", "C", 7)]))
+      end
+
+      it "closes a fence only with the same character and at least the same length" do
+        text = "````\n```\n[[A]]\n~~~~\n````\n[[B]]\n"
+
+        expect(described_class.extract(text).map(&:target)).to(eq(["B"]))
+      end
+
+      it "treats an unclosed fence as code to the end" do
+        expect(described_class.extract("```\n[[A]]\n")).to(eq([]))
+      end
+
+      it "skips links inside inline code" do
+        text = "`[[A]]` [[B]] ``x ` [[C]]`` [[D]]\n"
+
+        expect(described_class.extract(text).map(&:target)).to(eq(["B", "D"]))
+      end
+    end
   end
 end
