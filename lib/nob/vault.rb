@@ -76,19 +76,10 @@ module Nob
     def self.normalize_prefix(prefix, vault:)
       return nil if prefix.nil? || prefix.empty?
 
-      if File.absolute_path?(prefix)
-        raise InvalidPrefix, "prefix must be relative to the vault: #{prefix}"
-      end
-
-      stripped = prefix.chomp("/")
-
-      vault_real = File.realpath(vault)
-      candidate = File.expand_path(stripped, vault_real)
-      unless within?(vault_real, candidate)
-        raise InvalidPrefix, "prefix escapes the vault: #{prefix}"
-      end
-
-      stripped
+      path_for(vault, prefix)
+      prefix.chomp("/")
+    rescue InvalidPath => e
+      raise InvalidPrefix, e.message.sub(/\Apath /, "prefix ")
     end
 
     def self.within?(root, candidate)

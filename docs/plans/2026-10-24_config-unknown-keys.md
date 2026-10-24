@@ -80,7 +80,7 @@ end
     - `Keys.all` を追加する
 - [x] **T3**: `Warn about unknown config keys`（S2）
     - `load_config` ヘルパ、`DidYouMean::SpellChecker` による候補
-- [ ] **T4**: `Check list prefixes with Vault.path_for`（S3）
+- [x] **T4**: `Check list prefixes with Vault.path_for`（S3）
 - [ ] **T5**: `Document unknown config key warnings`
     - design.md（Config の節、Warning の例）、`generate:typesig`
     - 2026-10-23_create-template、2026-10-24_config-keys、2026-10-24_spec-setup-and-adr-sync の status を `done` にする
