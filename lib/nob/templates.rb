@@ -6,6 +6,9 @@ module Nob
     class ParseError < Nob::Error
     end
 
+    class InvalidPath < Nob::Error
+    end
+
     Literal = Struct.new(:text)
     Variable = Struct.new(:operator)
 
@@ -28,6 +31,20 @@ module Nob
       end
 
       Renderer.render(content, title: title, now: now)
+    end
+
+    # テンプレートの指定を vault 内の絶対パスに解決する
+    # @param vault [String] vault のルート
+    # @param raw [String, nil] vault 相対のテンプレートパス
+    # @param source [#to_s] 指定元（config のキーや CLI のオプション）。エラーメッセージに使う
+    # @return [String, nil] 解決したパス。raw が空なら nil
+    # (String, String?, source: _ToS) -> String?
+    def self.locate(vault, raw, source:)
+      return nil if raw.nil? || raw.to_s.empty?
+
+      Nob::Vault.path_for(vault, raw.to_s)
+    rescue Nob::Vault::InvalidPath => e
+      raise InvalidPath, "template #{e.message} (#{source})"
     end
   end
 end
