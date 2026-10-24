@@ -17,6 +17,9 @@ module Nob
     def self.size: (untyped) -> Integer
     def self.write: (untyped, untyped) -> Integer
     def self.list: (untyped, ?prefix: nil) -> Array[String]
+    def self.files: (untyped) -> Array[String]
+    def self.name_key: (String) -> String
+    def self.find_notes: (untyped, untyped) -> Array[String]
     def self.backup: (untyped, ?now: Time) -> String
     def self.frontmatter: (untyped) -> Hash[:body | :frontmatter, Hash[untyped, untyped]]
     def self.normalize_prefix: (nil, vault: untyped) -> nil

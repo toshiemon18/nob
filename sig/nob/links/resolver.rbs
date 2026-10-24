@@ -1,0 +1,13 @@
+# TypeProf 0.31.1
+
+# lib/nob/links/resolver.rb
+module Nob
+  module Nob::Links
+    class Nob::Links::Resolver
+      def initialize: (untyped) -> void
+      def resolve: (untyped, from: untyped) -> untyped
+      def distance: (untyped, untyped) -> Integer
+      def names: (String) -> Array[untyped]
+    end
+  end
+end

@@ -44,6 +44,43 @@ RSpec.describe Nob::Cli do
       end
     end
 
+    context("with links") do
+      include_context("tmp vault")
+
+      def touch(relative_path, content = "")
+        abs = File.join(@vault, relative_path)
+        FileUtils.mkdir_p(File.dirname(abs))
+        File.write(abs, content)
+      end
+
+      it "lists each distinct link once with its resolution, after the frontmatter" do
+        touch("projects/Plan.md")
+        touch("a/Note.md")
+        touch("b/Note.md")
+        touch("projects/Hub.md", "---\ntitle: Hub\n---\n[[Plan|計画]] [[missing]]\n[[Note]] [[Plan|計画]]\n")
+
+        output = capture_stdout { described_class.start(["show", "Hub"]) }
+
+        expect(output).to(
+          end_with(
+            "title    : Hub\n" \
+              "---links---\n" \
+              "[[Plan|計画]]  → projects/Plan.md\n" \
+              "[[missing]]  → (unresolved)\n" \
+              "[[Note]]     → (ambiguous: a/Note.md, b/Note.md)\n"
+          )
+        )
+      end
+
+      it "omits the links section when the note has no links" do
+        touch("plain.md", "no links here\n")
+
+        output = capture_stdout { described_class.start(["show", "plain"]) }
+
+        expect(output).not_to(include("---links---"))
+      end
+    end
+
     context("with size formatting") do
       include_context("tmp vault")
 
@@ -115,6 +152,29 @@ RSpec.describe Nob::Cli do
         FileUtils.mkdir_p(File.dirname(abs))
         File.write(abs, content)
         abs
+      end
+
+      it "resolves the title case-insensitively" do
+        touch("projects/Plan.md", "a")
+
+        output = capture_stdout { described_class.start(["show", "plan"]) }
+
+        expect(output).to(include("Path     : projects/Plan.md\n"))
+      end
+
+      it "reports notes differing only in case as ambiguous" do
+        touch("projects/Plan.md", "a")
+        touch("archive/plan.md", "b")
+
+        stderr = capture_stderr do
+          expect {
+            capture_stdout { described_class.start(["show", "PLAN"]) }
+          }
+            .to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
+        end
+
+        expect(stderr).to(include("archive/plan.md"))
+        expect(stderr).to(include("projects/Plan.md"))
       end
 
       it "ignores notes under dot-directories when resolving the title" do
@@ -696,6 +756,63 @@ RSpec.describe Nob::Cli do
 
         expect(stderr).to(match(/Error.*missing/))
       end
+    end
+  end
+
+  describe "#links" do
+    include_context("tmp vault")
+
+    def touch(relative_path, content = "")
+      abs = File.join(@vault, relative_path)
+      FileUtils.mkdir_p(File.dirname(abs))
+      File.binwrite(abs, content)
+    end
+
+    it "lists unresolved and ambiguous links as path:line, sorted by path then line" do
+      touch("Plan.md")
+      touch("a/Note.md")
+      touch("b/Note.md")
+      touch("z.md", "[[gone]]\n")
+      touch("daily/d.md", "---\ntitle: d\n---\n[[Plan]] [[missing]]\n\n[[Note]] [[missing]]\n")
+
+      output = capture_stdout { described_class.start(["links", "--unresolved"]) }
+
+      expect(output).to(
+        eq(
+          "daily/d.md:4: [[missing]]\n" \
+            "daily/d.md:6: [[Note]] (ambiguous: a/Note.md, b/Note.md)\n" \
+            "daily/d.md:6: [[missing]]\n" \
+            "z.md:1: [[gone]]\n"
+        )
+      )
+    end
+
+    it "prints nothing when every link resolves" do
+      touch("Plan.md", "[[Plan]]\n")
+
+      expect(capture_stdout { described_class.start(["links", "--unresolved"]) }).to(eq(""))
+    end
+
+    it "warns about a note that is not valid UTF-8 and keeps scanning" do
+      touch("bad.md", "[[x]] \xFF\n".b)
+      touch("good.md", "[[gone]]\n")
+
+      stdout = nil
+      stderr = capture_stderr { stdout = capture_stdout { described_class.start(["links", "--unresolved"]) } }
+
+      expect(stderr).to(eq("Warning: skipped bad.md: invalid UTF-8\n"))
+      expect(stdout).to(eq("good.md:1: [[gone]]\n"))
+    end
+
+    it "exits 1 without --unresolved" do
+      stderr = capture_stderr do
+        expect {
+          capture_stdout { described_class.start(["links"]) }
+        }
+          .to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
+      end
+
+      expect(stderr).to(eq("Error: specify --unresolved\n"))
     end
   end
 

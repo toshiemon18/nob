@@ -53,6 +53,22 @@ module Nob
       relatives.map { |rel| File.join(normalized, rel) }
     end
 
+    # vault 内の全ファイル（拡張子を問わない）の vault 相対パス。隠しディレクトリは含まない
+    def self.files(vault)
+      Dir.glob("**/*", base: vault).select { |rel| File.file?(File.join(vault, rel)) }.sort
+    end
+
+    # ノート名やリンク先を照合するための鍵。NFC に正規化し、大文字と小文字を区別しない
+    def self.name_key(name)
+      name.unicode_normalize(:nfc).downcase(:fold)
+    end
+
+    # ファイル名（拡張子を除く）が title と一致するノートの vault 相対パス
+    def self.find_notes(vault, title)
+      key = name_key(title)
+      list(vault).select { |rel| name_key(File.basename(rel, ".md")) == key }
+    end
+
     def self.backup(path, now: Time.now)
       timestamp = now.strftime("%Y%m%d-%H%M%S")
       ext = File.extname(path)
