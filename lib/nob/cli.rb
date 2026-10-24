@@ -227,9 +227,12 @@ module Nob
 
       def format_resolution(resolution)
         case resolution.status
-        when :resolved then resolution.paths.first
-        when :unresolved then "(unresolved)"
-        when :ambiguous then "(ambiguous: #{resolution.paths.join(", ")})"
+        when :resolved
+          resolution.paths.first
+        when :unresolved
+          "(unresolved)"
+        when :ambiguous
+          "(ambiguous: #{resolution.paths.join(", ")})"
         end
       end
 

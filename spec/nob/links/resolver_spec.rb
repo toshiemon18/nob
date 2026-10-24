@@ -14,7 +14,9 @@ RSpec.describe Nob::Links::Resolver do
   end
 
   it "matches names case-insensitively after NFC" do
-    expect(resolve(["\u30AB\u3099\u30A4\u30C9.md"], "\u30AC\u30A4\u30C9")).to(eq(resolved("\u30AB\u3099\u30A4\u30C9.md")))
+    expect(resolve(["\u30AB\u3099\u30A4\u30C9.md"], "\u30AC\u30A4\u30C9")).to(
+      eq(resolved("\u30AB\u3099\u30A4\u30C9.md"))
+    )
     expect(resolve(["Plan.md"], "plan")).to(eq(resolved("Plan.md")))
   end
 

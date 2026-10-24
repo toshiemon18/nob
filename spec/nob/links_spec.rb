@@ -13,7 +13,9 @@ RSpec.describe Nob::Links do
     it "extracts every link in order, numbering lines from 1" do
       text = "[[a]] and [[b]]\nnone\n[[c]]\n"
 
-      expect(described_class.extract(text)).to(eq([link("[[a]]", "a", 1), link("[[b]]", "b", 1), link("[[c]]", "c", 3)]))
+      expect(described_class.extract(text)).to(
+        eq([link("[[a]]", "a", 1), link("[[b]]", "b", 1), link("[[c]]", "c", 3)])
+      )
     end
 
     it "takes the target before an alias, a heading, or a block reference" do

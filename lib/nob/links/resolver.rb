@@ -19,6 +19,7 @@ module Nob
             names(File.basename(rel)).include?(key)
           end
         end
+
         return Resolution.new(status: :unresolved, paths: []) if candidates.empty?
 
         by_distance = candidates.group_by { |rel| distance(from, rel) }
