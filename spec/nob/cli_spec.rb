@@ -306,6 +306,12 @@ RSpec.describe Nob::Cli do
       FileUtils.remove_entry(@cfg_dir) if @cfg_dir
     end
 
+    it "describes --template as overriding [note].template in the help" do
+      output = capture_stdout { described_class.start(["help", "create"]) }
+
+      expect(output).to(include("Vault-relative template path (overrides [note].template)"))
+    end
+
     it "prints Created: <path> for a fresh note" do
       output = capture_stdout { described_class.start(["create", "FreshNote"]) }
 
@@ -574,7 +580,9 @@ RSpec.describe Nob::Cli do
       end
 
       expect(stdout).to(match(/^Created: /))
-      expect(stderr).to(match(/^Warning: no daily-note template configured/))
+      expect(stderr).to(
+        eq("Warning: no daily-note template configured ([dailyNote].template); creating an empty file.\n")
+      )
     end
 
     it "does not warn when a template is configured and exists" do

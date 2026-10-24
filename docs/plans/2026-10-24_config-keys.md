@@ -113,7 +113,7 @@ warn("Warning: no daily-note template configured (#{Nob::Config::Keys::DAILY_TEM
 - [x] **T4**: `Return raw template values from Config and locate them in the CLI`（S1 / S2）
     - Settings の `template_path` を `template`（生の値）に変え、create と daily を `Templates.locate` に切り替える。`Config#resolve_template` と `InvalidTemplatePath` を削除する
     - 既存の CLI spec が変更なしで通ること
-- [ ] **T5**: `Derive config key labels in CLI messages from Config::Keys`（S1）
+- [x] **T5**: `Derive config key labels in CLI messages from Config::Keys`（S1）
     - daily の Warning と `--template` の説明を `Keys` から作る
 - [ ] **T6**: `Update ADRs and RBS for Config::Keys and Templates.locate`
     - ADR 0001 の改訂注記（解決は `Templates.locate`、ラベルは caller）、ADR 0002 の例外表（`Templates::InvalidPath`）、`generate:typesig`

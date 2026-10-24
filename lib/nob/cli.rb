@@ -18,7 +18,7 @@ module Nob
       :template,
       aliases: "-t",
       type: :string,
-      desc: "Vault-relative template path (overrides [note].template)"
+      desc: "Vault-relative template path (overrides #{Nob::Config::Keys::NOTE_TEMPLATE})"
     )
     def create(title)
       config = Nob::Config.load
@@ -96,7 +96,7 @@ module Nob
       settings = config.daily_settings
       template_path = Nob::Templates.locate(config.vault, settings.template, source: Nob::Config::Keys::DAILY_TEMPLATE)
       if template_path.nil?
-        warn("Warning: no daily-note template configured ([dailyNote].template); creating an empty file.")
+        warn("Warning: no daily-note template configured (#{Nob::Config::Keys::DAILY_TEMPLATE}); creating an empty file.")
       end
 
       now = Time.now
