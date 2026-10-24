@@ -6,6 +6,11 @@ module Nob
     # @!attribute line   ファイル先頭からの行番号
     Link = Data.define(:raw, :target, :line)
 
+    # リンク先の解決結果
+    # @!attribute status :resolved / :unresolved / :ambiguous
+    # @!attribute paths  解決したパス（:ambiguous なら候補すべて）。vault 相対
+    Resolution = Data.define(:status, :paths)
+
     PATTERN = /!?\[\[([^\[\]\n]+)\]\]/
     FENCE = /\A {0,3}(`{3,}|~{3,})/
     INLINE_CODE = /(?<!`)(`+)(?!`).+?(?<!`)\1(?!`)/

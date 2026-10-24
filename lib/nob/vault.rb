@@ -53,6 +53,11 @@ module Nob
       relatives.map { |rel| File.join(normalized, rel) }
     end
 
+    # vault 内の全ファイル（拡張子を問わない）の vault 相対パス。隠しディレクトリは含まない
+    def self.files(vault)
+      Dir.glob("**/*", base: vault).select { |rel| File.file?(File.join(vault, rel)) }.sort
+    end
+
     # ノート名やリンク先を照合するための鍵。NFC に正規化し、大文字と小文字を区別しない
     def self.name_key(name)
       name.unicode_normalize(:nfc).downcase(:fold)

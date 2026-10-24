@@ -214,6 +214,17 @@ RSpec.describe Nob::Vault do
     end
   end
 
+  describe ".files" do
+    it "lists every file regardless of extension, sorted, skipping directories and dot-directories" do
+      touch("a.md")
+      touch("img/diagram.png")
+      touch(".obsidian/app.json")
+      FileUtils.mkdir_p(File.join(vault, "empty"))
+
+      expect(described_class.files(vault)).to(eq(["a.md", "img/diagram.png"]))
+    end
+  end
+
   describe ".name_key" do
     it "folds case and normalizes to NFC" do
       expect(described_class.name_key("Plan")).to(eq(described_class.name_key("PLAN")))
