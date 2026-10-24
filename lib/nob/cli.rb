@@ -134,6 +134,29 @@ module Nob
       Nob::Vault.list(config.vault, prefix: options[:prefix]).each { |rel| puts(rel) }
     end
 
+    desc "links --unresolved", "List links that do not resolve to a single file, as path:line"
+    method_option :unresolved, type: :boolean, default: false, desc: "List unresolved and ambiguous links"
+    def links
+      raise Nob::Error, "specify --unresolved" unless options[:unresolved]
+
+      config = load_config
+      resolver = Nob::Links::Resolver.new(Nob::Vault.files(config.vault))
+      Nob::Vault.list(config.vault).each do |rel|
+        text = File.read(Nob::Vault.path_for(config.vault, rel), encoding: "UTF-8")
+        unless text.valid_encoding?
+          warn("Warning: skipped #{rel}: invalid UTF-8")
+          next
+        end
+
+        Nob::Links.extract(text).each do |link|
+          resolution = resolver.resolve(link.target, from: rel)
+          next if resolution.status == :resolved
+
+          puts("#{rel}:#{link.line}: #{link.raw}#{format_unresolved_hint(resolution)}")
+        end
+      end
+    end
+
     no_commands do
       def invoke_command(command, *args)
         super
@@ -208,6 +231,10 @@ module Nob
         when :unresolved then "(unresolved)"
         when :ambiguous then "(ambiguous: #{resolution.paths.join(", ")})"
         end
+      end
+
+      def format_unresolved_hint(resolution)
+        resolution.status == :ambiguous ? " (ambiguous: #{resolution.paths.join(", ")})" : ""
       end
 
       def format_size(bytes)
