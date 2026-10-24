@@ -45,19 +45,7 @@ RSpec.describe Nob::Cli do
     end
 
     context("with size formatting") do
-      before do
-        @vault = Dir.mktmpdir("nob-vault")
-        @cfg_dir = Dir.mktmpdir("nob-cfg")
-        config_path = File.join(@cfg_dir, "nob", "config.toml")
-        FileUtils.mkdir_p(File.dirname(config_path))
-        File.write(config_path, "vault = \"#{@vault}\"\n")
-        allow(Nob::Config).to(receive(:default_path).and_return(config_path))
-      end
-
-      after do
-        FileUtils.remove_entry(@vault) if @vault
-        FileUtils.remove_entry(@cfg_dir) if @cfg_dir
-      end
+      include_context("tmp vault")
 
       it "formats sub-1KB sizes in bytes" do
         File.write(File.join(@vault, "tiny.md"), "x" * 512)
@@ -120,19 +108,7 @@ RSpec.describe Nob::Cli do
     end
 
     context("with title resolution edge cases") do
-      before do
-        @vault = Dir.mktmpdir("nob-vault")
-        @cfg_dir = Dir.mktmpdir("nob-cfg")
-        config_path = File.join(@cfg_dir, "nob", "config.toml")
-        FileUtils.mkdir_p(File.dirname(config_path))
-        File.write(config_path, "vault = \"#{@vault}\"\n")
-        allow(Nob::Config).to(receive(:default_path).and_return(config_path))
-      end
-
-      after do
-        FileUtils.remove_entry(@vault) if @vault
-        FileUtils.remove_entry(@cfg_dir) if @cfg_dir
-      end
+      include_context("tmp vault")
 
       def touch(relative_path, content = "")
         abs = File.join(@vault, relative_path)
@@ -292,19 +268,7 @@ RSpec.describe Nob::Cli do
   end
 
   describe "#create" do
-    before do
-      @vault = Dir.mktmpdir("nob-vault")
-      @cfg_dir = Dir.mktmpdir("nob-cfg")
-      @config_path = File.join(@cfg_dir, "nob", "config.toml")
-      FileUtils.mkdir_p(File.dirname(@config_path))
-      File.write(@config_path, "vault = \"#{@vault}\"\n")
-      allow(Nob::Config).to(receive(:default_path).and_return(@config_path))
-    end
-
-    after do
-      FileUtils.remove_entry(@vault) if @vault
-      FileUtils.remove_entry(@cfg_dir) if @cfg_dir
-    end
+    include_context("tmp vault")
 
     it "describes --template as overriding [note].template in the help" do
       output = capture_stdout { described_class.start(["help", "create"]) }
@@ -341,8 +305,7 @@ RSpec.describe Nob::Cli do
           File.write(abs, template_body)
         end
 
-        File.write(
-          @config_path,
+        write_config(
           <<~TOML
             vault = "#{@vault}"
             [note]
@@ -489,19 +452,7 @@ RSpec.describe Nob::Cli do
   end
 
   describe "#daily" do
-    before do
-      @vault = Dir.mktmpdir("nob-vault")
-      @cfg_dir = Dir.mktmpdir("nob-cfg")
-      @config_path = File.join(@cfg_dir, "nob", "config.toml")
-      FileUtils.mkdir_p(File.dirname(@config_path))
-      File.write(@config_path, "vault = \"#{@vault}\"\n")
-      allow(Nob::Config).to(receive(:default_path).and_return(@config_path))
-    end
-
-    after do
-      FileUtils.remove_entry(@vault) if @vault
-      FileUtils.remove_entry(@cfg_dir) if @cfg_dir
-    end
+    include_context("tmp vault")
 
     it "creates today's daily note and prints Created:" do
       output = nil
@@ -531,8 +482,7 @@ RSpec.describe Nob::Cli do
     end
 
     it "warns and exits 1 when the configured template path is missing" do
-      File.write(
-        @config_path,
+      write_config(
         <<~TOML
           vault = "#{@vault}"
           [dailyNote]
@@ -551,8 +501,7 @@ RSpec.describe Nob::Cli do
     end
 
     it "exits 1 naming [dailyNote].template when it is an absolute path" do
-      File.write(
-        @config_path,
+      write_config(
         <<~TOML
           vault = "#{@vault}"
           [dailyNote]
@@ -588,8 +537,7 @@ RSpec.describe Nob::Cli do
     it "does not warn when a template is configured and exists" do
       template_path = File.join(@vault, "tpl.md")
       File.write(template_path, "# {{title}}\n")
-      File.write(
-        @config_path,
+      write_config(
         <<~TOML
           vault = "#{@vault}"
           [dailyNote]
@@ -606,8 +554,7 @@ RSpec.describe Nob::Cli do
       capture_stderr { capture_stdout { described_class.start(["daily"]) } }
       existing = Dir.glob("#{@vault}/daily/*.md").first
       File.write(existing, "user content\n")
-      File.write(
-        @config_path,
+      write_config(
         <<~TOML
           vault = "#{@vault}"
           [dailyNote]
@@ -628,8 +575,7 @@ RSpec.describe Nob::Cli do
 
     it "exits 1 without writing when basePath escapes the vault" do
       out_dir = File.join(File.dirname(@vault), "out")
-      File.write(
-        @config_path,
+      write_config(
         <<~TOML
           vault = "#{@vault}"
           [dailyNote]
@@ -649,8 +595,7 @@ RSpec.describe Nob::Cli do
     end
 
     it "exits 1 without writing when fileNameFormat escapes the vault" do
-      File.write(
-        @config_path,
+      write_config(
         <<~TOML
           vault = "#{@vault}"
           [dailyNote]
@@ -701,20 +646,7 @@ RSpec.describe Nob::Cli do
     end
 
     context("with an empty vault") do
-      before do
-        @empty_vault = Dir.mktmpdir("nob-empty-vault")
-        cfg_dir = Dir.mktmpdir("nob-cfg")
-        config_path = File.join(cfg_dir, "nob", "config.toml")
-        FileUtils.mkdir_p(File.dirname(config_path))
-        File.write(config_path, "vault = \"#{@empty_vault}\"\n")
-        allow(Nob::Config).to(receive(:default_path).and_return(config_path))
-        @cfg_dir = cfg_dir
-      end
-
-      after do
-        FileUtils.remove_entry(@empty_vault)
-        FileUtils.remove_entry(@cfg_dir)
-      end
+      include_context("tmp vault")
 
       it "prints nothing and exits 0 when the vault has no notes" do
         output = capture_stdout { described_class.start(["list"]) }
@@ -724,24 +656,17 @@ RSpec.describe Nob::Cli do
     end
 
     context("with error conditions") do
+      include_context("tmp vault")
+
       it "warns and exits 1 when the prefix directory does not exist" do
-        Dir.mktmpdir("nob-vault") do |vault|
-          Dir.mktmpdir("nob-cfg") do |cfg_dir|
-            config_path = File.join(cfg_dir, "nob", "config.toml")
-            FileUtils.mkdir_p(File.dirname(config_path))
-            File.write(config_path, "vault = \"#{vault}\"\n")
-            allow(Nob::Config).to(receive(:default_path).and_return(config_path))
-
-            stderr = capture_stderr do
-              expect {
-                capture_stdout { described_class.start(["list", "--prefix", "missing"]) }
-              }
-                .to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
-            end
-
-            expect(stderr).to(match(/Error.*missing/))
-          end
+        stderr = capture_stderr do
+          expect {
+            capture_stdout { described_class.start(["list", "--prefix", "missing"]) }
+          }
+            .to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
         end
+
+        expect(stderr).to(match(/Error.*missing/))
       end
     end
   end
