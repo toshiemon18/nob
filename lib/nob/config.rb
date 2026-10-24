@@ -65,6 +65,20 @@ module Nob
       NoteSettings.new(template: Keys::NOTE_TEMPLATE.read(data))
     end
 
+    # 設定ファイルにあって Keys にないキーの表示名（"[note].tempalte" など）
+    def unknown_keys
+      known = Keys.all.map(&:to_s)
+      present = data.flat_map do |name, value|
+        if value.is_a?(Hash)
+          value.keys.map { |key| Key.new(section: name, name: key, default: nil).to_s }
+        else
+          [Key.new(section: nil, name: name, default: nil).to_s]
+        end
+      end
+
+      present - known
+    end
+
     private
 
     attr_reader :data

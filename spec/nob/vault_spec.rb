@@ -194,14 +194,14 @@ RSpec.describe Nob::Vault do
       expect {
         described_class.list(vault, prefix: "/etc")
       }
-        .to(raise_error(Nob::Vault::InvalidPrefix))
+        .to(raise_error(Nob::Vault::InvalidPrefix, "prefix must be relative to the vault: /etc"))
     end
 
     it "raises InvalidPrefix when the prefix escapes the vault via .." do
       expect {
-        described_class.list(vault, prefix: "../outside")
+        described_class.list(vault, prefix: "../outside/")
       }
-        .to(raise_error(Nob::Vault::InvalidPrefix))
+        .to(raise_error(Nob::Vault::InvalidPrefix, "prefix escapes the vault: ../outside/"))
     end
 
     it "raises InvalidPrefix when the prefix points to a file" do

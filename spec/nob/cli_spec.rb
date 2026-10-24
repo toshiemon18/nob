@@ -698,4 +698,36 @@ RSpec.describe Nob::Cli do
       end
     end
   end
+
+  describe "unknown config keys" do
+    include_context("tmp vault")
+
+    it "warns about each unknown key, suggesting a close match, and keeps running" do
+      write_config(
+        <<~TOML
+          vault = "#{@vault}"
+          editor = "vim"
+          [note]
+          tempalte = "templates/note.md"
+        TOML
+      )
+
+      stdout = nil
+      stderr = capture_stderr { stdout = capture_stdout { described_class.start(["list"]) } }
+
+      expect(stderr).to(
+        eq(
+          "Warning: unknown config key editor in #{@config_path}\n" \
+            "Warning: unknown config key [note].tempalte in #{@config_path} (did you mean [note].template?)\n"
+        )
+      )
+      expect(stdout).to(eq(""))
+    end
+
+    it "prints no warning when every key is known" do
+      stderr = capture_stderr { capture_stdout { described_class.start(["list"]) } }
+
+      expect(stderr).to(eq(""))
+    end
+  end
 end

@@ -12,7 +12,7 @@ module Nob
     class Nob::Vault::InvalidPath # failed to identify its superclass
     end
     Nob::Vault::YAML_LOADER: untyped
-    def self.path_for: (untyped, *untyped) -> String
+    def self.path_for: (untyped, *nil) -> String
     def self.exists?: (untyped) -> bool
     def self.size: (untyped) -> Integer
     def self.write: (untyped, untyped) -> Integer

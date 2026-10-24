@@ -164,4 +164,47 @@ RSpec.describe Nob::Config do
       FileUtils.remove_entry(vault) if vault
     end
   end
+
+  describe "#unknown_keys" do
+    let(:vault) { Dir.mktmpdir("nob-vault") }
+
+    after { FileUtils.remove_entry(vault) }
+
+    def config_with(toml)
+      described_class.new(path: "config.toml", data: TomlRB.parse("vault = \"#{vault}\"\n#{toml}"))
+    end
+
+    it "is empty when every key is known" do
+      config = config_with(
+        <<~TOML
+          [dailyNote]
+          basePath = "journal/"
+          fileNameFormat = "%Y/%m/%d"
+          template = "templates/daily.md"
+          [note]
+          template = "templates/note.md"
+        TOML
+      )
+
+      expect(config.unknown_keys).to(eq([]))
+    end
+
+    it "names an unknown key inside a known section" do
+      config = config_with("[note]\ntempalte = \"x.md\"\n")
+
+      expect(config.unknown_keys).to(eq(["[note].tempalte"]))
+    end
+
+    it "names an unknown top-level key" do
+      config = config_with("editor = \"vim\"\n")
+
+      expect(config.unknown_keys).to(eq(["editor"]))
+    end
+
+    it "names each key of an unknown section" do
+      config = config_with("[notes]\ntemplate = \"x.md\"\ndir = \"inbox\"\n")
+
+      expect(config.unknown_keys).to(eq(["[notes].template", "[notes].dir"]))
+    end
+  end
 end
