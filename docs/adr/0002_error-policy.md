@@ -45,6 +45,7 @@ CLI 層 (`Nob::Cli`) は現状サブコマンド単位で `rescue Nob::Error => 
 | 書き込み先パスが vault を抜けている / 絶対パス（create の title・`--dir`、daily の basePath・fileNameFormat） | （無し、自前検出） | raise | `Vault::InvalidPath` |
 | `nob show` で title 未マッチ | （無し、自前検出） | raise | `Nob::Error`（直接） |
 | `nob show` で title 複数マッチ | （無し、自前検出） | raise | `Nob::Error`（直接） |
+| `nob links` に `--unresolved` がない | （無し、自前検出） | raise | `Nob::Error`（直接） |
 | frontmatter YAML が壊れている | `Psych::SyntaxError` | **ラップ** | `Vault::InvalidFrontmatter` |
 | テンプレートのパスが vault を抜けている / 絶対パス（`--template`、`[note].template`、`[dailyNote].template`） | `Vault::InvalidPath` | **ラップ**（指定元を付ける） | `Templates::InvalidPath` |
 | テンプレートファイルが存在しない | （無し、自前検出） | raise | `Nob::Error`（直接） |
