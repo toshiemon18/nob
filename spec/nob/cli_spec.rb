@@ -377,6 +377,20 @@ RSpec.describe Nob::Cli do
         expect(File.exist?(File.join(@vault, "Weekly.md"))).to(be(false))
       end
 
+      it "exits 1 naming [note].template when it escapes the vault" do
+        configure_note_template(nil, path: "../note.md")
+
+        stderr = capture_stderr do
+          expect {
+            capture_stdout { described_class.start(["create", "Weekly"]) }
+          }
+            .to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
+        end
+
+        expect(stderr).to(include("Error: template path escapes the vault: ../note.md ([note].template)"))
+        expect(File.exist?(File.join(@vault, "Weekly.md"))).to(be(false))
+      end
+
       it "exits 1 without creating the note when the template file is missing" do
         configure_note_template(nil, path: "templates/missing.md")
 
@@ -528,6 +542,29 @@ RSpec.describe Nob::Cli do
       end
 
       expect(stderr).to(match(/Error:.*missing\.md/))
+    end
+
+    it "exits 1 naming [dailyNote].template when it is an absolute path" do
+      File.write(
+        @config_path,
+        <<~TOML
+          vault = "#{@vault}"
+          [dailyNote]
+          template = "/etc/nob/daily.md"
+        TOML
+      )
+
+      stderr = capture_stderr do
+        expect {
+          capture_stdout { described_class.start(["daily"]) }
+        }
+          .to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
+      end
+
+      expect(stderr).to(
+        include("Error: template path must be relative to the vault: /etc/nob/daily.md ([dailyNote].template)")
+      )
+      expect(Dir.glob("#{@vault}/daily/*.md")).to(be_empty)
     end
 
     it "warns to stderr but still creates the note when no daily template is configured" do
