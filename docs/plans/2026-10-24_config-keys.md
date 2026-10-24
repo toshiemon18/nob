@@ -105,7 +105,7 @@ warn("Warning: no daily-note template configured (#{Nob::Config::Keys::DAILY_TEM
 
 - [x] **T1**: `Add Config::Key and Config::Keys`（S4）
     - `to_s`（section あり / なし）、`read`（値あり / キーなし / セクションなし / 空文字列）
-- [ ] **T2**: `Read config values through Config::Keys`（S2）
+- [x] **T2**: `Read config values through Config::Keys`（S2）
     - `daily_settings` と `resolve_vault!` を `Keys` 経由にし、`DAILY_DEFAULTS` を削除する
     - `DEFAULT_CONTENT` の spec を `Keys` の既定値との照合に変える
 - [ ] **T3**: `Add Templates.locate for template path resolution`（S3）

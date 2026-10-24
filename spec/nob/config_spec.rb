@@ -18,14 +18,15 @@ RSpec.describe Nob::Config do
       expect(data).to(eq({"vault" => ""}))
     end
 
-    it "documents a [dailyNote] example that matches DAILY_DEFAULTS when uncommented" do
+    it "documents a [dailyNote] example that matches the Keys defaults when uncommented" do
       uncommented = described_class::DEFAULT_CONTENT
         .lines
         .grep(/^# (\[dailyNote\]$|basePath |fileNameFormat )/)
         .map { |line| line.delete_prefix("# ") }
         .join
+      keys = [described_class::Keys::DAILY_BASE_PATH, described_class::Keys::DAILY_FILE_NAME_FORMAT]
 
-      expect(TomlRB.parse(uncommented)["dailyNote"]).to(eq(described_class::DAILY_DEFAULTS))
+      expect(TomlRB.parse(uncommented)["dailyNote"]).to(eq(keys.to_h { |key| [key.name, key.default] }))
     end
   end
 
