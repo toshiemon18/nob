@@ -73,4 +73,38 @@ RSpec.describe Nob::Templates do
       expect(described_class.new(op1)).not_to(eq(described_class.new(op3)))
     end
   end
+
+  describe ".locate" do
+    let(:vault) { Dir.mktmpdir("nob-vault") }
+
+    after { FileUtils.remove_entry(vault) }
+
+    it "resolves a vault-relative path" do
+      expect(described_class.locate(vault, "tpl/note.md", source: "--template")).to(eq(File.join(vault, "tpl/note.md")))
+    end
+
+    it "returns nil for a blank value" do
+      expect(described_class.locate(vault, "", source: "--template")).to(be_nil)
+      expect(described_class.locate(vault, nil, source: "--template")).to(be_nil)
+    end
+
+    it "rejects a path that escapes the vault, naming the source" do
+      expect { described_class.locate(vault, "../../x.md", source: "--template") }.to(
+        raise_error(Nob::Templates::InvalidPath, "template path escapes the vault: ../../x.md (--template)")
+      )
+    end
+
+    it "rejects an absolute path, naming a config key as the source" do
+      expect { described_class.locate(vault, "/etc/tpl.md", source: Nob::Config::Keys::NOTE_TEMPLATE) }.to(
+        raise_error(
+          Nob::Templates::InvalidPath,
+          "template path must be relative to the vault: /etc/tpl.md ([note].template)"
+        )
+      )
+    end
+
+    it "is a Nob::Error so the CLI reports it" do
+      expect(Nob::Templates::InvalidPath.ancestors).to(include(Nob::Error))
+    end
+  end
 end

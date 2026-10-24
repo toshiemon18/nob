@@ -55,8 +55,10 @@ nob/
       config.rb         # config.toml の読み込みと検証
       config/
         editor.rb       # nob config -e のエディタ起動
+        key.rb          # 設定キー（section / name / default）
+        keys.rb         # nob が読む設定キーの一覧
       vault.rb          # vault 内のファイル操作（パス組み立て、列挙、frontmatter、バックアップ）
-      templates.rb      # テンプレートの facade（Templates.render）
+      templates.rb      # テンプレートの facade（Templates.render / Templates.locate）
       templates/
         parser.rb       # 字句解析
         renderer.rb     # 評価

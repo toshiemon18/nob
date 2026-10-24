@@ -3,9 +3,6 @@ require "toml-rb"
 
 module Nob
   class Config
-    class InvalidTemplatePath < Nob::Error
-    end
-
     DEFAULT_CONTENT = <<~TOML
       # nob configuration
 
@@ -52,37 +49,20 @@ module Nob
       @vault = resolve_vault!
     end
 
-    DailySettings = Struct.new(:base_path, :file_name_format, :template_path, keyword_init: true)
-
-    DAILY_DEFAULTS = {
-      "basePath" => "daily/",
-      "fileNameFormat" => "%Y-%m-%d"
-    }.freeze
+    DailySettings = Struct.new(:base_path, :file_name_format, :template, keyword_init: true)
 
     def daily_settings
-      raw = data["dailyNote"] || {}
-
       DailySettings.new(
-        base_path: raw["basePath"] || DAILY_DEFAULTS["basePath"],
-        file_name_format: raw["fileNameFormat"] || DAILY_DEFAULTS["fileNameFormat"],
-        template_path: resolve_template(raw["template"], source: "[dailyNote].template")
+        base_path: Keys::DAILY_BASE_PATH.read(data),
+        file_name_format: Keys::DAILY_FILE_NAME_FORMAT.read(data),
+        template: Keys::DAILY_TEMPLATE.read(data)
       )
     end
 
-    NoteSettings = Struct.new(:template_path, keyword_init: true)
+    NoteSettings = Struct.new(:template, keyword_init: true)
 
     def note_settings
-      raw = data["note"] || {}
-
-      NoteSettings.new(template_path: resolve_template(raw["template"], source: "[note].template"))
-    end
-
-    def resolve_template(raw, source:)
-      return nil if raw.nil? || raw.to_s.empty?
-
-      Nob::Vault.path_for(vault, raw.to_s)
-    rescue Nob::Vault::InvalidPath => e
-      raise InvalidTemplatePath, "template #{e.message} (#{source})"
+      NoteSettings.new(template: Keys::NOTE_TEMPLATE.read(data))
     end
 
     private
@@ -90,7 +70,7 @@ module Nob
     attr_reader :data
 
     def resolve_vault!
-      raw = data["vault"].to_s
+      raw = Keys::VAULT.read(data).to_s
       if raw.empty?
         raise Nob::Error, "vault is not configured. Edit #{path} (or run `nob config -e`)."
       end

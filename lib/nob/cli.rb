@@ -18,14 +18,19 @@ module Nob
       :template,
       aliases: "-t",
       type: :string,
-      desc: "Vault-relative template path (overrides [note].template)"
+      desc: "Vault-relative template path (overrides #{Nob::Config::Keys::NOTE_TEMPLATE})"
     )
     def create(title)
       config = Nob::Config.load
       path = Nob::Vault.path_for(config.vault, options[:dir], "#{title}.md")
       now = Time.now
-      template_path = config.resolve_template(options[:template], source: "--template") ||
-        config.note_settings.template_path
+      raw_template, source = if options[:template]
+        [options[:template], "--template"]
+      else
+        [config.note_settings.template, Nob::Config::Keys::NOTE_TEMPLATE]
+      end
+
+      template_path = Nob::Templates.locate(config.vault, raw_template, source: source)
       content = if template_path.nil?
         render_create_content(title, now.to_date)
       else
@@ -90,8 +95,11 @@ module Nob
     def daily
       config = Nob::Config.load
       settings = config.daily_settings
-      if settings.template_path.nil?
-        warn("Warning: no daily-note template configured ([dailyNote].template); creating an empty file.")
+      template_path = Nob::Templates.locate(config.vault, settings.template, source: Nob::Config::Keys::DAILY_TEMPLATE)
+      if template_path.nil?
+        warn(
+          "Warning: no daily-note template configured (#{Nob::Config::Keys::DAILY_TEMPLATE}); creating an empty file."
+        )
       end
 
       now = Time.now
@@ -104,10 +112,10 @@ module Nob
         return
       end
 
-      content = if settings.template_path.nil?
+      content = if template_path.nil?
         ""
       else
-        Nob::Templates.render(title: date_str, now: now, path: settings.template_path)
+        Nob::Templates.render(title: date_str, now: now, path: template_path)
       end
 
       backup_path = (Nob::Vault.backup(path, now: now) if exists && options[:force])
