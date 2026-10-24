@@ -405,6 +405,14 @@ RSpec.describe Nob::Cli do
       end
     end
 
+    it "creates the note under --dir, making the directories" do
+      output = capture_stdout { described_class.start(["create", "Plan", "--dir", "projects/2026"]) }
+
+      path = File.join(@vault, "projects/2026", "Plan.md")
+      expect(output).to(eq("Created: #{path}\n"))
+      expect(File.exist?(path)).to(be(true))
+    end
+
     it "exits 1 without writing when --dir escapes the vault" do
       escaped_dir = File.join(File.dirname(@vault), "escaped")
 
@@ -469,6 +477,26 @@ RSpec.describe Nob::Cli do
       capture_stderr { output = capture_stdout { described_class.start(["daily"]) } }
 
       expect(output).to(match(/^Already exists: /))
+    end
+
+    it "renders the template into an existing empty note without a backup" do
+      FileUtils.mkdir_p(File.join(@vault, "templates"))
+      File.write(File.join(@vault, "templates/daily.md"), "# {{title}}\n")
+      capture_stderr { capture_stdout { described_class.start(["daily"]) } }
+      existing = Dir.glob("#{@vault}/daily/*.md").first
+      write_config(
+        <<~TOML
+          vault = "#{@vault}"
+          [dailyNote]
+          template = "templates/daily.md"
+        TOML
+      )
+
+      output = capture_stdout { described_class.start(["daily"]) }
+
+      expect(output).to(eq("Recreated: #{existing}\n"))
+      expect(File.read(existing)).to(eq("# #{File.basename(existing, ".md")}\n"))
+      expect(Dir.glob("#{@vault}/daily/*.backup-*.md")).to(be_empty)
     end
 
     it "with --force backs up the existing note and recreates it" do
