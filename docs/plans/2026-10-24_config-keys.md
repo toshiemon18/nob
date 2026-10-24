@@ -103,7 +103,7 @@ warn("Warning: no daily-note template configured (#{Nob::Config::Keys::DAILY_TEM
 
 ## TODO（TDDタスク分解）
 
-- [ ] **T1**: `Add Config::Key and Config::Keys`（S4）
+- [x] **T1**: `Add Config::Key and Config::Keys`（S4）
     - `to_s`（section あり / なし）、`read`（値あり / キーなし / セクションなし / 空文字列）
 - [ ] **T2**: `Read config values through Config::Keys`（S2）
     - `daily_settings` と `resolve_vault!` を `Keys` 経由にし、`DAILY_DEFAULTS` を削除する
