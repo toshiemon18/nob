@@ -75,7 +75,7 @@ end
 
 ## TODO（TDDタスク分解）
 
-- [ ] **T1**: `Fail specs that exit without expecting SystemExit`（S4）
+- [x] **T1**: `Fail specs that exit without expecting SystemExit`（S4）
 - [ ] **T2**: `Add Config#unknown_keys`（S1）
     - `Keys.all` を追加する
 - [ ] **T3**: `Warn about unknown config keys`（S2）
