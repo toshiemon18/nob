@@ -214,6 +214,22 @@ RSpec.describe Nob::Vault do
     end
   end
 
+  describe ".find_notes" do
+    it "returns every note whose file name matches the title, sorted by path" do
+      touch("projects/Plan.md")
+      touch("archive/Plan.md")
+      touch("Planning.md")
+
+      expect(described_class.find_notes(vault, "Plan")).to(eq(["archive/Plan.md", "projects/Plan.md"]))
+    end
+
+    it "returns an empty array when no note matches" do
+      touch("a.md")
+
+      expect(described_class.find_notes(vault, "missing")).to(eq([]))
+    end
+  end
+
   describe ".backup" do
     it "renames the file with a timestamp suffix and returns the new path" do
       abs = touch("a.md", "original")

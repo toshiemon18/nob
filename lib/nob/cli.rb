@@ -160,7 +160,7 @@ module Nob
       end
 
       def resolve_title!(vault, title)
-        matches = Nob::Vault.list(vault).select { |rel| File.basename(rel, ".md") == title }
+        matches = Nob::Vault.find_notes(vault, title)
         raise Nob::Error, "note not found: #{title}" if matches.empty?
 
         if matches.size > 1

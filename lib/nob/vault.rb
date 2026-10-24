@@ -53,6 +53,11 @@ module Nob
       relatives.map { |rel| File.join(normalized, rel) }
     end
 
+    # ファイル名（拡張子を除く）が title と一致するノートの vault 相対パス
+    def self.find_notes(vault, title)
+      list(vault).select { |rel| File.basename(rel, ".md") == title }
+    end
+
     def self.backup(path, now: Time.now)
       timestamp = now.strftime("%Y%m%d-%H%M%S")
       ext = File.extname(path)
