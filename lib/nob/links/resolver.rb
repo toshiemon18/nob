@@ -21,10 +21,20 @@ module Nob
         end
         return Resolution.new(status: :unresolved, paths: []) if candidates.empty?
 
-        Resolution.new(status: :resolved, paths: candidates)
+        by_distance = candidates.group_by { |rel| distance(from, rel) }
+        nearest = by_distance.fetch(by_distance.keys.min).sort
+        Resolution.new(status: nearest.size == 1 ? :resolved : :ambiguous, paths: nearest)
       end
 
       private
+
+      # 2 つのファイルのディレクトリ間の距離。共通の祖先まで上がる段数と、そこから下る段数の和
+      def distance(from, to)
+        from_dirs = File.dirname(from).split("/") - ["."]
+        to_dirs = File.dirname(to).split("/") - ["."]
+        common = from_dirs.zip(to_dirs).take_while { |a, b| a == b }.size
+        (from_dirs.size - common) + (to_dirs.size - common)
+      end
 
       # path に当たるリンク先の鍵。ノートは .md の有無どちらでも当たる
       def names(path)

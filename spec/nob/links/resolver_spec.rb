@@ -51,6 +51,34 @@ RSpec.describe Nob::Links::Resolver do
     end
   end
 
+  context("with several candidates") do
+    def ambiguous(*paths) = Nob::Links::Resolution.new(status: :ambiguous, paths: paths)
+
+    it "picks the candidate in the same directory" do
+      files = ["daily/2026/Plan.md", "daily/Plan.md"]
+
+      expect(resolve(files, "Plan", from: "daily/2026/a.md")).to(eq(resolved("daily/2026/Plan.md")))
+    end
+
+    it "picks the nearest by directories up plus directories down" do
+      files = ["projects/Plan.md", "Plan.md"]
+
+      expect(resolve(files, "Plan", from: "daily/2026/a.md")).to(eq(resolved("Plan.md")))
+    end
+
+    it "reports a tie for the nearest as ambiguous, listing the tied paths" do
+      files = ["projects/Plan.md", "daily/Plan.md", "daily/2026/x/Plan.md"]
+
+      expect(resolve(files, "Plan", from: "daily/2026/a.md")).to(eq(ambiguous("daily/2026/x/Plan.md", "daily/Plan.md")))
+    end
+
+    it "applies the same rule to path targets" do
+      files = ["archive/projects/Plan.md", "projects/Plan.md"]
+
+      expect(resolve(files, "projects/Plan", from: "archive/note.md")).to(eq(resolved("archive/projects/Plan.md")))
+    end
+  end
+
   it "reports a name with no matching note as unresolved" do
     expect(resolve(["a.md"], "missing")).to(eq(unresolved))
   end
