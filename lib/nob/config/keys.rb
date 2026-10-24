@@ -7,6 +7,10 @@ module Nob
       DAILY_FILE_NAME_FORMAT = Key.new(section: "dailyNote", name: "fileNameFormat", default: "%Y-%m-%d")
       DAILY_TEMPLATE = Key.new(section: "dailyNote", name: "template", default: nil)
       NOTE_TEMPLATE = Key.new(section: "note", name: "template", default: nil)
+
+      def self.all
+        constants.map { |name| const_get(name) }.grep(Key)
+      end
     end
   end
 end
