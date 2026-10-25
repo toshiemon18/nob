@@ -816,6 +816,53 @@ RSpec.describe Nob::Cli do
     end
   end
 
+  describe "#resolve" do
+    include_context("tmp vault")
+
+    def touch(relative_path, content = "")
+      abs = File.join(@vault, relative_path)
+      FileUtils.mkdir_p(File.dirname(abs))
+      File.write(abs, content)
+    end
+
+    def resolve(*args)
+      capture_stdout { described_class.start(["resolve", *args]) }
+    end
+
+    it "prints the absolute path of the file a link resolves to" do
+      touch("projects/Plan.md")
+
+      expect(resolve("[[plan|計画]]")).to(eq("#{File.join(@vault, "projects", "Plan.md")}\n"))
+    end
+
+    it "prints every nearest candidate, one per line, when the link is ambiguous" do
+      touch("a/Note.md")
+      touch("b/Note.md")
+
+      expect(resolve("[[Note]]")).to(eq("#{File.join(@vault, "a", "Note.md")}\n#{File.join(@vault, "b", "Note.md")}\n"))
+    end
+
+    it "prints nothing when the link is unresolved" do
+      expect(resolve("[[missing]]")).to(eq(""))
+    end
+
+    it "measures distance from a vault-relative --from" do
+      touch("a/Note.md")
+      touch("b/Note.md")
+
+      expect(resolve("[[Note]]", "--from", "a/today.md")).to(eq("#{File.join(@vault, "a", "Note.md")}\n"))
+    end
+
+    it "accepts an absolute --from for a file that does not exist yet" do
+      touch("a/Note.md")
+      touch("b/Note.md")
+
+      expect(resolve("[[Note]]", "--from", File.join(@vault, "b", "new.md"))).to(
+        eq("#{File.join(@vault, "b", "Note.md")}\n")
+      )
+    end
+  end
+
   describe "unknown config keys" do
     include_context("tmp vault")
 

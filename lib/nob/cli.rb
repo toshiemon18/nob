@@ -157,6 +157,17 @@ module Nob
       end
     end
 
+    desc "resolve LINK", "Print the absolute path of the file a [[link]] resolves to (one line per candidate if ambiguous)"
+    method_option :from, type: :string, desc: "Note the link is written in, absolute or vault-relative (default: the vault root)"
+    def resolve(raw)
+      config = load_config
+      link = Nob::Links.parse(raw)
+      # --from を省いたら vault 直下のノートから書いたものとして測る
+      from = options[:from] ? Nob::Vault.relative_path(config.vault, options[:from]) : "."
+      resolution = Nob::Links::Resolver.new(Nob::Vault.files(config.vault)).resolve(link.target, from: from)
+      resolution.paths.each { |rel| puts(File.join(config.vault, rel)) }
+    end
+
     no_commands do
       def invoke_command(command, *args)
         super
