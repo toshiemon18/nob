@@ -18,6 +18,7 @@ module Nob
     def self.write: (untyped, untyped) -> Integer
     def self.list: (untyped, ?prefix: nil) -> Array[String]
     def self.files: (untyped) -> Array[String]
+    def self.relative_path: (untyped, untyped) -> String
     def self.name_key: (String) -> String
     def self.find_notes: (untyped, untyped) -> Array[String]
     def self.backup: (untyped, ?now: Time) -> String

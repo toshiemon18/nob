@@ -103,6 +103,7 @@ nob show <title>             # メタデータ・リンク情報表示
 nob daily                    # デイリーノート作成
 nob daily --force            # 強制再作成（既存はバックアップ）
 nob links --unresolved       # 未解決・曖昧なリンクをvault全体で一覧表示
+nob resolve <link> [--from <path>]  # リンク 1 つを解決先の絶対パスに変換
 nob config -e                # configをエディタで編集
 ```
 
@@ -305,6 +306,30 @@ daily/2024-03-27.md:15: [[Note]] (ambiguous: a/Note.md, b/Note.md)
 - 見つかっても終了コードは 0
 - UTF-8 として読めないノートは `Warning: skipped <path>: invalid UTF-8` を出して飛ばす
 
+#### リンク 1 つの解決 `nob resolve`
+
+```
+nob resolve '[[Plan|計画]]' --from daily/2024-03-27.md
+```
+
+Neovim からリンク先へジャンプするための入口。解決の規則は上の「リンク先解決ルール」と同じ。
+
+- `<link>` は `[[...]]` か `![[...]]` がちょうど 1 つの文字列（前後の空白は除く）。括弧なし、前後に文字がある、2 件以上、名前が空（`[[#見出し]]`）は `Error: expected a single [[link]]: <link>` / exit 1
+- 見出しとブロック参照（`#` 以降）は捨てる。ファイルを開くところまでが対象
+- `--from` はリンクを書いたノートのパス。距離の起点になる
+  - 絶対パスでも相対パスでもよい。相対パスは vault を基準にする
+  - 存在しなくてよい（保存前のバッファ）
+  - 絶対パスが字句的に vault の外なら、vault の realpath を基準にもう一度判定する（symlink 経由の vault）
+  - vault の外なら `Error: --from is outside the vault: <path>`、ディレクトリなら `Error: --from is not a file: <path>` / exit 1
+  - 省いたら vault 直下のノートから書いたものとして測る
+- 判定できれば結果によらず exit 0。結果は stdout の行数で区別する
+
+| 結果 | stdout |
+|---|---|
+| 解決 | 絶対パスを 1 行 |
+| 曖昧 | 最も近い候補の絶対パスを 1 行に 1 件（パス順。必ず 2 行以上） |
+| 未解決 | 空 |
+
 #### 新規ノート作成時の配置
 
 リンクを記述したファイルと同じディレクトリ（兄弟）に配置する。
@@ -339,7 +364,7 @@ daily/2024-03-27.md:15: [[Note]] (ambiguous: a/Note.md, b/Note.md)
 ### 実装フェーズ
 
 ```
-フェーズ1: vim.fn.system('nob create xxx') で叩くだけ
+フェーズ1: vim.fn.system('nob create xxx') で叩くだけ。リンク先へのジャンプは nob resolve の出力を :edit に渡す
 フェーズ2: Telescopeと組み合わせてノート一覧をファジー検索
 フェーズ3: ちゃんとしたNeovimプラグインとしてパッケージ化
 ```

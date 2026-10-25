@@ -9,6 +9,7 @@ module Nob
     Nob::Links::FENCE: Regexp
     Nob::Links::INLINE_CODE: Regexp
     def self.extract: (untyped) -> untyped
+    def self.parse: (untyped) -> nil
     def self.body_start: (untyped) -> Integer
     def self.links_in: (untyped, untyped) -> untyped
   end
