@@ -36,6 +36,14 @@ module Nob
       end
     end
 
+    # text がちょうど 1 つのリンク（前後の空白は除く）なら、その Link を返す。それ以外は nil
+    # (String) -> Link?
+    def self.parse(text)
+      stripped = text.strip
+      links = extract(stripped)
+      links.first if links.size == 1 && links.first.raw == stripped
+    end
+
     # 本文が始まる行の index。先頭行が --- で、閉じの --- があれば frontmatter とみなす
     def self.body_start(lines)
       return 0 unless lines.first&.chomp == "---"

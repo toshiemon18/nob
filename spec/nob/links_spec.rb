@@ -77,4 +77,22 @@ RSpec.describe Nob::Links do
       end
     end
   end
+
+  describe ".parse" do
+    it "returns the link when the text is exactly one link" do
+      expect(described_class.parse("[[Plan|計画]]")).to(
+        eq(Nob::Links::Link.new(raw: "[[Plan|計画]]", target: "Plan", line: 1))
+      )
+    end
+
+    it "accepts an embed and spaces around the link" do
+      expect(described_class.parse("  ![[diagram.png]]\n").target).to(eq("diagram.png"))
+    end
+
+    it "returns nil for text that is not exactly one link" do
+      ["Plan", "see [[Plan]] here", "[[a]] [[b]]", "[[#Goals]]", "[[ ]]", "`[[Plan]]`", ""].each do |text|
+        expect(described_class.parse(text)).to(be_nil, "expected nil for #{text.inspect}")
+      end
+    end
+  end
 end
