@@ -157,8 +157,15 @@ module Nob
       end
     end
 
-    desc "resolve LINK", "Print the absolute path of the file a [[link]] resolves to (one line per candidate if ambiguous)"
-    method_option :from, type: :string, desc: "Note the link is written in, absolute or vault-relative (default: the vault root)"
+    desc(
+      "resolve LINK",
+      "Print the absolute path of the file a [[link]] resolves to (one line per candidate if ambiguous)"
+    )
+    method_option(
+      :from,
+      type: :string,
+      desc: "Note the link is written in, absolute or vault-relative (default: the vault root)"
+    )
     def resolve(raw)
       config = load_config
       link = Nob::Links.parse(raw)
