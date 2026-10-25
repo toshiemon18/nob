@@ -58,6 +58,20 @@ module Nob
       Dir.glob("**/*", base: vault).select { |rel| File.file?(File.join(vault, rel)) }.sort
     end
 
+    # path を vault 相対パスにする。相対パスは vault を基準にする。path は存在しなくてよい
+    # 絶対パスが字句的に vault の外なら、vault の realpath を基準にもう一度判定する（symlink 経由の vault）
+    # (String, String) -> String
+    def self.relative_path(vault, path)
+      root = File.expand_path(vault)
+      absolute = File.expand_path(path, root)
+      roots = [root]
+      roots << File.realpath(root) if File.absolute_path?(path) && File.exist?(root)
+      base = roots.find { |candidate| within?(candidate, absolute) }
+      raise InvalidPath, "path is outside the vault: #{path}" unless base
+
+      absolute.delete_prefix(base).delete_prefix(File::SEPARATOR)
+    end
+
     # ノート名やリンク先を照合するための鍵。NFC に正規化し、大文字と小文字を区別しない
     def self.name_key(name)
       name.unicode_normalize(:nfc).downcase(:fold)
