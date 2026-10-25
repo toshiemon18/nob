@@ -861,6 +861,30 @@ RSpec.describe Nob::Cli do
         eq("#{File.join(@vault, "b", "Note.md")}\n")
       )
     end
+
+    def expect_error(args, message)
+      stderr = capture_stderr do
+        expect { resolve(*args) }.to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
+      end
+
+      expect(stderr).to(eq("Error: #{message}\n"))
+    end
+
+    it "exits 1 unless the argument is exactly one link" do
+      ["Plan", "see [[Plan]] here", "[[a]] [[b]]", "[[#Goals]]"].each do |raw|
+        expect_error([raw], "expected a single [[link]]: #{raw}")
+      end
+    end
+
+    it "exits 1 when --from is a directory" do
+      touch("daily/x.md")
+
+      expect_error(["[[x]]", "--from", "daily"], "--from is not a file: daily")
+    end
+
+    it "exits 1 when --from is outside the vault" do
+      expect_error(["[[x]]", "--from", "/etc/hosts"], "--from is outside the vault: /etc/hosts")
+    end
   end
 
   describe "unknown config keys" do

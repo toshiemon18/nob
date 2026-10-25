@@ -162,8 +162,9 @@ module Nob
     def resolve(raw)
       config = load_config
       link = Nob::Links.parse(raw)
-      # --from を省いたら vault 直下のノートから書いたものとして測る
-      from = options[:from] ? Nob::Vault.relative_path(config.vault, options[:from]) : "."
+      raise Nob::Error, "expected a single [[link]]: #{raw}" unless link
+
+      from = resolve_from!(config.vault, options[:from])
       resolution = Nob::Links::Resolver.new(Nob::Vault.files(config.vault)).resolve(link.target, from: from)
       resolution.paths.each { |rel| puts(File.join(config.vault, rel)) }
     end
@@ -212,6 +213,18 @@ module Nob
         else
           "Created: #{path}"
         end
+      end
+
+      # resolve の距離の起点（vault 相対パス）。省いたら vault 直下のノートから書いたものとして測る
+      def resolve_from!(vault, path)
+        return "." if path.nil?
+
+        rel = Nob::Vault.relative_path(vault, path)
+        raise Nob::Error, "--from is not a file: #{path}" if File.directory?(File.join(vault, rel))
+
+        rel
+      rescue Nob::Vault::InvalidPath => e
+        raise Nob::Error, e.message.sub(/\Apath /, "--from ")
       end
 
       def print_frontmatter(frontmatter)
