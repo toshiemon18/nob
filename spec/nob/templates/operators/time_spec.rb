@@ -15,5 +15,16 @@ RSpec.describe Nob::Templates::Operators::Time do
     it "delegates to strftime for other formats" do
       expect(described_class.new("%H:%M:%S").call(title: "x", now: now)).to(eq("09:07:30"))
     end
+
+    it "reads a format without % as moment" do
+      expect(described_class.new("HH:mm:ss").call(title: "x", now: now)).to(eq("09:07:30"))
+    end
+  end
+
+  describe ".new" do
+    it "raises UndefinedVariable for a moment token it does not support" do
+      expect { described_class.new("hh:mm A") }
+        .to(raise_error(Nob::Templates::UndefinedVariable, "unsupported format token: hh"))
+    end
   end
 end

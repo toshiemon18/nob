@@ -15,5 +15,16 @@ RSpec.describe Nob::Templates::Operators::Date do
     it "delegates to strftime for other formats" do
       expect(described_class.new("%Y/%m/%d").call(title: "x", now: now)).to(eq("2026/05/03"))
     end
+
+    it "reads a format without % as moment" do
+      expect(described_class.new("YYYY/MM/DD").call(title: "x", now: now)).to(eq("2026/05/03"))
+    end
+  end
+
+  describe ".new" do
+    it "raises UndefinedVariable for a moment token it does not support" do
+      expect { described_class.new("dddd") }
+        .to(raise_error(Nob::Templates::UndefinedVariable, "unsupported format token: dddd"))
+    end
   end
 end

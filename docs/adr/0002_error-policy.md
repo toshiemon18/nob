@@ -55,6 +55,8 @@ CLI 層 (`Nob::Cli`) は現状サブコマンド単位で `rescue Nob::Error => 
 | テンプレートファイルが存在しない | （無し、自前検出） | raise | `Nob::Error`（直接） |
 | テンプレートに未定義変数 | （無し、自前検出） | raise | `Templates::UndefinedVariable` |
 | テンプレート構文エラー | （無し、自前検出） | raise | `Templates::ParseError` |
+| テンプレートの `date` / `time` に対応しない moment のトークン | `TimeFormat::UnsupportedToken` | **ラップ**（Parser が変数と行番号を付ける） | `Templates::UndefinedVariable` |
+| `[dailyNote].fileNameFormat` に対応しない moment のトークン | `TimeFormat::UnsupportedToken` | **ラップ**（指定元を付ける） | `Nob::Error`（直接） |
 | `nob create` で既存ファイル（force 無し） | （無し、自前検出） | raise | `Nob::Error`（直接） |
 | `--force` 同秒バックアップ衝突（create / daily 共通） | （無し、自前検出） | raise | `Nob::Error`（直接） |
 | 対象ファイルがレースで消えた | `Errno::ENOENT` | **素通し** | — |

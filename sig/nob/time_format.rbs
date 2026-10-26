@@ -1,0 +1,14 @@
+# TypeProf 0.31.1
+
+# lib/nob/time_format.rb
+module Nob
+  class Nob::TimeFormat
+    class Nob::TimeFormat::UnsupportedToken # failed to identify its superclass
+    end
+    Nob::TimeFormat::MOMENT_TOKENS: Hash[String, String]
+    def initialize: (untyped) -> void
+    def format: (untyped) -> untyped
+    def moment_to_strftime: (untyped) -> String
+    def letters_to_strftime: (untyped) -> untyped
+  end
+end

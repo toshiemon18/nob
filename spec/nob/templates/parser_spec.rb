@@ -215,6 +215,15 @@ RSpec.describe Nob::Templates::Parser do
           )
         )
       end
+
+      it "wraps an unsupported moment token with token text and line" do
+        expect { described_class.parse("---\ncreated: {{date:dddd}}\n") }.to(
+          raise_error(
+            Nob::Templates::UndefinedVariable,
+            "unsupported format token: dddd: {{date:dddd}} (line 2)"
+          )
+        )
+      end
     end
   end
 end

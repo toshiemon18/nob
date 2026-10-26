@@ -58,6 +58,7 @@ nob/
         key.rb          # 設定キー（section / name / default）
         keys.rb         # nob が読む設定キーの一覧
       vault.rb          # vault 内のファイル操作（パス組み立て、列挙、frontmatter、バックアップ）
+      time_format.rb    # 日時の書式（strftime / moment）
       templates.rb      # テンプレートの facade（Templates.render / Templates.locate）
       templates/
         parser.rb       # 字句解析
@@ -187,14 +188,38 @@ nob show <title>             # ノート情報参照
 | `{{title}}` | `My Note` | ノートのタイトル |
 | `{{date}}` | `2024-03-27` | 今日の日付（YYYY-MM-DD） |
 | `{{date:%Y/%m/%d}}` | `2024/03/27` | フォーマット指定（strftime 形式） |
+| `{{date:YYYY/MM/DD}}` | `2024/03/27` | フォーマット指定（moment 形式） |
 | `{{date:timestamp}}` | `1711497600` | unixtime |
 | `{{time}}` | `09:00` | 現在時刻（HH:mm） |
 | `{{time:%H:%M:%S}}` | `09:00:00` | フォーマット指定（strftime 形式） |
+| `{{time:HH:mm:ss}}` | `09:00:00` | フォーマット指定（moment 形式） |
 | `{{time:timestamp}}` | `1711497600` | unixtime |
 | `{{id}}` | `20240327090000` | ZettelkastenのID |
 
 - 変数展開は固定変数＋フォーマット指定のみ対応する
 - 任意のコード実行は行わない（セキュリティ上の理由）
+
+#### 日時の書式（strftime と moment）
+
+Obsidian のデイリーノート機能とテンプレートを共用できるように、moment 形式（moment.js の書式）も受け付ける（ADR 0004）。テンプレートの `date` / `time` と `[dailyNote].fileNameFormat` で共通。
+
+- 書式に `%` を含めば strftime、含まなければ moment として読む
+- moment で使えるトークン
+
+| トークン | 意味 | 例（2026-03-07 09:05:02） |
+|---|---|---|
+| `YYYY` / `YY` | 西暦（4 桁 / 下 2 桁） | `2026` / `26` |
+| `MM` / `M` | 月（2 桁 / ゼロ埋めなし） | `03` / `3` |
+| `DD` / `D` | 日（2 桁 / ゼロ埋めなし） | `07` / `7` |
+| `HH` / `H` | 時（24 時間制。2 桁 / ゼロ埋めなし） | `09` / `9` |
+| `mm` | 分（2 桁） | `05` |
+| `ss` | 秒（2 桁） | `02` |
+
+- 英字は同じ文字の連なりごとに区切り、それぞれが表のトークンちょうどのときだけ受け付ける。`YYYYMMDD` は `YYYY` `MM` `DD` と読む。`MMMM`（moment では月名）を `MM` 2 つとは読まない
+- `[...]` の中は文字どおりに出力する。英字以外の文字（`年`、`/`、`-` など）もそのまま出力する
+- 表にないトークン（`dddd`、`Do`、`MMMM`、`m` など）と、閉じていない `[` はエラーにする。黙って文字どおりに出力すると、壊れたノートができても気づけないため
+  - テンプレート: `Error: unsupported format token: dddd: {{date:dddd}} (line 3)`。Parser の段階で検出するので、ノートは作らない
+  - fileNameFormat: `Error: unsupported format token: dddd ([dailyNote].fileNameFormat)`
 
 ---
 
@@ -217,9 +242,12 @@ template = "templates/note.md"   # vault 相対。省略時は title / date の 
 ```toml
 [dailyNote]
 basePath = "daily/"            # vault 相対。省略時は "daily/"
-fileNameFormat = "%Y-%m-%d"    # strftime 形式。省略時は "%Y-%m-%d"
+fileNameFormat = "%Y-%m-%d"    # strftime か moment（"YYYY/MM/YYYY-MM-DD" など）。省略時は "%Y-%m-%d"
 template = "templates/daily.md" # vault 相対。省略時は空ファイルを作成し Warning を出す
 ```
+
+- fileNameFormat に `/` を含めると、ディレクトリを掘ってそこに作る。`YYYY/MM/YYYY-MM-DD` なら `daily/2026/03/2026-03-07.md`
+- テンプレートの `{{title}}` は、fileNameFormat から作った名前のファイル名部分（上の例なら `2026-03-07`）
 
 #### 通常作成 `nob daily`
 

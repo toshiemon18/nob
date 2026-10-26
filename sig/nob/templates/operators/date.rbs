@@ -5,6 +5,7 @@ module Nob
   module Nob::Templates
     module Nob::Templates::Operators
       class Nob::Templates::Operators::Date # failed to identify its superclass
+        def initialize: (untyped) -> void
         def call: (title: untyped, now: untyped) -> untyped
       end
     end

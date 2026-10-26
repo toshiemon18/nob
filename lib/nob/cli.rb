@@ -112,7 +112,7 @@ module Nob
       end
 
       now = Time.now
-      date_str = now.strftime(settings.file_name_format)
+      date_str = format_daily_name(settings.file_name_format, now)
       path = Nob::Vault.path_for(config.vault, settings.base_path, "#{date_str}.md")
 
       exists = Nob::Vault.exists?(path)
@@ -124,7 +124,8 @@ module Nob
       content = if template_path.nil?
         ""
       else
-        Nob::Templates.render(title: date_str, now: now, path: template_path)
+        # fileNameFormat が "YYYY/MM/YYYY-MM-DD" のようにディレクトリを含んでも、タイトルはファイル名だけ
+        Nob::Templates.render(title: File.basename(date_str), now: now, path: template_path)
       end
 
       backup_path = (Nob::Vault.backup(path, now: now) if exists && options[:force])
@@ -209,6 +210,13 @@ module Nob
       def render_create_content(title, date)
         front_matter = YAML.dump({"title" => title, "date" => date})
         "#{front_matter}---\n\n"
+      end
+
+      # [dailyNote].fileNameFormat は strftime でも moment でもよい
+      def format_daily_name(fmt, now)
+        Nob::TimeFormat.new(fmt).format(now)
+      rescue Nob::TimeFormat::UnsupportedToken => e
+        raise Nob::Error, "#{e.message} (#{Nob::Config::Keys::DAILY_FILE_NAME_FORMAT})"
       end
 
       def resolve_title!(vault, title, notes)
