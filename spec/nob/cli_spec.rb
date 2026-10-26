@@ -196,6 +196,14 @@ RSpec.describe Nob::Cli do
         expect(stderr).to(include("a/計画.md"))
       end
 
+      it "walks the vault once for both the title and the links" do
+        touch("Plan.md", "[[Plan]]\n")
+        expect(Nob::Vault).to(receive(:files).once.and_call_original)
+        expect(Nob::Vault).not_to(receive(:list))
+
+        capture_stdout { described_class.start(["show", "Plan"]) }
+      end
+
       it "resolves the title case-insensitively" do
         touch("projects/Plan.md", "a")
 
