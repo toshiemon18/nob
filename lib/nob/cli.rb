@@ -56,13 +56,14 @@ module Nob
       config = load_config
       relative = resolve_title!(config.vault, title)
       absolute = Nob::Vault.path_for(config.vault, relative)
-      parsed = Nob::Vault.frontmatter(absolute)
+      text = Nob::Vault.read(absolute)
+      parsed = Nob::Vault.frontmatter(absolute, text)
 
       puts("Path     : #{relative}")
       puts("Size     : #{format_size(Nob::Vault.size(absolute))}")
       puts("Chars    : #{parsed[:body].length}")
       print_frontmatter(parsed[:frontmatter])
-      print_links(config.vault, relative, Nob::Links.extract(File.read(absolute)))
+      print_links(config.vault, relative, Nob::Links.extract(text))
     end
 
     desc "config", "View or edit the config file (use -e/--path/--show)"
@@ -142,8 +143,9 @@ module Nob
       config = load_config
       resolver = Nob::Links::Resolver.new(Nob::Vault.files(config.vault))
       Nob::Vault.list(config.vault).each do |rel|
-        text = File.read(Nob::Vault.path_for(config.vault, rel), encoding: "UTF-8")
-        unless text.valid_encoding?
+        begin
+          text = Nob::Vault.read(Nob::Vault.path_for(config.vault, rel))
+        rescue Nob::Vault::InvalidEncoding
           warn("Warning: skipped #{rel}: invalid UTF-8")
           next
         end

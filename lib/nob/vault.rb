@@ -16,6 +16,9 @@ module Nob
     class InvalidPath < Nob::Error
     end
 
+    class InvalidEncoding < Nob::Error
+    end
+
     YAML_LOADER = FrontMatterParser::Loader::Yaml.new(
       allowlist_classes: [Date, Time]
     )
@@ -96,8 +99,17 @@ module Nob
       backup_path
     end
 
-    def self.frontmatter(path)
-      parsed = FrontMatterParser::Parser.parse_file(path, loader: YAML_LOADER)
+    # ファイルを UTF-8 として読む。既定の外部エンコーディング（LANG）には左右されない
+    def self.read(path)
+      text = File.read(path, encoding: "UTF-8")
+      raise InvalidEncoding, "invalid UTF-8 in #{path}" unless text.valid_encoding?
+
+      text
+    end
+
+    # text を渡せば、ファイルを読み直さずにそれを解析する。path はエラーメッセージに使う
+    def self.frontmatter(path, text = read(path))
+      parsed = FrontMatterParser::Parser.new(:md, loader: YAML_LOADER).call(text)
       {frontmatter: parsed.front_matter || {}, body: parsed.content}
     rescue Psych::SyntaxError => e
       raise InvalidFrontmatter, "invalid YAML frontmatter in #{path}: #{e.message}"

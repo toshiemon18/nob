@@ -154,6 +154,34 @@ RSpec.describe Nob::Cli do
         abs
       end
 
+      it "exits 1 for a note that is not valid UTF-8" do
+        touch("bad.md", "")
+        File.binwrite(File.join(@vault, "bad.md"), "[[x]] \xFF\n".b)
+
+        stderr = capture_stderr do
+          expect {
+            capture_stdout { described_class.start(["show", "bad"]) }
+          }
+            .to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
+        end
+
+        expect(stderr).to(eq("Error: invalid UTF-8 in #{File.join(@vault, "bad.md")}\n"))
+      end
+
+      it "reads a note as UTF-8 regardless of the default external encoding" do
+        touch("jp.md", "---\ntitle: 計画\n---\n[[計画]]\n")
+        original = Encoding.default_external
+        output = nil
+        begin
+          Encoding.default_external = Encoding::US_ASCII
+          output = capture_stdout { described_class.start(["show", "jp"]) }
+        ensure
+          Encoding.default_external = original
+        end
+
+        expect(output).to(include("[[計画]]  → (unresolved)"))
+      end
+
       it "resolves the title case-insensitively" do
         touch("projects/Plan.md", "a")
 

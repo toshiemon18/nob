@@ -326,6 +326,22 @@ RSpec.describe Nob::Vault do
     end
   end
 
+  describe ".read" do
+    it "reads a file as UTF-8" do
+      abs = touch("jp.md", "計画")
+
+      expect(described_class.read(abs)).to(eq("計画"))
+      expect(described_class.read(abs).encoding).to(eq(Encoding::UTF_8))
+    end
+
+    it "raises InvalidEncoding for a file that is not valid UTF-8" do
+      abs = touch("bad.md")
+      File.binwrite(abs, "\xFF".b)
+
+      expect { described_class.read(abs) }.to(raise_error(Nob::Vault::InvalidEncoding, "invalid UTF-8 in #{abs}"))
+    end
+  end
+
   describe ".frontmatter" do
     it "returns empty frontmatter and full body when the file has no frontmatter" do
       abs = touch("a.md", "hello world")
@@ -351,6 +367,14 @@ RSpec.describe Nob::Vault do
 
       expect(result[:frontmatter]).to(eq("title" => "My Note", "date" => Date.new(2026, 4, 27)))
       expect(result[:body]).to(eq("body here\n"))
+    end
+
+    it "parses the given text instead of reading the file again" do
+      abs = touch("a.md", "on disk")
+
+      expect(described_class.frontmatter(abs, "---\ntitle: given\n---\nbody\n")).to(
+        eq(frontmatter: {"title" => "given"}, body: "body\n")
+      )
     end
 
     it "preserves the YAML key order" do
