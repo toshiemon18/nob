@@ -230,6 +230,28 @@ RSpec.describe Nob::Vault do
 
       expect(described_class.files(vault)).to(eq(["a.md", "img/diagram.png"]))
     end
+
+    it "includes symlinks to files" do
+      touch("a.md")
+      File.symlink(File.join(vault, "a.md"), File.join(vault, "alias.md"))
+
+      expect(described_class.files(vault)).to(eq(["a.md", "alias.md"]))
+    end
+
+    it "neither includes nor descends into symlinks to directories" do
+      touch("real/a.md")
+      File.symlink(File.join(vault, "real"), File.join(vault, "linked"))
+
+      expect(described_class.files(vault)).to(eq(["real/a.md"]))
+    end
+
+    # ファイルごとに stat しないので、リンク先がなくてもファイルとして扱う
+    it "includes symlinks whose target does not exist" do
+      touch("a.md")
+      File.symlink(File.join(vault, "gone.md"), File.join(vault, "dangling.md"))
+
+      expect(described_class.files(vault)).to(eq(["a.md", "dangling.md"]))
+    end
   end
 
   describe ".relative_path" do
@@ -337,6 +359,12 @@ RSpec.describe Nob::Vault do
       touch("a.md")
 
       expect(described_class.find_notes(vault, "missing")).to(eq([]))
+    end
+
+    it "searches the given notes instead of scanning the vault" do
+      touch("projects/Plan.md")
+
+      expect(described_class.find_notes(vault, "Plan", ["archive/Plan.md"])).to(eq(["archive/Plan.md"]))
     end
   end
 

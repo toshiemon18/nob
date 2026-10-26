@@ -50,7 +50,7 @@ module Nob
       base = normalized ? File.join(vault, normalized) : vault
       validate_base!(base, normalized)
 
-      relatives = Dir.glob("**/*.md", base: base).select { |rel| File.file?(File.join(base, rel)) }.sort
+      relatives = glob_files("**/*.md", base: base)
       return relatives if normalized.nil?
 
       relatives.map { |rel| File.join(normalized, rel) }
@@ -58,7 +58,15 @@ module Nob
 
     # vault 内の全ファイル（拡張子を問わない）の vault 相対パス。隠しディレクトリは含まない
     def self.files(vault)
-      Dir.glob("**/*", base: vault).select { |rel| File.file?(File.join(vault, rel)) }.sort
+      glob_files("**/*", base: vault)
+    end
+
+    # pattern に当たるエントリからディレクトリを除いて並べる
+    # ファイルごとに File.file? で stat すると、WSL から Windows ドライブ（9P）の vault で数秒かかる。
+    # 末尾が / のパターンは readdir の d_type でディレクトリを見分けるので、その差を取る
+    def self.glob_files(pattern, base:)
+      dirs = Dir.glob("#{pattern}/", base: base).map { |dir| dir.chomp("/") }
+      (Dir.glob(pattern, base: base) - dirs).sort
     end
 
     # path を vault 相対パスにする。相対パスは vault を基準にする。path は存在しなくてよい
@@ -96,9 +104,10 @@ module Nob
     end
 
     # ファイル名（拡張子を除く）が title と一致するノートの vault 相対パス
-    def self.find_notes(vault, title)
+    # notes を渡せば、vault を走査し直さずにその中から探す
+    def self.find_notes(vault, title, notes = list(vault))
       key = name_key(title)
-      list(vault).select { |rel| name_key(File.basename(rel, ".md")) == key }
+      notes.select { |rel| name_key(File.basename(rel, ".md")) == key }
     end
 
     def self.backup(path, now: Time.now)
@@ -157,6 +166,6 @@ module Nob
       end
     end
 
-    private_class_method :normalize_prefix, :validate_base!, :within?, :realpath_existing
+    private_class_method :normalize_prefix, :validate_base!, :within?, :realpath_existing, :glob_files
   end
 end
