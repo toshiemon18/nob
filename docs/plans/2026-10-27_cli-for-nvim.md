@@ -1,7 +1,7 @@
 ---
 title: Neovim プラグインから呼ぶための CLI の出力（--porcelain と config --vault）
 slug: cli-for-nvim
-status: in-progress
+status: reviewing
 created: 2026-10-27
 updated: 2026-10-27
 ---
@@ -54,8 +54,8 @@ stdout には、操作の対象になったノートの絶対パスだけを 1 �
 
 ## TODO（TDDタスク分解）
 
-- [ ] **T1**: `Add --porcelain to nob create`（S1）
-- [ ] **T2**: `Add --porcelain to nob daily`（S2）
-- [ ] **T3**: `Add nob config --vault`（S3）
-- [ ] **T4**: `Document the output for scripts`
+- [x] **T1**: `Add --porcelain to nob create`（S1）
+- [x] **T2**: `Add --porcelain to nob daily`（S2）
+- [x] **T3**: `Add nob config --vault`（S3）
+- [x] **T4**: `Document the output for scripts`
     - design.md（サブコマンド一覧、出力チャンネルの慣習、Neovim 連携）、README、`generate:typesig`
