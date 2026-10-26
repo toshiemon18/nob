@@ -50,6 +50,7 @@ CLI 層 (`Nob::Cli`) は現状サブコマンド単位で `rescue Nob::Error => 
 | `nob resolve --from` が vault の外 | `Vault::InvalidPath`（`Vault.relative_path`） | **ラップ**（`--from` を付ける） | `Nob::Error`（直接） |
 | `nob resolve --from` がディレクトリ | （無し、自前検出） | raise | `Nob::Error`（直接） |
 | frontmatter YAML が壊れている | `Psych::SyntaxError` | **ラップ** | `Vault::InvalidFrontmatter` |
+| ノートが UTF-8 として読めない（`nob show`。`nob links` は捕まえて Warning にする） | （無し、`valid_encoding?` で自前検出） | raise | `Vault::InvalidEncoding` |
 | テンプレートのパスが vault を抜けている / 絶対パス（`--template`、`[note].template`、`[dailyNote].template`） | `Vault::InvalidPath` | **ラップ**（指定元を付ける） | `Templates::InvalidPath` |
 | テンプレートファイルが存在しない | （無し、自前検出） | raise | `Nob::Error`（直接） |
 | テンプレートに未定義変数 | （無し、自前検出） | raise | `Templates::UndefinedVariable` |

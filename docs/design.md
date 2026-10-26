@@ -277,6 +277,8 @@ daily/2024-03-27.backup-20240327-153045.md
 
 `nob show`はそのノートのリンク一覧を出力する。本文に書いたとおりの文字列で、同じものは 1 回だけ、初めて出た順に並べる。リンクがなければ節を出さない。
 
+ノートは既定の外部エンコーディング（`LANG`）によらず UTF-8 として読む。UTF-8 として読めなければ `Error: invalid UTF-8 in <path>` / exit 1。
+
 ```
 Path     : daily/2024-03-27.md
 Size     : 1.2KB
@@ -319,7 +321,8 @@ Neovim からリンク先へジャンプするための入口。解決の規則�
 - `--from` はリンクを書いたノートのパス。距離の起点になる
   - 絶対パスでも相対パスでもよい。相対パスは vault を基準にする
   - 存在しなくてよい（保存前のバッファ）
-  - 絶対パスが字句的に vault の外なら、vault の realpath を基準にもう一度判定する（symlink 経由の vault）
+  - 字句的に vault の外なら、vault と `--from` の両方を realpath にしてもう一度判定する（symlink 経由の vault）。`--from` は存在しないことがあるので、実在する一番深い親ディレクトリまでを realpath にする
+  - 相対パスの先頭の `~` はホームディレクトリに展開しない（ファイル名の一部として扱う）
   - vault の外なら `Error: --from is outside the vault: <path>`、ディレクトリなら `Error: --from is not a file: <path>` / exit 1
   - 省いたら vault 直下のノートから書いたものとして測る
   - vault のルート（`.`）はディレクトリなので `--from is not a file` になる
