@@ -244,6 +244,14 @@ RSpec.describe Nob::Vault do
 
       expect(described_class.files(vault)).to(eq(["real/a.md"]))
     end
+
+    # ファイルごとに stat しないので、リンク先がなくてもファイルとして扱う
+    it "includes symlinks whose target does not exist" do
+      touch("a.md")
+      File.symlink(File.join(vault, "gone.md"), File.join(vault, "dangling.md"))
+
+      expect(described_class.files(vault)).to(eq(["a.md", "dangling.md"]))
+    end
   end
 
   describe ".relative_path" do
