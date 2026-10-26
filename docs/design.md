@@ -322,6 +322,7 @@ Neovim からリンク先へジャンプするための入口。解決の規則�
   - 絶対パスが字句的に vault の外なら、vault の realpath を基準にもう一度判定する（symlink 経由の vault）
   - vault の外なら `Error: --from is outside the vault: <path>`、ディレクトリなら `Error: --from is not a file: <path>` / exit 1
   - 省いたら vault 直下のノートから書いたものとして測る
+  - vault のルート（`.`）はディレクトリなので `--from is not a file` になる
 - 判定できれば結果によらず exit 0。結果は stdout の行数で区別する
 
 | 結果 | stdout |
@@ -329,6 +330,8 @@ Neovim からリンク先へジャンプするための入口。解決の規則�
 | 解決 | 絶対パスを 1 行 |
 | 曖昧 | 最も近い候補の絶対パスを 1 行に 1 件（パス順。必ず 2 行以上） |
 | 未解決 | 空 |
+
+- 出力する絶対パスは、config の `vault`（`~` は展開する）に vault 相対パスを足したもの。symlink は追わないので、`--from` に実体側のパスを渡しても、出力は config に書いた側のパスになる
 
 #### 新規ノート作成時の配置
 
