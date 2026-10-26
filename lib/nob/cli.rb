@@ -59,7 +59,8 @@ module Nob
     desc "show TITLE", "Print path, size, character count, and frontmatter for a note"
     def show(title)
       config = load_config
-      relative = resolve_title!(config.vault, title)
+      files = Nob::Vault.files(config.vault)
+      relative = resolve_title!(config.vault, title, files.select { |rel| rel.end_with?(".md") })
       absolute = Nob::Vault.path_for(config.vault, relative)
       text = Nob::Vault.read(absolute)
       parsed = Nob::Vault.frontmatter(absolute, text)
@@ -68,7 +69,7 @@ module Nob
       puts("Size     : #{format_size(Nob::Vault.size(absolute))}")
       puts("Chars    : #{parsed[:body].length}")
       print_frontmatter(parsed[:frontmatter])
-      print_links(config.vault, relative, Nob::Links.extract(text))
+      print_links(files, relative, Nob::Links.extract(text))
     end
 
     desc "config", "View or edit the config file (use -e/--path/--show)"
@@ -210,8 +211,8 @@ module Nob
         "#{front_matter}---\n\n"
       end
 
-      def resolve_title!(vault, title)
-        matches = Nob::Vault.find_notes(vault, title)
+      def resolve_title!(vault, title, notes)
+        matches = Nob::Vault.find_notes(vault, title, notes)
         raise Nob::Error, "note not found: #{title}" if matches.empty?
 
         if matches.size > 1
@@ -255,11 +256,11 @@ module Nob
         end
       end
 
-      def print_links(vault, from, links)
+      def print_links(files, from, links)
         distinct = links.uniq(&:raw)
         return if distinct.empty?
 
-        resolver = Nob::Links::Resolver.new(Nob::Vault.files(vault))
+        resolver = Nob::Links::Resolver.new(files)
         width = distinct.map { |link| link.raw.length }.max
         puts("---links---")
         distinct.each do |link|

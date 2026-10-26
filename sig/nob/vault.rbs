@@ -24,7 +24,7 @@ module Nob
     def self.relative_path: (untyped, untyped) -> String
     def self.realpath_existing: (String) -> String
     def self.name_key: (String) -> String
-    def self.find_notes: (untyped, untyped) -> Array[String]
+    def self.find_notes: (untyped, untyped, ?Array[String]) -> Array[String]
     def self.backup: (untyped, ?now: Time) -> String
     def self.read: (untyped) -> String
     def self.frontmatter: (untyped, ?String) -> Hash[:body | :frontmatter, Hash[untyped, untyped]]

@@ -104,9 +104,10 @@ module Nob
     end
 
     # ファイル名（拡張子を除く）が title と一致するノートの vault 相対パス
-    def self.find_notes(vault, title)
+    # notes を渡せば、vault を走査し直さずにその中から探す
+    def self.find_notes(vault, title, notes = list(vault))
       key = name_key(title)
-      list(vault).select { |rel| name_key(File.basename(rel, ".md")) == key }
+      notes.select { |rel| name_key(File.basename(rel, ".md")) == key }
     end
 
     def self.backup(path, now: Time.now)

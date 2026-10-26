@@ -360,6 +360,12 @@ RSpec.describe Nob::Vault do
 
       expect(described_class.find_notes(vault, "missing")).to(eq([]))
     end
+
+    it "searches the given notes instead of scanning the vault" do
+      touch("projects/Plan.md")
+
+      expect(described_class.find_notes(vault, "Plan", ["archive/Plan.md"])).to(eq(["archive/Plan.md"]))
+    end
   end
 
   describe ".backup" do
