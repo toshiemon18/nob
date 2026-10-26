@@ -230,6 +230,20 @@ RSpec.describe Nob::Vault do
 
       expect(described_class.files(vault)).to(eq(["a.md", "img/diagram.png"]))
     end
+
+    it "includes symlinks to files" do
+      touch("a.md")
+      File.symlink(File.join(vault, "a.md"), File.join(vault, "alias.md"))
+
+      expect(described_class.files(vault)).to(eq(["a.md", "alias.md"]))
+    end
+
+    it "neither includes nor descends into symlinks to directories" do
+      touch("real/a.md")
+      File.symlink(File.join(vault, "real"), File.join(vault, "linked"))
+
+      expect(described_class.files(vault)).to(eq(["real/a.md"]))
+    end
   end
 
   describe ".relative_path" do
