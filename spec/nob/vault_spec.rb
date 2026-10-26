@@ -298,6 +298,15 @@ RSpec.describe Nob::Vault do
       expect(described_class.name_key("\u30AB\u3099")).to(eq(described_class.name_key("\u30AC")))
     end
 
+    it "matches a name given as bytes, as ARGV is under LANG=C" do
+      expect(described_class.name_key("計画".b)).to(eq(described_class.name_key("計画")))
+    end
+
+    it "does not raise for a name that is not valid UTF-8" do
+      expect { described_class.name_key("bad\xFF.md".b) }.not_to(raise_error)
+      expect { described_class.name_key("bad\xFF.md".dup.force_encoding("UTF-8")) }.not_to(raise_error)
+    end
+
     it "keeps different names apart" do
       expect(described_class.name_key("Plan")).not_to(eq(described_class.name_key("Plans")))
     end

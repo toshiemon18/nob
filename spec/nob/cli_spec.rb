@@ -823,6 +823,13 @@ RSpec.describe Nob::Cli do
       )
     end
 
+    it "keeps scanning when a file name is not valid UTF-8" do
+      touch("bad\xFF.png".b)
+      touch("a.md", "[[gone]]\n")
+
+      expect(capture_stdout { described_class.start(["links", "--unresolved"]) }).to(eq("a.md:1: [[gone]]\n"))
+    end
+
     it "prints nothing when every link resolves" do
       touch("Plan.md", "[[Plan]]\n")
 
@@ -876,6 +883,12 @@ RSpec.describe Nob::Cli do
       touch("b/Note.md")
 
       expect(resolve("[[Note]]")).to(eq("#{File.join(@vault, "a", "Note.md")}\n#{File.join(@vault, "b", "Note.md")}\n"))
+    end
+
+    it "resolves a link given as bytes, as ARGV is under LANG=C" do
+      touch("計画.md")
+
+      expect(resolve("[[計画]]".b)).to(eq("#{File.join(@vault, "計画.md")}\n"))
     end
 
     it "prints nothing when the link is unresolved" do

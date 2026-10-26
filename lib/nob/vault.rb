@@ -90,8 +90,9 @@ module Nob
     end
 
     # ノート名やリンク先を照合するための鍵。NFC に正規化し、大文字と小文字を区別しない
+    # LANG=C の ARGV（ASCII-8BIT）も UTF-8 として扱い直し、不正なバイトは置き換えてから正規化する
     def self.name_key(name)
-      name.unicode_normalize(:nfc).downcase(:fold)
+      name.dup.force_encoding(Encoding::UTF_8).scrub.unicode_normalize(:nfc).downcase(:fold)
     end
 
     # ファイル名（拡張子を除く）が title と一致するノートの vault 相対パス
