@@ -115,6 +115,13 @@ RSpec.describe Nob::Vault do
   end
 
   describe ".list" do
+    it "skips directories whose names end in .md" do
+      touch("a.md")
+      touch("archive.md/b.md")
+
+      expect(described_class.list(vault)).to(eq(["a.md", "archive.md/b.md"]))
+    end
+
     it "returns a single relative path for one .md file at the vault root" do
       touch("README.md")
 

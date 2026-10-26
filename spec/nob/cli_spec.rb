@@ -815,6 +815,14 @@ RSpec.describe Nob::Cli do
       )
     end
 
+    it "skips a directory whose name ends in .md" do
+      touch("archive.md/old.md", "[[gone]]\n")
+
+      expect(capture_stdout { described_class.start(["links", "--unresolved"]) }).to(
+        eq("archive.md/old.md:1: [[gone]]\n")
+      )
+    end
+
     it "prints nothing when every link resolves" do
       touch("Plan.md", "[[Plan]]\n")
 

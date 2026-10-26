@@ -50,7 +50,7 @@ module Nob
       base = normalized ? File.join(vault, normalized) : vault
       validate_base!(base, normalized)
 
-      relatives = Dir.glob("**/*.md", base: base).sort
+      relatives = Dir.glob("**/*.md", base: base).select { |rel| File.file?(File.join(base, rel)) }.sort
       return relatives if normalized.nil?
 
       relatives.map { |rel| File.join(normalized, rel) }
