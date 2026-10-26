@@ -28,6 +28,15 @@ RSpec.describe Nob::Links::Resolver do
     expect(resolve(["img/diagram.png"], "diagram.png")).to(eq(resolved("img/diagram.png")))
   end
 
+  it "prefers a note over another file with the same name, even a nearer one" do
+    expect(resolve(["x/Plan", "x/Plan.md"], "Plan", from: "x/a.md")).to(eq(resolved("x/Plan.md")))
+    expect(resolve(["x/Plan", "Plan.md"], "Plan", from: "x/a.md")).to(eq(resolved("Plan.md")))
+  end
+
+  it "still resolves a link that only matches files other than notes" do
+    expect(resolve(["x/Plan"], "Plan", from: "x/a.md")).to(eq(resolved("x/Plan")))
+  end
+
   it "does not match an attachment by its name without the extension" do
     expect(resolve(["img/diagram.png"], "diagram")).to(eq(unresolved))
   end
