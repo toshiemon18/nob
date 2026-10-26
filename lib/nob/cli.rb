@@ -73,19 +73,20 @@ module Nob
       print_links(files, relative, Nob::Links.extract(text))
     end
 
-    desc "config", "View or edit the config file (use -e/--path/--show)"
+    desc "config", "View or edit the config file (use -e/--path/--show/--vault)"
     method_option :edit, aliases: "-e", type: :boolean, default: false, desc: "Open config in editor"
     method_option :path, aliases: "-p", type: :boolean, default: false, desc: "Print config file path"
     method_option :show, aliases: "-s", type: :boolean, default: false, desc: "Print config file contents"
+    method_option :vault, type: :boolean, default: false, desc: "Print the absolute path of the vault"
     def config
-      flags = [options[:edit], options[:path], options[:show]].count(true)
+      flags = [options[:edit], options[:path], options[:show], options[:vault]].count(true)
       if flags > 1
-        warn("Error: specify only one of -e/--path/--show")
+        warn("Error: specify only one of -e/--path/--show/--vault")
         exit(1)
       end
 
       if flags.zero?
-        warn("Error: specify -e/--path/--show (use -h for usage)")
+        warn("Error: specify -e/--path/--show/--vault (use -h for usage)")
         exit(1)
       end
 
@@ -97,6 +98,8 @@ module Nob
         puts(path)
       elsif options[:show]
         print(File.read(path))
+      elsif options[:vault]
+        puts(load_config.vault)
       end
     end
 
