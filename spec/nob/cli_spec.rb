@@ -937,6 +937,10 @@ RSpec.describe Nob::Cli do
       expect_error(["[[x]]", "--from", "daily"], "--from is not a file: daily")
     end
 
+    it "exits 1 when --from ends in a slash, even for a directory that does not exist yet" do
+      expect_error(["[[x]]", "--from", "newdir/"], "--from is not a file: newdir/")
+    end
+
     it "exits 1 when --from is outside the vault" do
       expect_error(["[[x]]", "--from", "/etc/hosts"], "--from is outside the vault: /etc/hosts")
     end

@@ -230,7 +230,10 @@ module Nob
         return "." if path.nil?
 
         rel = Nob::Vault.relative_path(vault, path)
-        raise Nob::Error, "--from is not a file: #{path}" if File.directory?(File.join(vault, rel))
+        # 末尾の / は、まだないディレクトリでもディレクトリを指している
+        if path.end_with?(File::SEPARATOR) || File.directory?(File.join(vault, rel))
+          raise Nob::Error, "--from is not a file: #{path}"
+        end
 
         rel
       rescue Nob::Vault::InvalidPath => e
