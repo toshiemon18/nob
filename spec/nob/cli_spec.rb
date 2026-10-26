@@ -761,6 +761,40 @@ RSpec.describe Nob::Cli do
       expect(File.exist?(escaped_path)).to(be(false))
     end
 
+    context("with --porcelain") do
+      before { allow(Time).to(receive(:now).and_return(Time.new(2026, 3, 7, 9, 5, 2))) }
+
+      let(:note) { File.join(@vault, "daily/2026-03-07.md") }
+
+      it "prints only the path of the new note and keeps the warning on stderr" do
+        stdout = nil
+        stderr = capture_stderr { stdout = capture_stdout { described_class.start(["daily", "--porcelain"]) } }
+
+        expect(stdout).to(eq("#{note}\n"))
+        expect(stderr).to(start_with("Warning: no daily-note template configured"))
+      end
+
+      it "prints only the path when the note already exists" do
+        capture_stderr { capture_stdout { described_class.start(["daily"]) } }
+        File.write(note, "user content\n")
+
+        output = nil
+        capture_stderr { output = capture_stdout { described_class.start(["daily", "--porcelain"]) } }
+
+        expect(output).to(eq("#{note}\n"))
+      end
+
+      it "prints only the path, without the backup, when --force recreates the note" do
+        capture_stderr { capture_stdout { described_class.start(["daily"]) } }
+        File.write(note, "user content\n")
+
+        output = nil
+        capture_stderr { output = capture_stdout { described_class.start(["daily", "--force", "--porcelain"]) } }
+
+        expect(output).to(eq("#{note}\n"))
+      end
+    end
+
     context("with a moment fileNameFormat") do
       before { allow(Time).to(receive(:now).and_return(Time.new(2026, 3, 7, 9, 5, 2))) }
 

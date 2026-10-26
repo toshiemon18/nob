@@ -102,6 +102,7 @@ module Nob
 
     desc "daily", "Create today's daily note"
     method_option :force, aliases: "-f", type: :boolean, default: false, desc: "Backup existing and recreate"
+    method_option :porcelain, type: :boolean, default: false, desc: "Print only the absolute path of the note"
     def daily
       config = load_config
       settings = config.daily_settings
@@ -118,7 +119,7 @@ module Nob
 
       exists = Nob::Vault.exists?(path)
       if exists && !options[:force] && Nob::Vault.size(path) > 0
-        puts("Already exists: #{path}")
+        print_result(path, "Already exists: #{path}")
         return
       end
 
@@ -133,7 +134,7 @@ module Nob
       recreated = exists
 
       Nob::Vault.write(path, content)
-      puts(format_write_result(path, backup_path, recreated: recreated))
+      print_result(path, format_write_result(path, backup_path, recreated: recreated))
     end
 
     desc "list", "List notes under the vault"
