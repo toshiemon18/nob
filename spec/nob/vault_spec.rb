@@ -115,6 +115,13 @@ RSpec.describe Nob::Vault do
   end
 
   describe ".list" do
+    it "skips directories whose names end in .md" do
+      touch("a.md")
+      touch("archive.md/b.md")
+
+      expect(described_class.list(vault)).to(eq(["a.md", "archive.md/b.md"]))
+    end
+
     it "returns a single relative path for one .md file at the vault root" do
       touch("README.md")
 
@@ -214,6 +221,125 @@ RSpec.describe Nob::Vault do
     end
   end
 
+  describe ".files" do
+    it "lists every file regardless of extension, sorted, skipping directories and dot-directories" do
+      touch("a.md")
+      touch("img/diagram.png")
+      touch(".obsidian/app.json")
+      FileUtils.mkdir_p(File.join(vault, "empty"))
+
+      expect(described_class.files(vault)).to(eq(["a.md", "img/diagram.png"]))
+    end
+  end
+
+  describe ".relative_path" do
+    it "takes a relative path as relative to the vault" do
+      expect(described_class.relative_path(vault, "daily/x.md")).to(eq("daily/x.md"))
+      expect(described_class.relative_path(vault, "./daily/x.md")).to(eq("daily/x.md"))
+    end
+
+    it "turns an absolute path inside the vault into a vault-relative one, even if the file does not exist" do
+      expect(described_class.relative_path(vault, File.join(vault, "daily", "new.md"))).to(eq("daily/new.md"))
+    end
+
+    it "keeps a leading ~ in a relative path as part of the file name" do
+      expect(described_class.relative_path(vault, "~draft.md")).to(eq("~draft.md"))
+      expect(described_class.relative_path(vault, "daily/~x.md")).to(eq("daily/~x.md"))
+    end
+
+    it "raises InvalidPath for a path outside the vault" do
+      expect { described_class.relative_path(vault, "../x.md") }.to(
+        raise_error(Nob::Vault::InvalidPath, "path is outside the vault: ../x.md")
+      )
+      expect { described_class.relative_path(vault, "/etc/hosts") }.to(
+        raise_error(Nob::Vault::InvalidPath, "path is outside the vault: /etc/hosts")
+      )
+    end
+
+    context("when the vault is reached through a symlink") do
+      let(:real) { Dir.mktmpdir("nob-real") }
+      let(:link) { File.join(vault, "link") }
+
+      before { File.symlink(real, link) }
+      after { FileUtils.remove_entry(real) }
+
+      it "accepts an absolute path under the real directory" do
+        path = File.join(File.realpath(real), "daily", "x.md")
+
+        expect(described_class.relative_path(link, path)).to(eq("daily/x.md"))
+      end
+
+      it "accepts a path reached through another symlink to the vault" do
+        other = Dir.mktmpdir("nob-other")
+        alias_path = File.join(other, "alias")
+        File.symlink(real, alias_path)
+
+        expect(described_class.relative_path(real, File.join(alias_path, "daily", "new.md"))).to(eq("daily/new.md"))
+      ensure
+        FileUtils.remove_entry(other)
+      end
+
+      it "accepts a path through a symlinked directory inside the vault" do
+        FileUtils.mkdir_p(File.join(real, "daily"))
+        File.symlink(File.join(real, "daily"), File.join(real, "today"))
+
+        expect(described_class.relative_path(real, File.join(real, "today", "x.md"))).to(eq("today/x.md"))
+      end
+
+      it "still accepts a path under the symlink itself" do
+        expect(described_class.relative_path(link, File.join(link, "x.md"))).to(eq("x.md"))
+      end
+    end
+  end
+
+  describe ".name_key" do
+    it "folds case and normalizes to NFC" do
+      expect(described_class.name_key("Plan")).to(eq(described_class.name_key("PLAN")))
+      expect(described_class.name_key("\u30AB\u3099")).to(eq(described_class.name_key("\u30AC")))
+    end
+
+    it "matches a name given as bytes, as ARGV is under LANG=C" do
+      expect(described_class.name_key("計画".b)).to(eq(described_class.name_key("計画")))
+    end
+
+    it "does not raise for a name that is not valid UTF-8" do
+      expect { described_class.name_key("bad\xFF.md".b) }.not_to(raise_error)
+      expect { described_class.name_key("bad\xFF.md".dup.force_encoding("UTF-8")) }.not_to(raise_error)
+    end
+
+    it "keeps different names apart" do
+      expect(described_class.name_key("Plan")).not_to(eq(described_class.name_key("Plans")))
+    end
+  end
+
+  describe ".find_notes" do
+    it "returns every note whose file name matches the title, sorted by path" do
+      touch("projects/Plan.md")
+      touch("archive/Plan.md")
+      touch("Planning.md")
+
+      expect(described_class.find_notes(vault, "Plan")).to(eq(["archive/Plan.md", "projects/Plan.md"]))
+    end
+
+    it "matches the title case-insensitively" do
+      touch("projects/Plan.md")
+
+      expect(described_class.find_notes(vault, "plan")).to(eq(["projects/Plan.md"]))
+    end
+
+    it "matches a decomposed (NFD) file name against a composed (NFC) title" do
+      touch("\u30AB\u3099\u30A4\u30C9.md")
+
+      expect(described_class.find_notes(vault, "\u30AC\u30A4\u30C9")).to(eq(["\u30AB\u3099\u30A4\u30C9.md"]))
+    end
+
+    it "returns an empty array when no note matches" do
+      touch("a.md")
+
+      expect(described_class.find_notes(vault, "missing")).to(eq([]))
+    end
+  end
+
   describe ".backup" do
     it "renames the file with a timestamp suffix and returns the new path" do
       abs = touch("a.md", "original")
@@ -235,6 +361,29 @@ RSpec.describe Nob::Vault do
         described_class.backup(abs, now: now)
       }
         .to(raise_error(Nob::Error, /backup target already exists/))
+    end
+  end
+
+  describe ".read" do
+    it "reads a file as UTF-8" do
+      abs = touch("jp.md", "計画")
+
+      expect(described_class.read(abs)).to(eq("計画"))
+      expect(described_class.read(abs).encoding).to(eq(Encoding::UTF_8))
+    end
+
+    it "strips a UTF-8 BOM" do
+      abs = touch("bom.md")
+      File.binwrite(abs, "\xEF\xBB\xBF---\n".b)
+
+      expect(described_class.read(abs)).to(eq("---\n"))
+    end
+
+    it "raises InvalidEncoding for a file that is not valid UTF-8" do
+      abs = touch("bad.md")
+      File.binwrite(abs, "\xFF".b)
+
+      expect { described_class.read(abs) }.to(raise_error(Nob::Vault::InvalidEncoding, "invalid UTF-8 in #{abs}"))
     end
   end
 
@@ -263,6 +412,14 @@ RSpec.describe Nob::Vault do
 
       expect(result[:frontmatter]).to(eq("title" => "My Note", "date" => Date.new(2026, 4, 27)))
       expect(result[:body]).to(eq("body here\n"))
+    end
+
+    it "parses the given text instead of reading the file again" do
+      abs = touch("a.md", "on disk")
+
+      expect(described_class.frontmatter(abs, "---\ntitle: given\n---\nbody\n")).to(
+        eq(frontmatter: {"title" => "given"}, body: "body\n")
+      )
     end
 
     it "preserves the YAML key order" do

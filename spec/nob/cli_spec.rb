@@ -44,6 +44,43 @@ RSpec.describe Nob::Cli do
       end
     end
 
+    context("with links") do
+      include_context("tmp vault")
+
+      def touch(relative_path, content = "")
+        abs = File.join(@vault, relative_path)
+        FileUtils.mkdir_p(File.dirname(abs))
+        File.write(abs, content)
+      end
+
+      it "lists each distinct link once with its resolution, after the frontmatter" do
+        touch("projects/Plan.md")
+        touch("a/Note.md")
+        touch("b/Note.md")
+        touch("projects/Hub.md", "---\ntitle: Hub\n---\n[[Plan|計画]] [[missing]]\n[[Note]] [[Plan|計画]]\n")
+
+        output = capture_stdout { described_class.start(["show", "Hub"]) }
+
+        expect(output).to(
+          end_with(
+            "title    : Hub\n" \
+              "---links---\n" \
+              "[[Plan|計画]]  → projects/Plan.md\n" \
+              "[[missing]]  → (unresolved)\n" \
+              "[[Note]]     → (ambiguous: a/Note.md, b/Note.md)\n"
+          )
+        )
+      end
+
+      it "omits the links section when the note has no links" do
+        touch("plain.md", "no links here\n")
+
+        output = capture_stdout { described_class.start(["show", "plain"]) }
+
+        expect(output).not_to(include("---links---"))
+      end
+    end
+
     context("with size formatting") do
       include_context("tmp vault")
 
@@ -115,6 +152,71 @@ RSpec.describe Nob::Cli do
         FileUtils.mkdir_p(File.dirname(abs))
         File.write(abs, content)
         abs
+      end
+
+      it "exits 1 for a note that is not valid UTF-8" do
+        touch("bad.md", "")
+        File.binwrite(File.join(@vault, "bad.md"), "[[x]] \xFF\n".b)
+
+        stderr = capture_stderr do
+          expect {
+            capture_stdout { described_class.start(["show", "bad"]) }
+          }
+            .to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
+        end
+
+        expect(stderr).to(eq("Error: invalid UTF-8 in #{File.join(@vault, "bad.md")}\n"))
+      end
+
+      it "reads a note as UTF-8 regardless of the default external encoding" do
+        touch("jp.md", "---\ntitle: 計画\n---\n[[計画]]\n")
+        original = Encoding.default_external
+        output = nil
+        begin
+          Encoding.default_external = Encoding::US_ASCII
+          output = capture_stdout { described_class.start(["show", "jp"]) }
+        ensure
+          Encoding.default_external = original
+        end
+
+        expect(output).to(include("[[計画]]  → (unresolved)"))
+      end
+
+      it "reports an ambiguous title given as bytes, as ARGV is under LANG=C" do
+        touch("計画.md", "a")
+        touch("a/計画.md", "b")
+
+        stderr = capture_stderr do
+          expect {
+            capture_stdout { described_class.start(["show", "計画".b]) }
+          }
+            .to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
+        end
+
+        expect(stderr).to(include("a/計画.md"))
+      end
+
+      it "resolves the title case-insensitively" do
+        touch("projects/Plan.md", "a")
+
+        output = capture_stdout { described_class.start(["show", "plan"]) }
+
+        expect(output).to(include("Path     : projects/Plan.md\n"))
+      end
+
+      it "reports notes differing only in case as ambiguous" do
+        touch("projects/Plan.md", "a")
+        touch("archive/plan.md", "b")
+
+        stderr = capture_stderr do
+          expect {
+            capture_stdout { described_class.start(["show", "PLAN"]) }
+          }
+            .to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
+        end
+
+        expect(stderr).to(include("archive/plan.md"))
+        expect(stderr).to(include("projects/Plan.md"))
       end
 
       it "ignores notes under dot-directories when resolving the title" do
@@ -696,6 +798,172 @@ RSpec.describe Nob::Cli do
 
         expect(stderr).to(match(/Error.*missing/))
       end
+    end
+  end
+
+  describe "#links" do
+    include_context("tmp vault")
+
+    def touch(relative_path, content = "")
+      abs = File.join(@vault, relative_path)
+      FileUtils.mkdir_p(File.dirname(abs))
+      File.binwrite(abs, content)
+    end
+
+    it "lists unresolved and ambiguous links as path:line, sorted by path then line" do
+      touch("Plan.md")
+      touch("a/Note.md")
+      touch("b/Note.md")
+      touch("z.md", "[[gone]]\n")
+      touch("daily/d.md", "---\ntitle: d\n---\n[[Plan]] [[missing]]\n\n[[Note]] [[missing]]\n")
+
+      output = capture_stdout { described_class.start(["links", "--unresolved"]) }
+
+      expect(output).to(
+        eq(
+          "daily/d.md:4: [[missing]]\n" \
+            "daily/d.md:6: [[Note]] (ambiguous: a/Note.md, b/Note.md)\n" \
+            "daily/d.md:6: [[missing]]\n" \
+            "z.md:1: [[gone]]\n"
+        )
+      )
+    end
+
+    it "skips a directory whose name ends in .md" do
+      touch("archive.md/old.md", "[[gone]]\n")
+
+      expect(capture_stdout { described_class.start(["links", "--unresolved"]) }).to(
+        eq("archive.md/old.md:1: [[gone]]\n")
+      )
+    end
+
+    it "keeps scanning when a file name is not valid UTF-8" do
+      touch("bad\xFF.png".b)
+      touch("a.md", "[[gone]]\n")
+
+      expect(capture_stdout { described_class.start(["links", "--unresolved"]) }).to(eq("a.md:1: [[gone]]\n"))
+    end
+
+    it "ignores links in the frontmatter of a note saved with a BOM" do
+      touch("bom.md", "\uFEFF---\nrelated: \"[[gone]]\"\n---\nbody\n")
+
+      expect(capture_stdout { described_class.start(["links", "--unresolved"]) }).to(eq(""))
+    end
+
+    it "prints nothing when every link resolves" do
+      touch("Plan.md", "[[Plan]]\n")
+
+      expect(capture_stdout { described_class.start(["links", "--unresolved"]) }).to(eq(""))
+    end
+
+    it "warns about a note that is not valid UTF-8 and keeps scanning" do
+      touch("bad.md", "[[x]] \xFF\n".b)
+      touch("good.md", "[[gone]]\n")
+
+      stdout = nil
+      stderr = capture_stderr { stdout = capture_stdout { described_class.start(["links", "--unresolved"]) } }
+
+      expect(stderr).to(eq("Warning: skipped bad.md: invalid UTF-8\n"))
+      expect(stdout).to(eq("good.md:1: [[gone]]\n"))
+    end
+
+    it "exits 1 without --unresolved" do
+      stderr = capture_stderr do
+        expect {
+          capture_stdout { described_class.start(["links"]) }
+        }
+          .to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
+      end
+
+      expect(stderr).to(eq("Error: specify --unresolved\n"))
+    end
+  end
+
+  describe "#resolve" do
+    include_context("tmp vault")
+
+    def touch(relative_path, content = "")
+      abs = File.join(@vault, relative_path)
+      FileUtils.mkdir_p(File.dirname(abs))
+      File.write(abs, content)
+    end
+
+    def resolve(*args)
+      capture_stdout { described_class.start(["resolve", *args]) }
+    end
+
+    it "prints the absolute path of the file a link resolves to" do
+      touch("projects/Plan.md")
+
+      expect(resolve("[[plan|計画]]")).to(eq("#{File.join(@vault, "projects", "Plan.md")}\n"))
+    end
+
+    it "prints every nearest candidate, one per line, when the link is ambiguous" do
+      touch("a/Note.md")
+      touch("b/Note.md")
+
+      expect(resolve("[[Note]]")).to(eq("#{File.join(@vault, "a", "Note.md")}\n#{File.join(@vault, "b", "Note.md")}\n"))
+    end
+
+    it "resolves a link given as bytes, as ARGV is under LANG=C" do
+      touch("計画.md")
+
+      expect(resolve("[[計画]]".b)).to(eq("#{File.join(@vault, "計画.md")}\n"))
+    end
+
+    it "measures distance from a --from given as bytes, as ARGV is under LANG=C" do
+      touch("日記/Plan.md")
+      touch("projects/Plan.md")
+
+      expect(resolve("[[Plan]]", "--from", "日記/2026/x.md".b)).to(eq("#{File.join(@vault, "日記", "Plan.md")}\n"))
+    end
+
+    it "prints nothing when the link is unresolved" do
+      expect(resolve("[[missing]]")).to(eq(""))
+    end
+
+    it "measures distance from a vault-relative --from" do
+      touch("a/Note.md")
+      touch("b/Note.md")
+
+      expect(resolve("[[Note]]", "--from", "a/today.md")).to(eq("#{File.join(@vault, "a", "Note.md")}\n"))
+    end
+
+    it "accepts an absolute --from for a file that does not exist yet" do
+      touch("a/Note.md")
+      touch("b/Note.md")
+
+      expect(resolve("[[Note]]", "--from", File.join(@vault, "b", "new.md"))).to(
+        eq("#{File.join(@vault, "b", "Note.md")}\n")
+      )
+    end
+
+    def expect_error(args, message)
+      stderr = capture_stderr do
+        expect { resolve(*args) }.to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
+      end
+
+      expect(stderr).to(eq("Error: #{message}\n"))
+    end
+
+    it "exits 1 unless the argument is exactly one link" do
+      ["Plan", "see [[Plan]] here", "[[a]] [[b]]", "[[#Goals]]"].each do |raw|
+        expect_error([raw], "expected a single [[link]]: #{raw}")
+      end
+    end
+
+    it "exits 1 when --from is a directory" do
+      touch("daily/x.md")
+
+      expect_error(["[[x]]", "--from", "daily"], "--from is not a file: daily")
+    end
+
+    it "exits 1 when --from ends in a slash, even for a directory that does not exist yet" do
+      expect_error(["[[x]]", "--from", "newdir/"], "--from is not a file: newdir/")
+    end
+
+    it "exits 1 when --from is outside the vault" do
+      expect_error(["[[x]]", "--from", "/etc/hosts"], "--from is outside the vault: /etc/hosts")
     end
   end
 

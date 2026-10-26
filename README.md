@@ -45,7 +45,9 @@ template = "templates/note.md"   # nob create 用。vault 相対。省略時は 
 |----------|------|
 | `nob create TITLE [--dir DIR] [--force] [--template PATH]` | ノートを作る。`--force` は既存ファイルをバックアップしてから作り直す。`--template`（`-t`）はその回だけ使うテンプレート |
 | `nob list [--prefix PATH]` | vault 内のノートを vault 相対パスで 1 行ずつ出力する |
-| `nob show TITLE` | ノートのパス、サイズ、文字数、frontmatter を表示する |
+| `nob show TITLE` | ノートのパス、サイズ、文字数、frontmatter、リンクとその解決先を表示する。TITLE は大文字と小文字を区別しない |
+| `nob links --unresolved` | vault 全体で、解決できないリンクと曖昧なリンクを `path:line: [[link]]` の形で出力する |
+| `nob resolve LINK [--from PATH]` | リンク 1 つを解決先の絶対パスにして出力する。曖昧なら候補を 1 行に 1 件、未解決なら何も出さない（いずれも exit 0） |
 | `nob daily [--force]` | 今日のデイリーノートを作る |
 | `nob config -e \| --path \| --show` | 設定ファイルを編集・パス表示・内容表示する |
 | `nob version` | バージョンを表示する |

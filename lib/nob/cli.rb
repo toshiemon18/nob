@@ -7,6 +7,11 @@ module Nob
   class Cli < Thor
     def self.exit_on_failure? = true
 
+    # LANG=C では ARGV が ASCII-8BIT になるので、入口で UTF-8 として扱い直す
+    def self.start(given_args = ARGV, config = {})
+      super(given_args.map { |arg| arg.dup.force_encoding(Encoding::UTF_8) }, config)
+    end
+
     desc "version", "Print nob version"
     def version
       puts(Nob::VERSION)
@@ -56,12 +61,14 @@ module Nob
       config = load_config
       relative = resolve_title!(config.vault, title)
       absolute = Nob::Vault.path_for(config.vault, relative)
-      parsed = Nob::Vault.frontmatter(absolute)
+      text = Nob::Vault.read(absolute)
+      parsed = Nob::Vault.frontmatter(absolute, text)
 
       puts("Path     : #{relative}")
       puts("Size     : #{format_size(Nob::Vault.size(absolute))}")
       puts("Chars    : #{parsed[:body].length}")
       print_frontmatter(parsed[:frontmatter])
+      print_links(config.vault, relative, Nob::Links.extract(text))
     end
 
     desc "config", "View or edit the config file (use -e/--path/--show)"
@@ -133,6 +140,50 @@ module Nob
       Nob::Vault.list(config.vault, prefix: options[:prefix]).each { |rel| puts(rel) }
     end
 
+    desc "links --unresolved", "List links that do not resolve to a single file, as path:line"
+    method_option :unresolved, type: :boolean, default: false, desc: "List unresolved and ambiguous links"
+    def links
+      raise Nob::Error, "specify --unresolved" unless options[:unresolved]
+
+      config = load_config
+      files = Nob::Vault.files(config.vault)
+      resolver = Nob::Links::Resolver.new(files)
+      files.select { |rel| rel.end_with?(".md") }.each do |rel|
+        begin
+          text = Nob::Vault.read(Nob::Vault.path_for(config.vault, rel))
+        rescue Nob::Vault::InvalidEncoding
+          warn("Warning: skipped #{rel}: invalid UTF-8")
+          next
+        end
+
+        Nob::Links.extract(text).each do |link|
+          resolution = resolver.resolve(link.target, from: rel)
+          next if resolution.status == :resolved
+
+          puts("#{rel}:#{link.line}: #{link.raw}#{format_unresolved_hint(resolution)}")
+        end
+      end
+    end
+
+    desc(
+      "resolve LINK",
+      "Print the absolute path of the file a [[link]] resolves to (one line per candidate if ambiguous)"
+    )
+    method_option(
+      :from,
+      type: :string,
+      desc: "Note the link is written in, absolute or vault-relative (default: the vault root)"
+    )
+    def resolve(raw)
+      config = load_config
+      link = Nob::Links.parse(raw)
+      raise Nob::Error, "expected a single [[link]]: #{raw}" unless link
+
+      from = resolve_from!(config.vault, options[:from])
+      resolution = Nob::Links::Resolver.new(Nob::Vault.files(config.vault)).resolve(link.target, from: from)
+      resolution.paths.each { |rel| puts(File.join(config.vault, rel)) }
+    end
+
     no_commands do
       def invoke_command(command, *args)
         super
@@ -160,7 +211,7 @@ module Nob
       end
 
       def resolve_title!(vault, title)
-        matches = Nob::Vault.list(vault).select { |rel| File.basename(rel, ".md") == title }
+        matches = Nob::Vault.find_notes(vault, title)
         raise Nob::Error, "note not found: #{title}" if matches.empty?
 
         if matches.size > 1
@@ -179,6 +230,21 @@ module Nob
         end
       end
 
+      # resolve の距離の起点（vault 相対パス）。省いたら vault 直下のノートから書いたものとして測る
+      def resolve_from!(vault, path)
+        return "." if path.nil?
+
+        rel = Nob::Vault.relative_path(vault, path)
+        # 末尾の / は、まだないディレクトリでもディレクトリを指している
+        if path.end_with?(File::SEPARATOR) || File.directory?(File.join(vault, rel))
+          raise Nob::Error, "--from is not a file: #{path}"
+        end
+
+        rel
+      rescue Nob::Vault::InvalidPath => e
+        raise Nob::Error, e.message.sub(/\Apath /, "--from ")
+      end
+
       def print_frontmatter(frontmatter)
         return if frontmatter.empty?
 
@@ -187,6 +253,33 @@ module Nob
         frontmatter.each do |key, value|
           puts("#{key.to_s.ljust([key_width, 8].max)} : #{value}")
         end
+      end
+
+      def print_links(vault, from, links)
+        distinct = links.uniq(&:raw)
+        return if distinct.empty?
+
+        resolver = Nob::Links::Resolver.new(Nob::Vault.files(vault))
+        width = distinct.map { |link| link.raw.length }.max
+        puts("---links---")
+        distinct.each do |link|
+          puts("#{link.raw.ljust(width)}  → #{format_resolution(resolver.resolve(link.target, from: from))}")
+        end
+      end
+
+      def format_resolution(resolution)
+        case resolution.status
+        when :resolved
+          resolution.paths.first
+        when :unresolved
+          "(unresolved)"
+        when :ambiguous
+          "(ambiguous: #{resolution.paths.join(", ")})"
+        end
+      end
+
+      def format_unresolved_hint(resolution)
+        resolution.status == :ambiguous ? " #{format_resolution(resolution)}" : ""
       end
 
       def format_size(bytes)

@@ -1,0 +1,17 @@
+# TypeProf 0.31.1
+
+# lib/nob/links.rb
+module Nob
+  module Nob::Links
+    Nob::Links::Link: untyped
+    Nob::Links::Resolution: untyped
+    Nob::Links::PATTERN: Regexp
+    Nob::Links::FENCE: Regexp
+    Nob::Links::FRONTMATTER: untyped
+    Nob::Links::INLINE_CODE: Regexp
+    def self.extract: (untyped) -> untyped
+    def self.parse: (untyped) -> nil
+    def self.body_start: (untyped) -> Integer
+    def self.links_in: (untyped, untyped) -> untyped
+  end
+end

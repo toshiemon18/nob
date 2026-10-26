@@ -4,18 +4,25 @@
 module Nob
   class Nob::Cli # failed to identify its superclass
     def self.exit_on_failure?: -> true
+    def self.start: (?Array[String], ?Hash[untyped, untyped]) -> untyped
     def version: -> nil
     def create: (untyped) -> nil
     def show: (untyped) -> nil
     def config: -> nil
     def daily: -> nil
     def list: -> untyped
+    def links: -> untyped
+    def resolve: (untyped) -> untyped
     def invoke_command: (untyped, *untyped) -> bot
     def load_config: -> untyped
     def render_create_content: (untyped, untyped) -> String
     def resolve_title!: (untyped, untyped) -> untyped
     def format_write_result: (untyped, nil, recreated: false) -> String
+    def resolve_from!: (untyped, untyped) -> String
     def print_frontmatter: (untyped) -> nil
+    def print_links: (untyped, untyped, untyped) -> nil
+    def format_resolution: (untyped) -> String?
+    def format_unresolved_hint: (untyped) -> String
     def format_size: (untyped) -> String
   end
 end
