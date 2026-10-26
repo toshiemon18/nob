@@ -14,12 +14,12 @@ module Nob
       def resolve(target, from:)
         key = Nob::Vault.name_key(target)
         candidates = @entries.filter_map do |rel, basename_keys, path_keys|
-          matched =
-            if target.include?("/")
-              path_keys.any? { |name| name == key || name.end_with?("/#{key}") }
-            else
-              basename_keys.include?(key)
-            end
+          matched = if target.include?("/")
+            path_keys.any? { |name| name == key || name.end_with?("/#{key}") }
+          else
+            basename_keys.include?(key)
+          end
+
           rel if matched
         end
 

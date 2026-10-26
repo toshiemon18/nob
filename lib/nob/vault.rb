@@ -85,6 +85,7 @@ module Nob
         rest.unshift(File.basename(existing))
         existing = File.dirname(existing)
       end
+
       File.join(File.realpath(existing), *rest)
     end
 
