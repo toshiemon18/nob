@@ -1,7 +1,7 @@
 ---
 title: nob show の揃えを表示幅で行う
 slug: display-width
-status: implementing
+status: reviewing
 created: 2026-10-26
 updated: 2026-10-26
 ---
@@ -26,9 +26,12 @@ updated: 2026-10-26
 
 - [x] **T1**: `Align nob show columns by display width`（S1）
     - gemspec に `unicode-display_width` を追加する
-- [ ] **T2**: `Mark finished plans as done`
+- [x] **T2**: `Mark finished plans as done`
     - config-unknown-keys、links、resolve の status を `done` にする
 
 ## レビューフィードバック
 
 ## 実装と計画の差分（recap）
+
+- frontmatter の key の幅の下限 8 は今までどおり（表示幅で比べる）
+- 曖昧幅の文字はライブラリの既定どおり 1 桁で数える。端末の設定で曖昧幅を 2 桁にしている場合はずれる
