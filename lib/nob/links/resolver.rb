@@ -4,8 +4,13 @@ module Nob
     class Resolver
       # @param files [Array<String>] vault 内の全ファイルの vault 相対パス
       def initialize(files)
-        # 照合の鍵はファイルごとに 1 回だけ作る。[パス, ファイル名の鍵, パスの鍵]
-        @entries = files.map { |rel| [rel, names(File.basename(rel)), names(rel)] }
+        # 照合の鍵はファイルごとに 1 回だけ作る。この実行の間だけメモリに持つ
+        # / を含まないリンクはファイル名の鍵から引き、/ を含むリンクは [パス, パスの鍵] を順に調べる
+        @by_basename = Hash.new { |hash, key| hash[key] = [] }
+        @by_path = files.map do |rel|
+          names(File.basename(rel)).each { |key| @by_basename[key] << rel }
+          [rel, names(rel)]
+        end
       end
 
       # @param target [String] リンク先の名前（Link#target）
@@ -13,14 +18,12 @@ module Nob
       # (String, from: String) -> Resolution
       def resolve(target, from:)
         key = Nob::Vault.name_key(target)
-        candidates = @entries.filter_map do |rel, basename_keys, path_keys|
-          matched = if target.include?("/")
-            path_keys.any? { |name| name == key || name.end_with?("/#{key}") }
-          else
-            basename_keys.include?(key)
+        candidates = if target.include?("/")
+          @by_path.filter_map do |rel, path_keys|
+            rel if path_keys.any? { |name| name == key || name.end_with?("/#{key}") }
           end
-
-          rel if matched
+        else
+          @by_basename.fetch(key, [])
         end
 
         return Resolution.new(status: :unresolved, paths: []) if candidates.empty?
