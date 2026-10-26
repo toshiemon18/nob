@@ -392,6 +392,22 @@ RSpec.describe Nob::Cli do
       expect(output).to(match(%r{\ARecreated: .*/Dup\.md \(backup: .*Dup\.backup-\d{8}-\d{6}\.md\)\n\z}))
     end
 
+    context("with --porcelain") do
+      it "prints only the absolute path of the new note" do
+        output = capture_stdout { described_class.start(["create", "Plan", "--dir", "projects", "--porcelain"]) }
+
+        expect(output).to(eq("#{File.join(@vault, "projects/Plan.md")}\n"))
+      end
+
+      it "prints only the path, without the backup, when --force recreates the note" do
+        capture_stdout { described_class.start(["create", "Dup"]) }
+
+        output = capture_stdout { described_class.start(["create", "Dup", "--force", "--porcelain"]) }
+
+        expect(output).to(eq("#{File.join(@vault, "Dup.md")}\n"))
+      end
+    end
+
     it "writes a quoted title/date frontmatter when no template is configured" do
       capture_stdout { described_class.start(["create", "会議: 定例"]) }
 

@@ -20,6 +20,7 @@ module Nob
     desc "create TITLE", "Create a new note under the vault"
     method_option :dir, aliases: "-d", type: :string, desc: "Subdirectory under vault (e.g. projects, daily/2026)"
     method_option :force, aliases: "-f", type: :boolean, default: false, desc: "Backup existing file and recreate"
+    method_option :porcelain, type: :boolean, default: false, desc: "Print only the absolute path of the note"
     method_option(
       :template,
       aliases: "-t",
@@ -53,7 +54,7 @@ module Nob
       end
 
       Nob::Vault.write(path, content)
-      puts(format_write_result(path, backup_path, recreated: !backup_path.nil?))
+      print_result(path, format_write_result(path, backup_path, recreated: !backup_path.nil?))
     end
 
     desc "show TITLE", "Print path, size, character count, and frontmatter for a note"
@@ -229,6 +230,11 @@ module Nob
         end
 
         matches.first
+      end
+
+      # --porcelain なら、スクリプト（Neovim プラグイン）向けにノートの絶対パスだけを出す
+      def print_result(path, message)
+        puts(options[:porcelain] ? path : message)
       end
 
       def format_write_result(path, backup_path, recreated:)
