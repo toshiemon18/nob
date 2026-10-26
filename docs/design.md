@@ -106,7 +106,10 @@ nob daily --force            # 強制再作成（既存はバックアップ）
 nob links --unresolved       # 未解決・曖昧なリンクをvault全体で一覧表示
 nob resolve <link> [--from <path>]  # リンク 1 つを解決先の絶対パスに変換
 nob config -e                # configをエディタで編集
+nob config --vault           # vault の絶対パスを出力
 ```
+
+`create` と `daily` は `--porcelain` を付けると、stdout にノートの絶対パスだけを 1 行出力する（下の「スクリプト向けの出力」）。
 
 ### 出力チャンネルの慣習
 
@@ -121,6 +124,15 @@ nob config -e                # configをエディタで編集
 - **`Error: `**: 致命的エラー。コマンドの主目的を達成できず、ユーザー側の対処（config 修正・引数見直し）が必要。`exit 1` で終了。`Nob::Error` ラップ方針の詳細は `docs/adr/0002_error-policy.md`
 - **`Warning: `**: 継続可能な注意。コマンドは目的を達成しているが、ユーザーが意図しているか確認したい状況（テンプレ未指定で空ファイル生成、等）。`exit 0` のまま
 - **prefix なし**: 通常の情報出力。stdout に書き、機械可読 / パイプ可能な形を保つ
+
+### スクリプト向けの出力
+
+Neovim プラグインなどのスクリプトは、人間向けの文言（`Created: ` など）に依存せずに結果を読めるようにする。
+
+- `create` と `daily` の `--porcelain`: stdout に、操作の対象になったノートの絶対パスだけを 1 行出力する。作成・作り直し・すでにある（`daily`）のどれでも同じ形で、バックアップのパスは出さない。`Warning: ` と `Error: ` は今までどおり stderr に出し、終了コードも変わらない
+- `config --vault`: config の `vault` を展開・検証した絶対パスを 1 行出力する。`create` などが出力するパスと同じ vault を指す
+- `resolve`: 結果を stdout の行数で区別する（「リンク 1 つの解決」の節）
+- 名前は git の `--porcelain` にならった。ほかのコマンドにスクリプト向けの出力を足すときも、この名前を使う
 
 ---
 
@@ -146,7 +158,7 @@ nob show <title>             # ノート情報参照
 - `nob config -e` でエディタを開いて編集できる（`$EDITOR`を参照、未設定の場合は`vi`）
 - `$EDITOR` は `code -w` のような引数付きを許容するため shell 形式で起動する。ユーザ自身の環境変数を信頼する前提で、信頼できない `$EDITOR`（例: `evil; rm -rf ~`）の保護は行わない
 - nob が知らないキーがあれば、キーごとに `Warning: unknown config key [note].tempalte in <config のパス> (did you mean [note].template?)` を stderr に出し、そのまま続行する。候補は似たキーがあるときだけ付ける
-  - 検査するのは config を読むコマンド（create / show / daily / list）だけ。`nob config` は検査しないので、vault が未設定でも編集できる
+  - 検査するのは config を読むコマンド（create / show / daily / list / links / resolve と `config --vault`）だけ。`nob config` の `-e` / `--path` / `--show` は検査しないので、vault が未設定でも編集できる
   - 値の型は検査しない
 
 ---
@@ -404,7 +416,7 @@ Neovim からリンク先へジャンプするための入口。解決の規則�
 ### 実装フェーズ
 
 ```
-フェーズ1: vim.fn.system('nob create xxx') で叩くだけ。リンク先へのジャンプは nob resolve の出力を :edit に渡す
+フェーズ1: vim.system で nob を呼ぶ。作ったノートは create / daily --porcelain の出力を :edit に渡し、リンク先へのジャンプは nob resolve の出力を :edit に渡す
 フェーズ2: Telescopeと組み合わせてノート一覧をファジー検索
 フェーズ3: ちゃんとしたNeovimプラグインとしてパッケージ化
 ```

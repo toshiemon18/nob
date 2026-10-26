@@ -310,6 +310,35 @@ RSpec.describe Nob::Cli do
       end
     end
 
+    context("with --vault") do
+      include_context("tmp vault")
+
+      it "prints the vault with ~ expanded" do
+        original_home = ENV["HOME"]
+        ENV["HOME"] = File.dirname(@vault)
+        write_config("vault = \"~/#{File.basename(@vault)}\"\n")
+
+        output = capture_stdout { described_class.start(["config", "--vault"]) }
+
+        expect(output).to(eq("#{@vault}\n"))
+      ensure
+        ENV["HOME"] = original_home
+      end
+
+      it "exits 1 when the vault is not configured" do
+        write_config("vault = \"\"\n")
+
+        stderr = capture_stderr do
+          expect {
+            capture_stdout { described_class.start(["config", "--vault"]) }
+          }
+            .to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
+        end
+
+        expect(stderr).to(start_with("Error: vault is not configured."))
+      end
+    end
+
     context("without options") do
       it "prints an Error-prefixed message and exits 1" do
         stderr = capture_stderr do
@@ -319,7 +348,7 @@ RSpec.describe Nob::Cli do
             .to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
         end
 
-        expect(stderr).to(match(/^Error: specify -e\/--path\/--show/))
+        expect(stderr).to(match(/^Error: specify -e\/--path\/--show\/--vault /))
       end
     end
 
@@ -328,7 +357,9 @@ RSpec.describe Nob::Cli do
         ["config", "-e", "--path"],
         ["config", "--path", "--show"],
         ["config", "-e", "--show"],
-        ["config", "-e", "--path", "--show"]
+        ["config", "-e", "--path", "--show"],
+        ["config", "--vault", "--path"],
+        ["config", "--show", "--vault"]
       ].each do |args|
         it "rejects #{args.drop(1).join(" ")} with Error and exits 1" do
           stderr = capture_stderr do
@@ -338,7 +369,7 @@ RSpec.describe Nob::Cli do
               .to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
           end
 
-          expect(stderr).to(match(/Error: specify only one of -e\/--path\/--show/))
+          expect(stderr).to(match(/Error: specify only one of -e\/--path\/--show\/--vault$/))
         end
       end
     end
@@ -390,6 +421,22 @@ RSpec.describe Nob::Cli do
       output = capture_stdout { described_class.start(["create", "Dup", "--force"]) }
 
       expect(output).to(match(%r{\ARecreated: .*/Dup\.md \(backup: .*Dup\.backup-\d{8}-\d{6}\.md\)\n\z}))
+    end
+
+    context("with --porcelain") do
+      it "prints only the absolute path of the new note" do
+        output = capture_stdout { described_class.start(["create", "Plan", "--dir", "projects", "--porcelain"]) }
+
+        expect(output).to(eq("#{File.join(@vault, "projects/Plan.md")}\n"))
+      end
+
+      it "prints only the path, without the backup, when --force recreates the note" do
+        capture_stdout { described_class.start(["create", "Dup"]) }
+
+        output = capture_stdout { described_class.start(["create", "Dup", "--force", "--porcelain"]) }
+
+        expect(output).to(eq("#{File.join(@vault, "Dup.md")}\n"))
+      end
     end
 
     it "writes a quoted title/date frontmatter when no template is configured" do
@@ -743,6 +790,40 @@ RSpec.describe Nob::Cli do
 
       expect(stderr).to(match(%r{Error: path escapes the vault: daily/\.\./\.\./\d{4}-escaped\.md}))
       expect(File.exist?(escaped_path)).to(be(false))
+    end
+
+    context("with --porcelain") do
+      before { allow(Time).to(receive(:now).and_return(Time.new(2026, 3, 7, 9, 5, 2))) }
+
+      let(:note) { File.join(@vault, "daily/2026-03-07.md") }
+
+      it "prints only the path of the new note and keeps the warning on stderr" do
+        stdout = nil
+        stderr = capture_stderr { stdout = capture_stdout { described_class.start(["daily", "--porcelain"]) } }
+
+        expect(stdout).to(eq("#{note}\n"))
+        expect(stderr).to(start_with("Warning: no daily-note template configured"))
+      end
+
+      it "prints only the path when the note already exists" do
+        capture_stderr { capture_stdout { described_class.start(["daily"]) } }
+        File.write(note, "user content\n")
+
+        output = nil
+        capture_stderr { output = capture_stdout { described_class.start(["daily", "--porcelain"]) } }
+
+        expect(output).to(eq("#{note}\n"))
+      end
+
+      it "prints only the path, without the backup, when --force recreates the note" do
+        capture_stderr { capture_stdout { described_class.start(["daily"]) } }
+        File.write(note, "user content\n")
+
+        output = nil
+        capture_stderr { output = capture_stdout { described_class.start(["daily", "--force", "--porcelain"]) } }
+
+        expect(output).to(eq("#{note}\n"))
+      end
     end
 
     context("with a moment fileNameFormat") do

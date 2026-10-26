@@ -20,6 +20,7 @@ module Nob
     desc "create TITLE", "Create a new note under the vault"
     method_option :dir, aliases: "-d", type: :string, desc: "Subdirectory under vault (e.g. projects, daily/2026)"
     method_option :force, aliases: "-f", type: :boolean, default: false, desc: "Backup existing file and recreate"
+    method_option :porcelain, type: :boolean, default: false, desc: "Print only the absolute path of the note"
     method_option(
       :template,
       aliases: "-t",
@@ -53,7 +54,7 @@ module Nob
       end
 
       Nob::Vault.write(path, content)
-      puts(format_write_result(path, backup_path, recreated: !backup_path.nil?))
+      print_result(path, format_write_result(path, backup_path, recreated: !backup_path.nil?))
     end
 
     desc "show TITLE", "Print path, size, character count, and frontmatter for a note"
@@ -72,19 +73,20 @@ module Nob
       print_links(files, relative, Nob::Links.extract(text))
     end
 
-    desc "config", "View or edit the config file (use -e/--path/--show)"
+    desc "config", "View or edit the config file (use -e/--path/--show/--vault)"
     method_option :edit, aliases: "-e", type: :boolean, default: false, desc: "Open config in editor"
     method_option :path, aliases: "-p", type: :boolean, default: false, desc: "Print config file path"
     method_option :show, aliases: "-s", type: :boolean, default: false, desc: "Print config file contents"
+    method_option :vault, type: :boolean, default: false, desc: "Print the absolute path of the vault"
     def config
-      flags = [options[:edit], options[:path], options[:show]].count(true)
+      flags = [options[:edit], options[:path], options[:show], options[:vault]].count(true)
       if flags > 1
-        warn("Error: specify only one of -e/--path/--show")
+        warn("Error: specify only one of -e/--path/--show/--vault")
         exit(1)
       end
 
       if flags.zero?
-        warn("Error: specify -e/--path/--show (use -h for usage)")
+        warn("Error: specify -e/--path/--show/--vault (use -h for usage)")
         exit(1)
       end
 
@@ -96,11 +98,14 @@ module Nob
         puts(path)
       elsif options[:show]
         print(File.read(path))
+      elsif options[:vault]
+        puts(load_config.vault)
       end
     end
 
     desc "daily", "Create today's daily note"
     method_option :force, aliases: "-f", type: :boolean, default: false, desc: "Backup existing and recreate"
+    method_option :porcelain, type: :boolean, default: false, desc: "Print only the absolute path of the note"
     def daily
       config = load_config
       settings = config.daily_settings
@@ -117,7 +122,7 @@ module Nob
 
       exists = Nob::Vault.exists?(path)
       if exists && !options[:force] && Nob::Vault.size(path) > 0
-        puts("Already exists: #{path}")
+        print_result(path, "Already exists: #{path}")
         return
       end
 
@@ -132,7 +137,7 @@ module Nob
       recreated = exists
 
       Nob::Vault.write(path, content)
-      puts(format_write_result(path, backup_path, recreated: recreated))
+      print_result(path, format_write_result(path, backup_path, recreated: recreated))
     end
 
     desc "list", "List notes under the vault"
@@ -229,6 +234,11 @@ module Nob
         end
 
         matches.first
+      end
+
+      # --porcelain なら、スクリプト（Neovim プラグイン）向けにノートの絶対パスだけを出す
+      def print_result(path, message)
+        puts(options[:porcelain] ? path : message)
       end
 
       def format_write_result(path, backup_path, recreated:)
