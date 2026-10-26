@@ -372,6 +372,13 @@ RSpec.describe Nob::Vault do
       expect(described_class.read(abs).encoding).to(eq(Encoding::UTF_8))
     end
 
+    it "strips a UTF-8 BOM" do
+      abs = touch("bom.md")
+      File.binwrite(abs, "\xEF\xBB\xBF---\n".b)
+
+      expect(described_class.read(abs)).to(eq("---\n"))
+    end
+
     it "raises InvalidEncoding for a file that is not valid UTF-8" do
       abs = touch("bad.md")
       File.binwrite(abs, "\xFF".b)

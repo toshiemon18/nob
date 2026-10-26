@@ -114,9 +114,9 @@ module Nob
       backup_path
     end
 
-    # ファイルを UTF-8 として読む。既定の外部エンコーディング（LANG）には左右されない
+    # ファイルを UTF-8 として読む。既定の外部エンコーディング（LANG）には左右されない。先頭の BOM は除く
     def self.read(path)
-      text = File.read(path, encoding: "UTF-8")
+      text = File.read(path, encoding: "BOM|UTF-8")
       raise InvalidEncoding, "invalid UTF-8 in #{path}" unless text.valid_encoding?
 
       text

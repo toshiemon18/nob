@@ -830,6 +830,12 @@ RSpec.describe Nob::Cli do
       expect(capture_stdout { described_class.start(["links", "--unresolved"]) }).to(eq("a.md:1: [[gone]]\n"))
     end
 
+    it "ignores links in the frontmatter of a note saved with a BOM" do
+      touch("bom.md", "\uFEFF---\nrelated: \"[[gone]]\"\n---\nbody\n")
+
+      expect(capture_stdout { described_class.start(["links", "--unresolved"]) }).to(eq(""))
+    end
+
     it "prints nothing when every link resolves" do
       touch("Plan.md", "[[Plan]]\n")
 
