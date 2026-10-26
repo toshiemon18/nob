@@ -23,14 +23,15 @@ module Nob
       allowlist_classes: [Date, Time]
     )
 
-    def self.path_for(vault, *segments)
+    # label はエラーメッセージの主語（"prefix" など）
+    def self.path_for(vault, *segments, label: "path")
       relatives = segments.map(&:to_s).reject(&:empty?)
       absolute = relatives.find { |seg| File.absolute_path?(seg) }
-      raise InvalidPath, "path must be relative to the vault: #{absolute}" if absolute
+      raise InvalidPath, "#{label} must be relative to the vault: #{absolute}" if absolute
 
       path = File.join(vault, *relatives)
       unless within?(File.expand_path(vault), File.expand_path(path))
-        raise InvalidPath, "path escapes the vault: #{File.join(*relatives)}"
+        raise InvalidPath, "#{label} escapes the vault: #{File.join(*relatives)}"
       end
 
       path
@@ -64,7 +65,7 @@ module Nob
     # path を vault 相対パスにする。相対パスは vault を基準にする。path は存在しなくてよい
     # 字句的に vault の外なら、vault と path の両方を realpath にしてもう一度判定する（symlink 経由の vault）
     # (String, String) -> String
-    def self.relative_path(vault, path)
+    def self.relative_path(vault, path, label: "path")
       root = File.expand_path(vault)
       # 相対パスは vault と連結してから正規化する（File.expand_path(path, root) だと先頭の ~ を展開してしまう）
       absolute = File.expand_path(File.absolute_path?(path) ? path : File.join(root, path))
@@ -72,7 +73,7 @@ module Nob
 
       real_root = File.realpath(root) if File.exist?(root)
       real = realpath_existing(absolute)
-      raise InvalidPath, "path is outside the vault: #{path}" unless real_root && within?(real_root, real)
+      raise InvalidPath, "#{label} is outside the vault: #{path}" unless real_root && within?(real_root, real)
 
       real.delete_prefix(real_root).delete_prefix(File::SEPARATOR)
     end
@@ -135,10 +136,10 @@ module Nob
     def self.normalize_prefix(prefix, vault:)
       return nil if prefix.nil? || prefix.empty?
 
-      path_for(vault, prefix)
+      path_for(vault, prefix, label: "prefix")
       prefix.chomp("/")
     rescue InvalidPath => e
-      raise InvalidPrefix, e.message.sub(/\Apath /, "prefix ")
+      raise InvalidPrefix, e.message
     end
 
     def self.within?(root, candidate)

@@ -235,7 +235,7 @@ module Nob
       def resolve_from!(vault, path)
         return "." if path.nil?
 
-        rel = Nob::Vault.relative_path(vault, path)
+        rel = Nob::Vault.relative_path(vault, path, label: "--from")
         # 末尾の / は、まだないディレクトリでもディレクトリを指している
         if path.end_with?(File::SEPARATOR) || File.directory?(File.join(vault, rel))
           raise Nob::Error, "--from is not a file: #{path}"
@@ -243,7 +243,7 @@ module Nob
 
         rel
       rescue Nob::Vault::InvalidPath => e
-        raise Nob::Error, e.message.sub(/\Apath /, "--from ")
+        raise Nob::Error, e.message
       end
 
       def print_frontmatter(frontmatter)
