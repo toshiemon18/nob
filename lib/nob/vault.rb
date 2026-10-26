@@ -62,17 +62,30 @@ module Nob
     end
 
     # path を vault 相対パスにする。相対パスは vault を基準にする。path は存在しなくてよい
-    # 絶対パスが字句的に vault の外なら、vault の realpath を基準にもう一度判定する（symlink 経由の vault）
+    # 字句的に vault の外なら、vault と path の両方を realpath にしてもう一度判定する（symlink 経由の vault）
     # (String, String) -> String
     def self.relative_path(vault, path)
       root = File.expand_path(vault)
-      absolute = File.expand_path(path, root)
-      roots = [root]
-      roots << File.realpath(root) if File.absolute_path?(path) && File.exist?(root)
-      base = roots.find { |candidate| within?(candidate, absolute) }
-      raise InvalidPath, "path is outside the vault: #{path}" unless base
+      # 相対パスは vault と連結してから正規化する（File.expand_path(path, root) だと先頭の ~ を展開してしまう）
+      absolute = File.expand_path(File.absolute_path?(path) ? path : File.join(root, path))
+      return absolute.delete_prefix(root).delete_prefix(File::SEPARATOR) if within?(root, absolute)
 
-      absolute.delete_prefix(base).delete_prefix(File::SEPARATOR)
+      real_root = File.realpath(root) if File.exist?(root)
+      real = realpath_existing(absolute)
+      raise InvalidPath, "path is outside the vault: #{path}" unless real_root && within?(real_root, real)
+
+      real.delete_prefix(real_root).delete_prefix(File::SEPARATOR)
+    end
+
+    # path のうち実在する一番深い祖先までを realpath にし、残り（まだないファイルなど）を足す
+    def self.realpath_existing(path)
+      existing = path
+      rest = []
+      until File.exist?(existing)
+        rest.unshift(File.basename(existing))
+        existing = File.dirname(existing)
+      end
+      File.join(File.realpath(existing), *rest)
     end
 
     # ノート名やリンク先を照合するための鍵。NFC に正規化し、大文字と小文字を区別しない
@@ -142,6 +155,6 @@ module Nob
       end
     end
 
-    private_class_method :normalize_prefix, :validate_base!, :within?
+    private_class_method :normalize_prefix, :validate_base!, :within?, :realpath_existing
   end
 end

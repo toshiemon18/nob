@@ -242,6 +242,11 @@ RSpec.describe Nob::Vault do
       expect(described_class.relative_path(vault, File.join(vault, "daily", "new.md"))).to(eq("daily/new.md"))
     end
 
+    it "keeps a leading ~ in a relative path as part of the file name" do
+      expect(described_class.relative_path(vault, "~draft.md")).to(eq("~draft.md"))
+      expect(described_class.relative_path(vault, "daily/~x.md")).to(eq("daily/~x.md"))
+    end
+
     it "raises InvalidPath for a path outside the vault" do
       expect { described_class.relative_path(vault, "../x.md") }.to(
         raise_error(Nob::Vault::InvalidPath, "path is outside the vault: ../x.md")
@@ -262,6 +267,23 @@ RSpec.describe Nob::Vault do
         path = File.join(File.realpath(real), "daily", "x.md")
 
         expect(described_class.relative_path(link, path)).to(eq("daily/x.md"))
+      end
+
+      it "accepts a path reached through another symlink to the vault" do
+        other = Dir.mktmpdir("nob-other")
+        alias_path = File.join(other, "alias")
+        File.symlink(real, alias_path)
+
+        expect(described_class.relative_path(real, File.join(alias_path, "daily", "new.md"))).to(eq("daily/new.md"))
+      ensure
+        FileUtils.remove_entry(other)
+      end
+
+      it "accepts a path through a symlinked directory inside the vault" do
+        FileUtils.mkdir_p(File.join(real, "daily"))
+        File.symlink(File.join(real, "daily"), File.join(real, "today"))
+
+        expect(described_class.relative_path(real, File.join(real, "today", "x.md"))).to(eq("today/x.md"))
       end
 
       it "still accepts a path under the symlink itself" do
