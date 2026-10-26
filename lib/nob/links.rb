@@ -56,7 +56,8 @@ module Nob
     def self.links_in(line, number)
       line.to_enum(:scan, PATTERN).filter_map do
         match = Regexp.last_match
-        target = match[1].split(/[|#]/, 2).first.to_s.strip
+        # 表の中では Obsidian が別名の区切りを \| と書く
+        target = match[1].split(/\\?\||#/, 2).first.to_s.strip
         Link.new(raw: match[0], target: target, line: number) unless target.empty?
       end
     end

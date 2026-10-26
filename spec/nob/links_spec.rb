@@ -33,6 +33,10 @@ RSpec.describe Nob::Links do
       expect(described_class.extract("[[#Goals]] [[|alias]] [[ ]]\n")).to(eq([]))
     end
 
+    it "treats \\| as the alias separator, as Obsidian writes links in tables" do
+      expect(described_class.extract("| [[Plan\\|計画]] |\n").map(&:target)).to(eq(["Plan"]))
+    end
+
     it "strips spaces around the target" do
       expect(described_class.extract("[[ Plan | 計画 ]]\n").map(&:target)).to(eq(["Plan"]))
     end
