@@ -141,8 +141,9 @@ module Nob
       raise Nob::Error, "specify --unresolved" unless options[:unresolved]
 
       config = load_config
-      resolver = Nob::Links::Resolver.new(Nob::Vault.files(config.vault))
-      Nob::Vault.list(config.vault).each do |rel|
+      files = Nob::Vault.files(config.vault)
+      resolver = Nob::Links::Resolver.new(files)
+      files.select { |rel| rel.end_with?(".md") }.each do |rel|
         begin
           text = Nob::Vault.read(Nob::Vault.path_for(config.vault, rel))
         rescue Nob::Vault::InvalidEncoding
@@ -270,7 +271,7 @@ module Nob
       end
 
       def format_unresolved_hint(resolution)
-        resolution.status == :ambiguous ? " (ambiguous: #{resolution.paths.join(", ")})" : ""
+        resolution.status == :ambiguous ? " #{format_resolution(resolution)}" : ""
       end
 
       def format_size(bytes)
