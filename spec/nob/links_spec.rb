@@ -52,6 +52,16 @@ RSpec.describe Nob::Links do
         expect(described_class.extract("---\n[[A]]\n")).to(eq([link("[[A]]", "A", 2)]))
       end
 
+      it "finds the frontmatter the same way as nob show: after blank lines, with spaces after ---" do
+        text = "\n---  \nrelated: \"[[A]]\"\n---\n[[B]]\n"
+
+        expect(described_class.extract(text)).to(eq([link("[[B]]", "B", 5)]))
+      end
+
+      it "treats a closing --- without a newline after it as body, as nob show does" do
+        expect(described_class.extract("---\n[[A]]\n---").map(&:target)).to(eq(["A"]))
+      end
+
       it "only treats a --- on the first line as frontmatter" do
         expect(described_class.extract("intro\n---\n[[A]]\n---\n").map(&:target)).to(eq(["A"]))
       end

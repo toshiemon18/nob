@@ -1,3 +1,5 @@
+require "front_matter_parser"
+
 module Nob
   module Links
     # 本文中の 1 つのリンク
@@ -13,6 +15,7 @@ module Nob
 
     PATTERN = /!?\[\[([^\[\]\n]+)\]\]/
     FENCE = /\A {0,3}(`{3,}|~{3,})/
+    FRONTMATTER = FrontMatterParser::SyntaxParser::Md.new
     INLINE_CODE = /(?<!`)(`+)(?!`).+?(?<!`)\1(?!`)/
 
     # ノートの全文からリンクを取り出す。名前が空のリンク（[[#見出し]] など）は除く。
@@ -21,7 +24,7 @@ module Nob
     def self.extract(text)
       lines = text.lines
       fence = nil
-      lines.each_with_index.drop(body_start(lines)).flat_map do |line, index|
+      lines.each_with_index.drop(body_start(text)).flat_map do |line, index|
         if fence
           fence = nil if line.match?(/\A {0,3}#{Regexp.escape(fence[0])}{#{fence.length},}\s*\z/)
           next []
@@ -45,12 +48,10 @@ module Nob
       links.first if links.size == 1 && links.first.raw == stripped
     end
 
-    # 本文が始まる行の index。先頭行が --- で、閉じの --- があれば frontmatter とみなす
-    def self.body_start(lines)
-      return 0 unless lines.first&.chomp == "---"
-
-      closing = lines.each_with_index.drop(1).find { |line, _| line.chomp == "---" }
-      closing ? closing[1] + 1 : 0
+    # 本文が始まる行の index。nob show と同じく front_matter_parser の判定で frontmatter を見つける
+    def self.body_start(text)
+      match = FRONTMATTER.call(text)
+      match ? text[0...match.begin(:content)].count("\n") : 0
     end
 
     def self.links_in(line, number)
