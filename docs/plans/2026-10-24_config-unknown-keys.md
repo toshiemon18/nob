@@ -1,7 +1,7 @@
 ---
 title: 未知の設定キーの警告、spec の打ち切り対策、prefix 判定の統一
 slug: config-unknown-keys
-status: reviewing
+status: done
 created: 2026-10-24
 updated: 2026-10-25
 ---
