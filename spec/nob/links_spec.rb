@@ -66,6 +66,12 @@ RSpec.describe Nob::Links do
         expect(described_class.extract(text).map(&:target)).to(eq(["B"]))
       end
 
+      it "does not open a fence on a line whose backticks close inline" do
+        text = "```foo``` [[A]]\n[[B]]\n~~~ a`b\n[[C]]\n~~~\n"
+
+        expect(described_class.extract(text).map(&:target)).to(eq(["A", "B"]))
+      end
+
       it "treats an unclosed fence as code to the end" do
         expect(described_class.extract("```\n[[A]]\n")).to(eq([]))
       end

@@ -27,7 +27,8 @@ module Nob
           next []
         end
 
-        if (opening = line[FENCE, 1])
+        # バッククォートのフェンスは、後ろにバッククォートを書けない（書けば同じ行で閉じるインラインコード）
+        if (opening = line[FENCE, 1]) && !(opening.start_with?("`") && line.sub(FENCE, "").include?("`"))
           fence = opening
           next []
         end
