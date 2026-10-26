@@ -744,6 +744,46 @@ RSpec.describe Nob::Cli do
       expect(stderr).to(match(%r{Error: path escapes the vault: daily/\.\./\.\./\d{4}-escaped\.md}))
       expect(File.exist?(escaped_path)).to(be(false))
     end
+
+    context("with a moment fileNameFormat") do
+      before { allow(Time).to(receive(:now).and_return(Time.new(2026, 3, 7, 9, 5, 2))) }
+
+      it "creates the note at the path the format builds" do
+        write_config(
+          <<~TOML
+            vault = "#{@vault}"
+            [dailyNote]
+            basePath = "日記/"
+            fileNameFormat = "YYYY/MM/YYYY-MM-DD"
+          TOML
+        )
+
+        output = nil
+        capture_stderr { output = capture_stdout { described_class.start(["daily"]) } }
+
+        expect(output).to(eq("Created: #{File.join(@vault, "日記/2026/03/2026-03-07.md")}\n"))
+      end
+
+      it "exits 1 naming [dailyNote].fileNameFormat when a token is not supported" do
+        write_config(
+          <<~TOML
+            vault = "#{@vault}"
+            [dailyNote]
+            fileNameFormat = "YYYY-MM-DD dddd"
+          TOML
+        )
+
+        stderr = capture_stderr do
+          expect {
+            capture_stdout { described_class.start(["daily"]) }
+          }
+            .to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
+        end
+
+        expect(stderr).to(include("Error: unsupported format token: dddd ([dailyNote].fileNameFormat)"))
+        expect(Dir.glob("#{@vault}/**/*.md")).to(be_empty)
+      end
+    end
   end
 
   describe "#list" do
