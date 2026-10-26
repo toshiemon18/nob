@@ -16,7 +16,7 @@ module Nob
     def invoke_command: (untyped, *untyped) -> bot
     def load_config: -> untyped
     def render_create_content: (untyped, untyped) -> String
-    def resolve_title!: (untyped, untyped) -> untyped
+    def resolve_title!: (untyped, untyped, files: untyped) -> untyped
     def format_write_result: (untyped, nil, recreated: false) -> String
     def resolve_from!: (untyped, untyped) -> String
     def print_frontmatter: (untyped) -> nil

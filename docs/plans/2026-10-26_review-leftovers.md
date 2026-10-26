@@ -1,7 +1,7 @@
 ---
 title: レビューで見送った細かい件の対応
 slug: review-leftovers
-status: implementing
+status: reviewing
 created: 2026-10-26
 updated: 2026-10-26
 ---
@@ -60,9 +60,14 @@ Nob::Vault.relative_path(vault, path, label: "path")
 - [x] **T1**: `Walk the vault once in nob show`（S1）
 - [x] **T2**: `Prefer notes over other files with the same name`（S2）
 - [x] **T3**: `Pass a label to Vault path errors instead of rewriting them`（S3）
-- [ ] **T4**: `Document note preference in link resolution`
+- [x] **T4**: `Document note preference in link resolution`
     - design.md、ADR 0003、`generate:typesig`
 
 ## レビューフィードバック
 
 ## 実装と計画の差分（recap）
+
+- T1: 最初の spec（`Vault.files` を 1 回だけ呼ぶ）は、今のままでも通ってしまった。タイトルを探す側は `Vault.list` を使っていたため。`Vault.list` を呼ばないことも確かめるようにして Red にした
+- T1: `resolve_title!` を呼ぶのは `show` だけなので、`files:` は必須の引数にした。`Vault.find_notes` の `files:` は省略できるまま（省けば自分で走査する）
+- T2: ノートの優先は距離より先に効く。遠くのノートでも、近くの拡張子のないファイルより優先する（Obsidian は拡張子のないリンクをノートとして開くため）
+- T3: `Templates.locate` は `template #{e.message}` のように前に付け足しているだけで、書き換えていないので変えていない
