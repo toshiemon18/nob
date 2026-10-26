@@ -182,6 +182,20 @@ RSpec.describe Nob::Cli do
         expect(output).to(include("[[計画]]  → (unresolved)"))
       end
 
+      it "reports an ambiguous title given as bytes, as ARGV is under LANG=C" do
+        touch("計画.md", "a")
+        touch("a/計画.md", "b")
+
+        stderr = capture_stderr do
+          expect {
+            capture_stdout { described_class.start(["show", "計画".b]) }
+          }
+            .to(raise_error(SystemExit) { |e| expect(e.status).to(eq(1)) })
+        end
+
+        expect(stderr).to(include("a/計画.md"))
+      end
+
       it "resolves the title case-insensitively" do
         touch("projects/Plan.md", "a")
 
@@ -895,6 +909,13 @@ RSpec.describe Nob::Cli do
       touch("計画.md")
 
       expect(resolve("[[計画]]".b)).to(eq("#{File.join(@vault, "計画.md")}\n"))
+    end
+
+    it "measures distance from a --from given as bytes, as ARGV is under LANG=C" do
+      touch("日記/Plan.md")
+      touch("projects/Plan.md")
+
+      expect(resolve("[[Plan]]", "--from", "日記/2026/x.md".b)).to(eq("#{File.join(@vault, "日記", "Plan.md")}\n"))
     end
 
     it "prints nothing when the link is unresolved" do

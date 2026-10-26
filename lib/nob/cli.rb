@@ -7,6 +7,11 @@ module Nob
   class Cli < Thor
     def self.exit_on_failure? = true
 
+    # LANG=C では ARGV が ASCII-8BIT になるので、入口で UTF-8 として扱い直す
+    def self.start(given_args = ARGV, config = {})
+      super(given_args.map { |arg| arg.dup.force_encoding(Encoding::UTF_8) }, config)
+    end
+
     desc "version", "Print nob version"
     def version
       puts(Nob::VERSION)
