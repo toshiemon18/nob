@@ -157,6 +157,8 @@ nob show <title>             # ノート情報参照
 - 管理対象ディレクトリ（vault）はconfigで指定する
 - 書き込み先は vault 内に限る。`create` の title・`--dir`、`daily` の basePath・fileNameFormat に絶対パスや vault の外を指す `..` が含まれる場合は `Error: ` で終了する
   - 判定はパスの字句的な正規化（`File.expand_path`）で行い、symlink の追跡はしない
+- vault 内のファイルの一覧は `Dir.glob` で取り、隠しファイルと隠しディレクトリは含めない。ディレクトリかどうかは glob（readdir の d_type）で見分け、ファイルごとに stat はしない。WSL から Windows ドライブ上の vault を使うと、ファイルごとの stat だけで数秒かかるため（`docs/plans/2026-10-26_perf.md`）
+  - ディレクトリへの symlink は含めず、中も辿らない。リンク先のない symlink はファイルとして含める
 
 ---
 
