@@ -4,7 +4,8 @@ module Nob
     class Resolver
       # @param files [Array<String>] vault 内の全ファイルの vault 相対パス
       def initialize(files)
-        @files = files
+        # 照合の鍵はファイルごとに 1 回だけ作る。[パス, ファイル名の鍵, パスの鍵]
+        @entries = files.map { |rel| [rel, names(File.basename(rel)), names(rel)] }
       end
 
       # @param target [String] リンク先の名前（Link#target）
@@ -12,12 +13,14 @@ module Nob
       # (String, from: String) -> Resolution
       def resolve(target, from:)
         key = Nob::Vault.name_key(target)
-        candidates = @files.select do |rel|
-          if target.include?("/")
-            names(rel).any? { |name| name == key || name.end_with?("/#{key}") }
-          else
-            names(File.basename(rel)).include?(key)
-          end
+        candidates = @entries.filter_map do |rel, basename_keys, path_keys|
+          matched =
+            if target.include?("/")
+              path_keys.any? { |name| name == key || name.end_with?("/#{key}") }
+            else
+              basename_keys.include?(key)
+            end
+          rel if matched
         end
 
         return Resolution.new(status: :unresolved, paths: []) if candidates.empty?
