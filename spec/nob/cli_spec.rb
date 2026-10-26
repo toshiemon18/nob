@@ -764,6 +764,23 @@ RSpec.describe Nob::Cli do
         expect(output).to(eq("Created: #{File.join(@vault, "日記/2026/03/2026-03-07.md")}\n"))
       end
 
+      it "uses the file name, without the directories in the format, as {{title}}" do
+        FileUtils.mkdir_p(File.join(@vault, "templates"))
+        File.write(File.join(@vault, "templates/daily.md"), "# {{title}}\n")
+        write_config(
+          <<~TOML
+            vault = "#{@vault}"
+            [dailyNote]
+            fileNameFormat = "YYYY/MM/YYYY-MM-DD"
+            template = "templates/daily.md"
+          TOML
+        )
+
+        capture_stdout { described_class.start(["daily"]) }
+
+        expect(File.read(File.join(@vault, "daily/2026/03/2026-03-07.md"))).to(eq("# 2026-03-07\n"))
+      end
+
       it "exits 1 naming [dailyNote].fileNameFormat when a token is not supported" do
         write_config(
           <<~TOML
