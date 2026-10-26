@@ -7,6 +7,7 @@ module Nob
       def initialize: (untyped) -> void
       def resolve: (untyped, from: untyped) -> untyped
       def distance: (untyped, untyped) -> Integer
+      def dirs: (untyped) -> Array[untyped]
       def names: (String) -> Array[untyped]
     end
   end

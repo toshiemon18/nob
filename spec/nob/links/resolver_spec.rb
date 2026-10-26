@@ -68,6 +68,13 @@ RSpec.describe Nob::Links::Resolver do
       expect(resolve(files, "Plan", from: "daily/2026/a.md")).to(eq(resolved("Plan.md")))
     end
 
+    it "compares directories by case and NFC as it does names" do
+      files = ["daily/Plan.md", "other/Plan.md", "\u30AC/Plan.md"]
+
+      expect(resolve(files, "Plan", from: "Daily/a.md")).to(eq(resolved("daily/Plan.md")))
+      expect(resolve(files, "Plan", from: "\u30AB\u3099/a.md")).to(eq(resolved("\u30AC/Plan.md")))
+    end
+
     it "reports a tie for the nearest as ambiguous, listing the tied paths" do
       files = ["projects/Plan.md", "daily/Plan.md", "daily/2026/x/Plan.md"]
 

@@ -36,11 +36,16 @@ module Nob
       private
 
       # 2 つのファイルのディレクトリ間の距離。共通の祖先まで上がる段数と、そこから下る段数の和
+      # ディレクトリ名も、ファイル名と同じく name_key で比べる
       def distance(from, to)
-        from_dirs = File.dirname(from).split("/") - ["."]
-        to_dirs = File.dirname(to).split("/") - ["."]
+        from_dirs = dirs(from)
+        to_dirs = dirs(to)
         common = from_dirs.zip(to_dirs).take_while { |a, b| a == b }.size
         (from_dirs.size - common) + (to_dirs.size - common)
+      end
+
+      def dirs(path)
+        (File.dirname(path).split("/") - ["."]).map { |dir| Nob::Vault.name_key(dir) }
       end
 
       # path に当たるリンク先の鍵。ノートは .md の有無どちらでも当たる
