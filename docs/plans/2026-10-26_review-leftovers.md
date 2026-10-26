@@ -58,7 +58,7 @@ Nob::Vault.relative_path(vault, path, label: "path")
 ## TODO
 
 - [x] **T1**: `Walk the vault once in nob show`（S1）
-- [ ] **T2**: `Prefer notes over other files with the same name`（S2）
+- [x] **T2**: `Prefer notes over other files with the same name`（S2）
 - [ ] **T3**: `Pass a label to Vault path errors instead of rewriting them`（S3）
 - [ ] **T4**: `Document note preference in link resolution`
     - design.md、ADR 0003、`generate:typesig`
