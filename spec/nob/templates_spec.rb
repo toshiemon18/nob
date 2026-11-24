@@ -24,6 +24,14 @@ RSpec.describe Nob::Templates do
       expect(described_class.render(text: "# {{title}}\n", title: title, now: now)).to(eq("# My Note\n"))
     end
 
+    # Obsidian のデイリーノート機能と共用しているテンプレート（moment 形式）
+    it "renders a template written for Obsidian" do
+      text = "created: {{date:YYYY-MM-DD}}T{{time:HH:mm}} (UTC +09:00)\n# {{date:YYYY-MM-DD}}\n"
+
+      expect(described_class.render(text: text, title: title, now: now))
+        .to(eq("created: #{now.strftime("%Y-%m-%dT%H:%M")} (UTC +09:00)\n# #{now.strftime("%Y-%m-%d")}\n"))
+    end
+
     it "reads the template at path and renders it" do
       Dir.mktmpdir("nob-templates") do |dir|
         path = File.join(dir, "tpl.md")

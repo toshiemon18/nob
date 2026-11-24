@@ -37,7 +37,7 @@ vault = "~/Documents/MyVault"
 
 [dailyNote]
 basePath = "daily/"              # vault 相対。省略時は "daily/"
-fileNameFormat = "%Y-%m-%d"      # strftime 形式。省略時は "%Y-%m-%d"
+fileNameFormat = "%Y-%m-%d"      # strftime か moment（"YYYY/MM/YYYY-MM-DD" など）。省略時は "%Y-%m-%d"
 template = "templates/daily.md"  # vault 相対。省略時は空ファイルを作る
 
 [note]
@@ -47,6 +47,8 @@ template = "templates/note.md"   # nob create 用。vault 相対。省略時は 
 テンプレートのパスは vault 相対で書きます（`--template` も同じ）。絶対パスや vault の外を指すパスはエラーになります。テンプレートの変数はエスケープされないので、frontmatter の中では `title: "{{title}}"` のようにクォートしてください。
 
 テンプレートでは `{{title}}` `{{date}}` `{{date:%Y/%m/%d}}` `{{time}}` `{{id}}` などの変数を使えます。一覧は [docs/design.md](docs/design.md) の「テンプレート」を参照してください。
+
+日時の書式は strftime（`%Y-%m-%d`）と moment（`YYYY-MM-DD`）のどちらでも書けます。`%` を含めば strftime として読みます。Obsidian のデイリーノート機能と同じテンプレートや fileNameFormat をそのまま使えます。moment で使えるのは `YYYY` `YY` `MM` `M` `DD` `D` `HH` `H` `mm` `ss` と `[...]` だけで、それ以外のトークン（`dddd` など）はエラーになります。
 
 ## コマンド
 
