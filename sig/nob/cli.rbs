@@ -21,6 +21,8 @@ module Nob
     def resolve_from!: (untyped, untyped) -> String
     def print_frontmatter: (untyped) -> nil
     def print_links: (untyped, untyped, untyped) -> nil
+    def display_width: (untyped) -> untyped
+    def pad: (untyped, Integer) -> untyped
     def format_resolution: (untyped) -> String?
     def format_unresolved_hint: (untyped) -> String
     def format_size: (untyped) -> String

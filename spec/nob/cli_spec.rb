@@ -66,10 +66,18 @@ RSpec.describe Nob::Cli do
             "title    : Hub\n" \
               "---links---\n" \
               "[[Plan|計画]]  → projects/Plan.md\n" \
-              "[[missing]]  → (unresolved)\n" \
-              "[[Note]]     → (ambiguous: a/Note.md, b/Note.md)\n"
+              "[[missing]]    → (unresolved)\n" \
+              "[[Note]]       → (ambiguous: a/Note.md, b/Note.md)\n"
           )
         )
+      end
+
+      it "aligns frontmatter keys by display width, counting full-width characters as two columns" do
+        touch("wide.md", "---\nタイトル名: x\ntag: y\n---\n")
+
+        output = capture_stdout { described_class.start(["show", "wide"]) }
+
+        expect(output).to(include("タイトル名 : x\ntag        : y\n"))
       end
 
       it "omits the links section when the note has no links" do

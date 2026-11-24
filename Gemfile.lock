@@ -5,6 +5,7 @@ PATH
       front_matter_parser (~> 1.0)
       thor (~> 1.3)
       toml-rb (~> 4.0)
+      unicode-display_width (~> 3.2)
       zeitwerk (~> 2.6)
 
 GEM
@@ -42,6 +43,9 @@ GEM
     typeprof (0.31.1)
       prism (>= 1.4.0)
       rbs (>= 3.6.0)
+    unicode-display_width (3.3.0)
+      unicode-emoji (~> 4.3)
+    unicode-emoji (4.3.0)
     zeitwerk (2.7.5)
 
 PLATFORMS
@@ -73,6 +77,8 @@ CHECKSUMS
   toml-rb (4.2.0) sha256=10a48c91613e20cf63483a7a776767dfb3cd7d70e9327c0237443da601e13776
   tsort (0.2.0) sha256=9650a793f6859a43b6641671278f79cfead60ac714148aabe4e3f0060480089f
   typeprof (0.31.1) sha256=22fcc9c0ec52c642a88353b78a84464fd8a381e8f1bf865ba05be237b9fc5088
+  unicode-display_width (3.3.0) sha256=4b7aa66a4b11db50f6f7e98411215cd0dd10eaecb665d36eec5bcacb3fa0b613
+  unicode-emoji (4.3.0) sha256=11c02fa73290378c066bb0562cd4c87d8e1b706fbbe0059ca12746a4244de8ce
   zeitwerk (2.7.5) sha256=d8da92128c09ea6ec62c949011b00ed4a20242b255293dd66bf41545398f73dd
 
 BUNDLED WITH
