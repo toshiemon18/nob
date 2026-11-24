@@ -838,7 +838,13 @@ RSpec.describe Nob::Cli do
     end
 
     it "keeps scanning when a file name is not valid UTF-8" do
-      touch("bad\xFF.png".b)
+      # macOS の APFS は UTF-8 として不正なファイル名を作らせない
+      begin
+        touch("bad\xFF.png".b)
+      rescue Errno::EILSEQ
+        skip("this file system rejects file names that are not valid UTF-8")
+      end
+
       touch("a.md", "[[gone]]\n")
 
       expect(capture_stdout { described_class.start(["links", "--unresolved"]) }).to(eq("a.md:1: [[gone]]\n"))
