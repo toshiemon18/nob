@@ -18,6 +18,15 @@ bundle install
 bundle exec exe/nob version
 ```
 
+普段使うときは gem としてインストールし、`bundle exec` を付けずに `nob` を起動してください。`bundle exec` は起動に 100 ms ほど上乗せします。Neovim から呼ぶときには、この差が効いてきます。
+
+```sh
+bundle exec rake install
+nob version
+```
+
+ソースを更新したら、もう一度 `bundle exec rake install` を実行してください。
+
 ## 設定
 
 設定ファイルは `$XDG_CONFIG_HOME/nob/config.toml` です（`XDG_CONFIG_HOME` が未設定なら `~/.config/nob/config.toml`）。初回実行時に雛形が作られるので、`nob config -e` で開いて `vault` を設定してください。
