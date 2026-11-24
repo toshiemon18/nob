@@ -66,10 +66,18 @@ RSpec.describe Nob::Cli do
             "title    : Hub\n" \
               "---links---\n" \
               "[[Plan|計画]]  → projects/Plan.md\n" \
-              "[[missing]]  → (unresolved)\n" \
-              "[[Note]]     → (ambiguous: a/Note.md, b/Note.md)\n"
+              "[[missing]]    → (unresolved)\n" \
+              "[[Note]]       → (ambiguous: a/Note.md, b/Note.md)\n"
           )
         )
+      end
+
+      it "aligns frontmatter keys by display width, counting full-width characters as two columns" do
+        touch("wide.md", "---\nタイトル名: x\ntag: y\n---\n")
+
+        output = capture_stdout { described_class.start(["show", "wide"]) }
+
+        expect(output).to(include("タイトル名 : x\ntag        : y\n"))
       end
 
       it "omits the links section when the note has no links" do
@@ -194,6 +202,14 @@ RSpec.describe Nob::Cli do
         end
 
         expect(stderr).to(include("a/計画.md"))
+      end
+
+      it "walks the vault once for both the title and the links" do
+        touch("Plan.md", "[[Plan]]\n")
+        expect(Nob::Vault).to(receive(:files).once.and_call_original)
+        expect(Nob::Vault).not_to(receive(:list))
+
+        capture_stdout { described_class.start(["show", "Plan"]) }
       end
 
       it "resolves the title case-insensitively" do
@@ -895,7 +911,13 @@ RSpec.describe Nob::Cli do
     end
 
     it "keeps scanning when a file name is not valid UTF-8" do
-      touch("bad\xFF.png".b)
+      # macOS の APFS は UTF-8 として不正なファイル名を作らせない
+      begin
+        touch("bad\xFF.png".b)
+      rescue Errno::EILSEQ
+        skip("this file system rejects file names that are not valid UTF-8")
+      end
+
       touch("a.md", "[[gone]]\n")
 
       expect(capture_stdout { described_class.start(["links", "--unresolved"]) }).to(eq("a.md:1: [[gone]]\n"))
