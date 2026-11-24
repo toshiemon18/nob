@@ -60,8 +60,10 @@ template = "templates/note.md"   # nob create 用。vault 相対。省略時は 
 | `nob links --unresolved` | vault 全体で、解決できないリンクと曖昧なリンクを `path:line: [[link]]` の形で出力する |
 | `nob resolve LINK [--from PATH]` | リンク 1 つを解決先の絶対パスにして出力する。曖昧なら候補を 1 行に 1 件、未解決なら何も出さない（いずれも exit 0） |
 | `nob daily [--force]` | 今日のデイリーノートを作る |
-| `nob config -e \| --path \| --show` | 設定ファイルを編集・パス表示・内容表示する |
+| `nob config -e \| --path \| --show \| --vault` | 設定ファイルを編集・パス表示・内容表示する。`--vault` は vault の絶対パスを出力する |
 | `nob version` | バージョンを表示する |
+
+`create` と `daily` は、`--porcelain` を付けるとノートの絶対パスだけを 1 行出力します。Neovim などのスクリプトから呼ぶときに使います。
 
 書き込み先は vault 内に限られます。vault の外を指すパスや絶対パスを渡すと、`Error:` を出して終了コード 1 で終わります。
 
