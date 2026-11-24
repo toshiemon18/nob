@@ -28,6 +28,10 @@ module Nob
 
         return Resolution.new(status: :unresolved, paths: []) if candidates.empty?
 
+        # 同じ名前に当たるノートがあれば、ノート以外のファイル（拡張子のない Plan など）より優先する
+        notes = candidates.select { |rel| rel.end_with?(".md") }
+        candidates = notes unless notes.empty?
+
         by_distance = candidates.group_by { |rel| distance(from, rel) }
         nearest = by_distance.fetch(by_distance.keys.min).sort
         Resolution.new(status: nearest.size == 1 ? :resolved : :ambiguous, paths: nearest)

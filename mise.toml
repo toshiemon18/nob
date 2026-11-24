@@ -1,11 +1,13 @@
 [settings]
 idiomatic_version_file_enable_tools = ["ruby"]
-task_output = "interleave"
+
+[tasks]
+output = "interleave"
 
 [tools]
 gh = "latest"
 # リリースの tarball は releases/v<version>-<OS>/ の下に実行ファイルを置くので、bin_path で指す
-"github:fables-tales/rubyfmt" = { version = "0.14.1", bin_path = "releases/v{{version}}-{% if os() == 'macos' %}Darwin{% else %}Linux{% endif %}" }
+"github:fables-tales/rubyfmt" = { version = "0.14.1", bin_path = "releases/v{{ version }}-{% if os() == 'macos' %}Darwin{% else %}Linux{% endif %}" }
 
 [tasks.test]
 description = "Run RSpec"

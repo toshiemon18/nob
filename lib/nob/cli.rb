@@ -1,6 +1,7 @@
 require "date"
 require "did_you_mean"
 require "thor"
+require "unicode/display_width"
 require "yaml"
 
 module Nob
@@ -60,7 +61,7 @@ module Nob
     def show(title)
       config = load_config
       files = Nob::Vault.files(config.vault)
-      relative = resolve_title!(config.vault, title, files.select { |rel| rel.end_with?(".md") })
+      relative = resolve_title!(config.vault, title, files: files)
       absolute = Nob::Vault.path_for(config.vault, relative)
       text = Nob::Vault.read(absolute)
       parsed = Nob::Vault.frontmatter(absolute, text)
@@ -211,8 +212,8 @@ module Nob
         "#{front_matter}---\n\n"
       end
 
-      def resolve_title!(vault, title, notes)
-        matches = Nob::Vault.find_notes(vault, title, notes)
+      def resolve_title!(vault, title, files:)
+        matches = Nob::Vault.find_notes(vault, title, files: files)
         raise Nob::Error, "note not found: #{title}" if matches.empty?
 
         if matches.size > 1
@@ -235,7 +236,7 @@ module Nob
       def resolve_from!(vault, path)
         return "." if path.nil?
 
-        rel = Nob::Vault.relative_path(vault, path)
+        rel = Nob::Vault.relative_path(vault, path, label: "--from")
         # 末尾の / は、まだないディレクトリでもディレクトリを指している
         if path.end_with?(File::SEPARATOR) || File.directory?(File.join(vault, rel))
           raise Nob::Error, "--from is not a file: #{path}"
@@ -243,16 +244,16 @@ module Nob
 
         rel
       rescue Nob::Vault::InvalidPath => e
-        raise Nob::Error, e.message.sub(/\Apath /, "--from ")
+        raise Nob::Error, e.message
       end
 
       def print_frontmatter(frontmatter)
         return if frontmatter.empty?
 
         puts("---frontmatter---")
-        key_width = frontmatter.keys.map(&:to_s).map(&:length).max
+        key_width = frontmatter.keys.map { |key| display_width(key.to_s) }.max
         frontmatter.each do |key, value|
-          puts("#{key.to_s.ljust([key_width, 8].max)} : #{value}")
+          puts("#{pad(key.to_s, [key_width, 8].max)} : #{value}")
         end
       end
 
@@ -261,11 +262,21 @@ module Nob
         return if distinct.empty?
 
         resolver = Nob::Links::Resolver.new(files)
-        width = distinct.map { |link| link.raw.length }.max
+        width = distinct.map { |link| display_width(link.raw) }.max
         puts("---links---")
         distinct.each do |link|
-          puts("#{link.raw.ljust(width)}  → #{format_resolution(resolver.resolve(link.target, from: from))}")
+          puts("#{pad(link.raw, width)}  → #{format_resolution(resolver.resolve(link.target, from: from))}")
         end
+      end
+
+      # 端末での表示幅。全角文字は 2 桁と数える
+      def display_width(text)
+        Unicode::DisplayWidth.of(text)
+      end
+
+      # 表示幅が width になるまで右に空白を足す
+      def pad(text, width)
+        text + " " * [width - display_width(text), 0].max
       end
 
       def format_resolution(resolution)
