@@ -17,12 +17,14 @@ module Nob
     def load_config: -> untyped
     def render_create_content: (untyped, untyped) -> String
     def format_daily_name: (untyped, Time) -> untyped
-    def resolve_title!: (untyped, untyped, untyped) -> untyped
+    def resolve_title!: (untyped, untyped, files: untyped) -> untyped
     def print_result: (untyped, String) -> nil
     def format_write_result: (untyped, nil, recreated: false) -> String
     def resolve_from!: (untyped, untyped) -> String
     def print_frontmatter: (untyped) -> nil
     def print_links: (untyped, untyped, untyped) -> nil
+    def display_width: (untyped) -> untyped
+    def pad: (untyped, Integer) -> untyped
     def format_resolution: (untyped) -> String?
     def format_unresolved_hint: (untyped) -> String
     def format_size: (untyped) -> String

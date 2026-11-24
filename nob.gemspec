@@ -20,4 +20,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency "thor", "~> 1.3"
   spec.add_dependency "toml-rb", "~> 4.0"
   spec.add_dependency "front_matter_parser", "~> 1.0"
+  spec.add_dependency "unicode-display_width", "~> 3.2"
 end
